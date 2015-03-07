@@ -17,6 +17,9 @@ sf2 = exp(2*hyp(1));
 psi = exp(hyp(2));
 xi =  exp(hyp(3));
 
+h2 = hyp(2);
+h3 = hyp(3);
+
 x_mat = repmat(x, 1, numel(z));
 z_mat = repmat(z', numel(x), 1);
 
@@ -25,18 +28,22 @@ if nargin < 4
       K = sf2 * ones(size(x, 1), 1);
     else
       K = sf2 * (1/(psi*xi)) ^ (1/xi) ./ ((x_mat + z_mat + (1/(psi*xi))) .^ (1/xi));
+      %K = sf2 * exp(-h2-h3) ^ exp(-h3) ./ ((x_mat + z_mat + exp(-h2-h3)) .^ exp(-h3));
     end
 else                                           % derivatives
   if i == 1                                    % sf
-      K = 2 * sf2 * (1/(psi*xi)) ^ (1/xi) ./ ((x_mat + z_mat + (1/(psi*xi))) .^ (1/xi));
+    K = 2 * sf2 * (1/(psi*xi)) ^ (1/xi) ./ ((x_mat + z_mat + (1/(psi*xi))) .^ (1/xi));
   elseif i == 2                                % psi
-      K = sf2 * ((1/(psi*xi))^(1/xi) * (x_mat + z_mat + 1/(psi*xi)) .^ (-1/xi-1) - ...
-          (1/psi*xi)^(1/xi-1) * (x_mat + z_mat + 1/(psi*xi)) .^ (-1/xi)) ./ (psi^2*xi^2);
+    % TODO express this in terms of psi and xi
+    K = sf2 * (exp(-2*h3-h2)*exp(-h2-h3)^exp(-h3)*(exp(-h3-h2)+x_mat+z_mat).^(-exp(-h3)-1) - ...
+        exp(-2*h3-h2) * exp(-h3-h2)^(exp(-h3)-1)*(exp(-h3-h2) + x_mat+z_mat).^(-exp(-h3)));
   elseif i == 3                                % xi
-      K = sf2 * ((1/(psi*xi))^(1/xi) * (-log(1/(psi*xi))/xi^2 - 1/xi^2) * ...
-          (x_mat + z_mat + 1/(psi*xi)) .^ (-1/xi) + (1/(psi*xi))^(1/xi) * ...
-          (x_mat + z_mat + 1/(psi*xi)) .^ (-1/xi) .* (1./(psi*xi^3 * ...
-          (x_mat + z_mat + 1/(psi*xi))) + log(x_mat + z_mat + 1/(psi*xi)) / xi^2));
+    % TODO express this purely in terms of psi and xi
+    s_1 = (1/(xi*psi))^(1/xi)*(1/xi*(h2+h3)-1/xi)*(x_mat+z_mat+1/(xi*psi)).^(-exp(-h3));
+    s_2 = exp(-h2-h3)^exp(-h3)*(x_mat + z_mat + exp(-h2-h3)).^(-exp(-h3)) .* ...
+          (exp(-h3)*log(exp(-h3-h2)+x_mat+z_mat) + exp(-2*h3-h2) ./ (x_mat + z_mat + exp(-h2-h3)));
+
+    K = sf2 * (s_1+s_2);
   else
       error('Unknown hyperparameter')
   end
