@@ -1,7 +1,9 @@
-delta = 0.01;
+delta = 0.001;
 kernel = @covExpMixture1d; 
-hyp = log([1 200 20]);
-param_index = 2;
+hyp = log([1 2 3]);
+param_index = 3;
+hyp(3) = randn()*10;
+hyp(3)
 
 % randn('seed', 10);
 % x = abs(randn(1000, 1)) * 100;

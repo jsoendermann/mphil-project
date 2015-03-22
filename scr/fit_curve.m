@@ -19,6 +19,9 @@ hyp.mean = [];
 covfunc = {@covSum, {@covExpMixture1d, @covConst, @covNoise}};
 hyp.cov = log([1 1 1 1 1]);
 
+% covfunc = {@covSEiso};
+% hyp.cov = log([1 1]);
+
 %covfunc = {@covSum, {@covExpMixture1d, @covMaterniso}};
 %hyp.cov = log([0.1 1.5 2 0.05 0.02]);
 % matern, matern + exp mixt, matern * exp mixture
