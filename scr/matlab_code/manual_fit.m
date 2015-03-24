@@ -2,13 +2,13 @@
 
 x = linspace(0.1, 1, 100)';
 z = linspace(0.1, 2, 100)';
+
 hyp.cov = [1 1 1];
 K_xx = covExpMixture1d(hyp.cov, x);
 noise = 0.001 * max(max(K_xx));
 K_xx = K_xx + noise * eye(size(K_xx));
 K_xz = covExpMixture1d(hyp.cov, x, z);
 K_zz = covExpMixture1d(hyp.cov, z);
-% K_zz = K_zz + noise * eye(size(K_zz));
 
 %% Generate data
 
@@ -17,9 +17,9 @@ plot(x, y, 'o');
 
 %% Infer manually
 
-m = K_xz' * (K_xx \ y);
-v = K_zz - K_xz' * (K_xx \ K_xz);
-sd = sqrt(diag(v));
+% m = K_xz' * (K_xx \ y);
+% v = K_zz - K_xz' * (K_xx \ K_xz);
+% sd = sqrt(diag(v));
 
 %% Infer using gpml
 

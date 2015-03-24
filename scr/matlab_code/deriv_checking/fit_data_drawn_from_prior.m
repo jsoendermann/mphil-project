@@ -19,8 +19,6 @@ hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, z, y);
 [~, ~, m, s2] = gp(hyp, @infExact, meanfunc, covfunc, likfunc, z, y, z);
 [~, ~, m_opt, s2_opt] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, z, y, z);
 
-
-
 clf;
 hold on; 
 
