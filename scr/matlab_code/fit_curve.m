@@ -3,15 +3,23 @@
 D = csvread('../../data/all-numeric-datasets_random-forest_proportion-of-data-used.csv');
 
 y = D(2,:)';
-l = numel(y);
-x = linspace(0, 1, l)';
+t = (1:length(y))';
+t_star = (1:(2*length(y)))';
 
-x_train = x(1:l/2,1);
-x_test = x(l/2+1:l,1);
+% y = D(2,:)';
+% l = numel(y);
+% x = linspace(0, 1, l)';
+% 
+% x_train = x(1:l/2,1);
+% x_test = x(l/2+1:l,1);
+% 
+% y_train = y(1:l/2,1);
+% y_test = y(l/2+1:l,1);
+%% Subset
 
-y_train = y(1:l/2,1);
-y_test = y(l/2+1:l,1);
-
+t = t(1:10);
+y = y(1:10);
+t_star = t_star(1:20);
 
 %% Create kernel function and likelihood function and params
 

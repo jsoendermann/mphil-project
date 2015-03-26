@@ -20,12 +20,13 @@ N_FOLDS = 10
 
 datasets = load_datasets()
 
-csvfile = open('data_complete.csv', 'wb')
-datawriter = csv.writer(csvfile)
 
-datawriter.writerow(['dataset_id', 'n_trees', 'max_features', 'percent_data', 'time', 'score'])
 
 for dataset in datasets:
+    csvfile = open('data_rnd_forest_{}.csv'.format(dataset['name']), 'wb')
+    datawriter = csv.writer(csvfile)
+    datawriter.writerow(['dataset_id', 'n_trees', 'max_features', 'percent_data', 'time', 'score'])
+
     for max_features in np.arange(MIN_MAX_FEATURES, MAX_MAX_FEATURES+MAX_FEATURES_STEP, MAX_FEATURES_STEP):
         for n_trees in range(MIN_TREES, MAX_TREES + TREES_STEP, TREES_STEP):
 
@@ -63,10 +64,10 @@ for dataset in datasets:
 
                 output = [str(dataset['id']), n_trees, round(max_features, 2), data_used, elapsed_time, round(avg_score, 3)]
 
-                print ', '.join(map(lambda x: str(x), output))
+                print 'dataset: {}; n_trees: {}; max_features: {}; data_used: {}; elapsed_time: {}; avg_score: {}'.format(str(dataset['id']), n_trees, round(max_features, 2), data_used, elapsed_time, round(avg_score, 3))
+                #print ', '.join(map(lambda x: str(x), output))
                 datawriter.writerow(output)
     csvfile.flush()
-
-csvfile.close()
+    csvfile.close()
 
 
