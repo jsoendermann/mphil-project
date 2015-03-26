@@ -22,7 +22,7 @@ z_mat = repmat(z', numel(x), 1);
 
 if nargin < 4
     if dg
-        K = sf2 * ones(size(x, 1), 1);
+        K = sf2 * (1/(psi*xi)) ^ (1/xi) ./ (x + x + (1/(psi*xi))) .^ (1/xi);
     else
         K = sf2 * (1/(psi*xi)) ^ (1/xi) ./ (x_mat + z_mat + (1/(psi*xi))) .^ (1/xi);
     end
