@@ -3,3 +3,4 @@
 *.pyc
 report/.texpadtmp/
 report/report.pdf
+src/dataset_creation/out/
