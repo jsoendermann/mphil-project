@@ -2,28 +2,54 @@ from scipy.io.arff import loadarff
 import numpy as np
 from glob import glob
 from os.path import join, basename
+from json import loads
+from sklearn.feature_extraction import DictVectorizer
 
-dataset_ids = {}
-with open('../../data/dataset_list.txt', 'r') as f:
-    for i, line in enumerate(f):
-        dataset_ids[line.rstrip()] = i
+DATASETS_DIR = '/Users/jan/mphil_project_datasets/'
 
-def load_datasets():
-    for ds_dirname in glob('/Users/jan/mphil_project_datasets/medium_large/*'):
-        yield load_dataset(basename(ds_dirname), ds_dirname)
+with open('datasets_data.json') as datasets_data_file:  
+    datasets_data = loads(datasets_data_file.read())
 
-def load_dataset(name, dirname):
+def load_datasets(size="small"):
+    for dataset_data in datasets_data:
+        if size == "all" or size == dataset_data['size']:
+            yield load_dataset(dataset_data)
+
+def load_dataset(dataset_data):
+    name = dataset_data['name']
+
     print('Loading {}...'.format(name))
-    fp_train = join(dirname, 'train.arff')
-    # TODO also use test data, maybe merge the two?
-    # fp_test = join(dirname, 'test.arff')
 
-    raw_data, _ = loadarff(open(fp_train))
+    
+    arff_file_path = join(DATASETS_DIR, name+'/'+name+'.arff')
+
+    raw_data, metadata = loadarff(open(arff_file_path))
     list_data = raw_data.tolist()
+    attribute_names = list(metadata)
+    
+    normal_attributes = attribute_names[:len(attribute_names)-1]
+    class_attribute = attribute_names[len(attribute_names)-1]
+
+    if class_attribute != 'class':
+        print('WARNING: class attribute != "class"')
 
     X, y = [], []
-    for sample in list_data:
-        X.append(sample[:len(sample)-1])
-        y.append(sample[len(sample)-1])
 
-    return {'name': name, 'id': dataset_ids[name], 'X': np.array(X), 'y': np.array(y)}
+    for sample in list_data:
+        normal_features = sample[:len(sample)-1]
+        class_feature = sample[len(sample)-1]
+        
+        X.append(dict(zip(normal_attributes, normal_features)))
+        y.append({class_attribute: class_feature})
+
+    vec_X = DictVectorizer()
+    vec_y = DictVectorizer()
+    X_sk = vec_X.fit_transform(X).toarray()
+    y_sk = vec_y.fit_transform(y).toarray()
+
+    ret = dataset_data.copy()
+    ret.update({'X': X_sk, 'y': y_sk, 
+        'X_feature_names': vec_X.get_feature_names(), 'y_feature_names':vec_y.get_feature_names(),
+        'n_samples': len(list_data)})
+
+    return ret

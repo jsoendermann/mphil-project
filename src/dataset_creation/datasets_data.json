@@ -1,21 +1,23 @@
-dorothea
-secom
-kddcup09appetency
-yeast
-waveform
-cifar10small
-mnistrotationbackimagenew
-krvskp
-car
-madelon
-abalone
-mnist
-dexter
-amazon
-cifar10
-germancredit
-gisette
-convex
-winequalitywhite
-shuttle
-semeion
+[
+    {"name": "dorothea", "id": 0, "size": "medium"},
+    {"name": "secom", "id": 1, "size": "medium"},
+    {"name": "kddcup09appetency", "id": 2, "size": "medium"},
+    {"name": "yeast", "id": 3, "size": "small"},
+    {"name": "waveform", "id": 4, "size": "small"},
+    {"name": "cifar10small", "id": 5, "size": "large"},
+    {"name": "mnistrotationbackimagenew", "id": 0, "size": "large"},
+    {"name": "krvskp", "id": 6, "size": "small"},
+    {"name": "car", "id": 7, "size": "small"},
+    {"name": "madelon", "id": 8, "size": "medium"},
+    {"name": "abalone", "id": 9, "size": "small"},
+    {"name": "mnist", "id": 10, "size": "large"},
+    {"name": "dexter", "id": 11, "size": "small"},
+    {"name": "amazon", "id": 12, "size": "medium"},
+    {"name": "cifar10", "id": 13, "size": "large"},
+    {"name": "germancredit", "id": 14, "size": "small"},
+    {"name": "gisette", "id": 15, "size": "large"},
+    {"name": "convex", "id": 16, "size": "large"},
+    {"name": "winequalitywhite", "id": 17, "size": "small"},
+    {"name": "shuttle", "id": 18, "size": "small"},
+    {"name": "semeion", "id": 19, "size": "small"}
+]
