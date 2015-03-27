@@ -12,6 +12,8 @@ with open('datasets_data.json') as datasets_data_file:
 
 def load_datasets(size="small"):
     for dataset_data in datasets_data:
+        if dataset_data['sparse']:
+            continue
         if size == "all" or size == dataset_data['size']:
             yield load_dataset(dataset_data)
 
@@ -30,8 +32,8 @@ def load_dataset(dataset_data):
     normal_attributes = attribute_names[:len(attribute_names)-1]
     class_attribute = attribute_names[len(attribute_names)-1]
 
-    if class_attribute != 'class':
-        print('WARNING: class attribute != "class"')
+    #if class_attribute != 'class':
+    #    print('WARNING: class attribute != "class"')
 
     X, y = [], []
 

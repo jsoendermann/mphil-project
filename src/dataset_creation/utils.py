@@ -1,10 +1,10 @@
 from time import time
 
 _timer = 0
-def start_timer():
+def tic():
     global _timer
     _timer = time()
 
-def stop_timer():
-    elapsed_time = round(time() - _timer, 2)
+def toc():
+    elapsed_time = round(time() - _timer, 3)
     return elapsed_time
