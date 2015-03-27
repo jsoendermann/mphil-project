@@ -29,10 +29,14 @@ k_t_t     = @(xx) covExpMixture1d([xx(1), xx(2), xx(3)], t, t) + covNoise(xx(4),
 k_tstar_tstar_no_noise = @(xx) covExpMixture1d([xx(1), xx(2), xx(3)], t_star, t_star) + covConst(xx(5), t_star);
 k_t_tstar = @(xx) covExpMixture1d([xx(1), xx(2), xx(3)], t, t_star) + covConst(xx(5), t, t_star);
 
+% k_t_t     = @(xx) covTest([xx(1), xx(2), xx(3)], t, t) + covNoise(xx(4), t) + covConst(xx(5), t);
+% k_tstar_tstar_no_noise = @(xx) covTest([xx(1), xx(2), xx(3)], t_star, t_star) + covConst(xx(5), t_star);
+% k_t_tstar = @(xx) covTest([xx(1), xx(2), xx(3)], t, t_star) + covConst(xx(5), t, t_star);
+
 ll = @(xx) -0.5 * log(det(k_t_t(xx))) -0.5 * y' * (k_t_t(xx) \ y);
 
-alpha = log(1);
-beta = log(1);
+alpha = log(2);
+beta = log(2);
 scale = 1;
 noise = 0.1;
 const = 1;
@@ -47,7 +51,7 @@ bounds = [-inf, inf;
  %% Slice sample and plot
 
 for dummy = 1:1
-    xx = slice_sample_max_bounded(1,10,ll,xx,0.25,true,10,bounds);
+%     xx = slice_sample_max_bounded(1,10,ll,xx,0.25,true,10,bounds);
     
     exp(xx)
     
@@ -83,8 +87,8 @@ end
 meanfunc = @meanZero;
 hyp.mean = [];
 
-covfunc = {@covSum, {@covExpMixture1d, @covConst, @covNoise}};
-hyp.cov = log([1 1 1 1 1]);
+covfunc = {@covSum, {@covTest, @covConst}};
+hyp.cov = log([2 2 1 1]);
 
 likfunc = @likGauss;
 hyp.lik = log(0.1);
@@ -92,18 +96,22 @@ hyp.lik = log(0.1);
 %% Fit GP
 z = linspace(0, 1, 100)';
 
-hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, x_train, y_train);
-[~, ~, m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, x_train, y_train, z);
+hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, t, y);
+[~, ~, m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
+% [m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
 
-hyp_opt.mean
-exp(hyp_opt.cov)
-exp(hyp_opt.lik)
+% hyp_opt.mean
+% exp(hyp_opt.cov)
+% exp(hyp_opt.lik)
+
+xx = [hyp_opt.cov(1:3), hyp_opt.lik, hyp_opt.cov(4)];
+exp(xx)
 
 %% Show result
 clf;
 hold on; 
 f = [m+2*sqrt(s2); flipdim(m-2*sqrt(s2),1)];
-fill([z; flipdim(z,1)], f, [7 7 7]/8)
-plot(z, m); 
-plot(x_train, y_train, '+');
-plot(x_test, y_test, 'x');
+fill([t_star; flipdim(t_star,1)], f, [7 7 7]/8)
+plot(t_star, m); 
+plot(t, y, '+');
+% plot(t_star, y_test, 'x');
