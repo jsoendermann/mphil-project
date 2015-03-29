@@ -2,16 +2,17 @@ from datasets import load_datasets
 from csv import writer
 from sklearn.cross_validation import KFold
 from itertools import product
-from utils import tic, toc
 import numpy as np
 from joblib import Parallel, delayed
+from time import time
+import sys
 
 def _generate_data_for_config(dataset, classifier, param_names, param_values, percentage_data, kf, header):
     X, y = dataset['X'], dataset['y']
 
     scores = []
 
-    tic()
+    t = time()
     
     for train_index, test_index in kf:
         train_index_subset = train_index[:len(train_index)*percentage_data]
@@ -24,12 +25,13 @@ def _generate_data_for_config(dataset, classifier, param_names, param_values, pe
 
         scores.append(score)
         
-    elapsed_time = toc()
+    elapsed_time = time() - t
     avg_score = round(np.mean(scores), 3)
 
     output = [dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score]
-    print(' '.join(['{0}: {1:7.2f};'.format(*t) for t in zip(header, output)]))
-
+    sys.stout.write(' '.join(['{0}: {1:7.2f};'.format(*t) for t in zip(header, output)]))
+    sys.stdout.flush()
+    
     return (param_values, percentage_data, elapsed_time, avg_score)
 
 
@@ -55,7 +57,9 @@ def generate_data(name, classifier, parameters, n_folds=10, datasets='small'):
         all_configs = product(all_parameter_values, all_percentage_data_values)
 
         p = Parallel(n_jobs=-1)
-        res = p(delayed(_generate_data_for_config)(dataset, classifier, param_names, param_values, percentage_data, kf, header) for (param_values, percentage_data) in all_configs)
+        res = p(delayed(_generate_data_for_config)
+                (dataset, classifier, param_names, param_values, percentage_data, kf, header) 
+                for (param_values, percentage_data) in all_configs)
 
         for param_values, percentage_data, elapsed_time, avg_score in res:
             output = [dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score]
