@@ -16,7 +16,7 @@ def generate_data(name, classifier, parameters, n_folds=10, datasets='small'):
         X, y, n_samples = dataset['X'], dataset['y'], dataset['n_samples']
         kf = KFold(n_samples, n_folds)
 
-        csvfile = open('out/data_{}_{}.csv'.format(name, dataset['name']), 'wb')
+        csvfile = open('out/data_{0}_{1}.csv'.format(name, dataset['name']), 'wb')
 
         datawriter = writer(csvfile)
         header = ['dataset_id'] + param_names + ['percentage_data', 'time', 'score']
