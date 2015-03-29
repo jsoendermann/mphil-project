@@ -12,7 +12,7 @@ with open('datasets_data.json') as datasets_data_file:
 
 def load_datasets(datasets="small"):
     for dataset_data in datasets_data:
-        if dataset_data['sparse']:
+        if dataset_data['sparse'] or dataset_data['hasMissingData']:
             continue
         if isinstance(datasets, list) and dataset_data['name'] in datasets:
             yield load_dataset(dataset_data)
