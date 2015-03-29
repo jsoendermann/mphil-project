@@ -10,11 +10,13 @@ DATASETS_DIR = '../../data/raw_arffs/'
 with open('datasets_data.json') as datasets_data_file:  
     datasets_data = loads(datasets_data_file.read())
 
-def load_datasets(size="small"):
+def load_datasets(datasets="small"):
     for dataset_data in datasets_data:
         if dataset_data['sparse']:
             continue
-        if size == "all" or size == dataset_data['size']:
+        if isinstance(datasets, list) and dataset_data['name'] in datasets:
+            yield load_dataset(dataset_data)
+        elif datasets == "all" or datasets == dataset_data['size']:
             yield load_dataset(dataset_data)
 
 def load_dataset(dataset_data):

@@ -5,12 +5,12 @@ from itertools import product
 from utils import tic, toc
 import numpy as np
 
-def generate_data(name, classifier, parameters, n_folds=10, datasets_size='small'):
+def generate_data(name, classifier, parameters, n_folds=10, datasets='small'):
     params_tuples = parameters.items()
     param_names = [t[0] for t in params_tuples]
     param_generators = [t[1] for t in params_tuples]
 
-    datasets = load_datasets(size=datasets_size)
+    datasets = load_datasets(datasets=datasets)
 
     for dataset in datasets:
         X, y, n_samples = dataset['X'], dataset['y'], dataset['n_samples']
