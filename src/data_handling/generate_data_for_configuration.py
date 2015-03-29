@@ -45,5 +45,5 @@ def generate_data(name, classifier, parameters, n_folds=10, datasets_size='small
                 output = [dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score]
                 datawriter.writerow(output)
                 
-                print(' '.join(map(lambda t: '{}: {:2.3f};'.format(*t), zip(header, output))))
+                print(' '.join(['{0}: {1:7.2f};'.format(*t) for t in zip(header, output)]))
         csvfile.close()

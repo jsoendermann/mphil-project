@@ -5,7 +5,7 @@ from os.path import join, basename
 from json import loads
 from sklearn.feature_extraction import DictVectorizer
 
-DATASETS_DIR = '/Users/jan/mphil_project_datasets/'
+DATASETS_DIR = '../../data/raw_arffs/'
 
 with open('datasets_data.json') as datasets_data_file:  
     datasets_data = loads(datasets_data_file.read())
