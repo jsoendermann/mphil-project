@@ -22,7 +22,7 @@ def load_datasets(datasets="small"):
 def load_dataset(dataset_data):
     name = dataset_data['name']
 
-    print('Loading {}...'.format(name))
+    print('Loading {0}...'.format(name))
 
     
     arff_file_path = join(DATASETS_DIR, name+'/'+name+'.arff')
