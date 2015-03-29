@@ -29,7 +29,7 @@ def _generate_data_for_config(dataset, classifier, param_names, param_values, pe
     avg_score = round(np.mean(scores), 3)
 
     output = [dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score]
-    sys.stout.write(' '.join(['{0}: {1:7.2f};'.format(*t) for t in zip(header, output)]))
+    sys.stdout.write(' '.join(['{0}: {1:7.2f};'.format(*t) for t in zip(header, output)]) + '\n')
     sys.stdout.flush()
     
     return (param_values, percentage_data, elapsed_time, avg_score)
