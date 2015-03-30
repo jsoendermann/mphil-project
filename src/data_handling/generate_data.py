@@ -18,6 +18,6 @@ datasets = [
     ]
 
 generate_data('rnd_forest', RandomForestClassifier, datasets,
-        list(exp_incl_float_range(0.01, 20, 1.0, 1.1)),
-        {'n_estimators':   [512], 
-         'max_leaf_nodes': [8196]})
+        exp_incl_float_range(0.01, 10, 1.0, 1.1),
+        {'n_estimators':   exp_incl_int_range(10, 10, 512, 1.1), 
+         'max_leaf_nodes': exp_incl_int_range(1024, 10, 8196, 1.1)})
