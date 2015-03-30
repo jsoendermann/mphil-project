@@ -68,7 +68,7 @@ def load_dataset(dataset_data):
     vec_X = DictVectorizer()
     vec_y = DictVectorizer()
     X_sk = vec_X.fit_transform(X).toarray()
-    y_sk = vec_y.fit_transform(y).toarray()
+    y_sk = vec_y.fit_transform(y).toarray() # TODO don't use one in k here, just convert to numerical
 
     ret = dataset_data.copy()
     ret.update({'X': X_sk, 'y': y_sk, 'binary': False, # TODO check if the data is really binary and set this to true if yes
