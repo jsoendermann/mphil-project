@@ -16,7 +16,7 @@ group.add_argument('-l', '--load-arff', type=str, help='Load dataset from arff f
 parser.add_argument('-d', '--all-percentage-data-values', type=str, required=True, help='A range for the percentage of data used. a:0.1:10:10 creates ten evenly spaced steps between 0 percent and 100 percent, g:0.01:10:1:1.1 creates a geometric series from 1 percent to 100 percent with 10 steps and a growth parameter of 1.1')
 parser.add_argument('parameter', metavar='parameter', nargs='*', help='Parameters to the algorithm in the form <param_name>:<int|float>-<a|g>:start:steps:end[:growth_param]')
 
-parser.add_argument('-p', '--parallel', action='store_true', help='Paralellise data collection')
+parser.add_argument('-p', '--parallel', action='store_true', default=True, help='Paralellise data collection')
 args = parser.parse_args()
 
 if args.algorithm == 'rnd_forest':
