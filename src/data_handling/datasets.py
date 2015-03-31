@@ -5,7 +5,7 @@ from os.path import join, basename
 from json import loads
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.datasets import make_classification
-from random import randint
+from random import randint, shuffle
 
 DATASETS_DIR = '../../data/raw_arffs/'
 
@@ -24,6 +24,7 @@ def load_datasets(datasets="small"):
 
 
 def create_dataset(data_args={}):
+    # TODO find a better solution to this
     id_ = randint(10000, 19999)
 
     X, y = make_classification(**data_args)
@@ -37,6 +38,8 @@ def create_dataset(data_args={}):
             'size': 'custom', 'sparse': False, 'hasMissingData': False, 
             'X': X, 'y': y, 'n_samples': len(X), 'binary': binary}
 
+def convert_y_values_to_ints(y):
+    return y
 
 def load_dataset(dataset_data):
     name = dataset_data['name']
@@ -48,31 +51,31 @@ def load_dataset(dataset_data):
 
     raw_data, metadata = loadarff(open(arff_file_path))
     list_data = raw_data.tolist()
+
+    # TODO this is done to avoid the problem of only having one class in the data when taking subsets
+    # find a more robust solution
+    shuffle(list_data)
+
     attribute_names = list(metadata)
     
     normal_attributes = attribute_names[:len(attribute_names)-1]
     class_attribute = attribute_names[len(attribute_names)-1]
-
-    #if class_attribute != 'class':
-    #    print('WARNING: class attribute != "class"')
 
     X, y = [], []
 
     for sample in list_data:
         normal_features = sample[:len(sample)-1]
         class_feature = sample[len(sample)-1]
-        
+
         X.append(dict(zip(normal_attributes, normal_features)))
         y.append({class_attribute: class_feature})
 
     vec_X = DictVectorizer()
-    vec_y = DictVectorizer()
     X_sk = vec_X.fit_transform(X).toarray()
-    y_sk = vec_y.fit_transform(y).toarray() # TODO don't use one in k here, just convert to numerical
+    y_sk = convert_y_values_to_ints(np.array([yv[class_attribute] for yv in y]))
 
     ret = dataset_data.copy()
     ret.update({'X': X_sk, 'y': y_sk, 'binary': False, # TODO check if the data is really binary and set this to true if yes
-        'X_feature_names': vec_X.get_feature_names(), 'y_feature_names': vec_y.get_feature_names(),
-        'n_samples': len(list_data)})
+        'X_feature_names': vec_X.get_feature_names(), 'n_samples': len(list_data)})
 
     return ret

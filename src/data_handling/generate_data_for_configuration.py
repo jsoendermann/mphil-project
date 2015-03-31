@@ -25,11 +25,15 @@ def _generate_data_for_config(dataset, classifier, param_names, param_values, pe
         clf = model.fit(X_train, y_train)
 
         if dataset['binary']:
+           # print 'b'
             y_predict = clf.predict(X_test)
 
             score = roc_auc_score(y_test, y_predict)
         else:
+           # print 'n'
             score = clf.score(X_test, y_test)
+
+       # print score
 
         scores.append(score)
         
@@ -43,34 +47,35 @@ def _generate_data_for_config(dataset, classifier, param_names, param_values, pe
     return (param_values, percentage_data, elapsed_time, avg_score)
 
 
-def generate_data(name, classifier, dataset, all_percentage_data_values, parameters, n_folds=10, parallel=True):
+def generate_data(name, classifier, datasets, all_percentage_data_values, parameters, n_folds=10, parallel=True):
     params_tuples = parameters.items()
     param_names = [t[0] for t in params_tuples]
     param_generators = [t[1] for t in params_tuples]
 
-    n_samples = dataset['n_samples']
-    kf = KFold(n_samples, n_folds, shuffle=True)
+    for dataset in datasets:
+        n_samples = dataset['n_samples']
+        kf = KFold(n_samples, n_folds, shuffle=True, random_state=42)
 
-    csvfile = open('out/data_{0}_{1}.csv'.format(name, dataset['name']), 'wb')
+        csvfile = open('out/data_{0}_{1}.csv'.format(name, dataset['name']), 'wb')
 
-    datawriter = writer(csvfile)
-    header = ['dataset_id'] + param_names + ['percentage_data', 'time', 'score']
-    datawriter.writerow(header)
+        datawriter = writer(csvfile)
+        header = ['dataset_id'] + param_names + ['percentage_data', 'time', 'score']
+        datawriter.writerow(header)
 
-    all_parameter_values = product(*param_generators)
-    all_configs = product(all_parameter_values, all_percentage_data_values)
-    
-    if parallel:
-        p = Parallel(n_jobs=-1)
-    else:
-        p = Parallel(n_jobs=1)
+        all_parameter_values = product(*param_generators)
+        all_configs = product(all_parameter_values, all_percentage_data_values)
         
-    res = p(delayed(_generate_data_for_config)
-            (dataset, classifier, param_names, param_values, percentage_data, kf, header) 
-            for (param_values, percentage_data) in all_configs)
-
-    for param_values, percentage_data, elapsed_time, avg_score in res:
-        output = [dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score]
-        datawriter.writerow(output)
+        if parallel:
+            p = Parallel(n_jobs=-1)
+        else:
+            p = Parallel(n_jobs=1)
             
-    csvfile.close()
+        res = p(delayed(_generate_data_for_config)
+                (dataset, classifier, param_names, param_values, percentage_data, kf, header) 
+                for (param_values, percentage_data) in all_configs)
+
+        for param_values, percentage_data, elapsed_time, avg_score in res:
+            output = [dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score]
+            datawriter.writerow(output)
+                
+        csvfile.close()

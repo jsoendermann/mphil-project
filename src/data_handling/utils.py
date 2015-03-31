@@ -11,6 +11,8 @@ def convert_range_string(s):
     t = s.split(':')
     start = float(t[1])
     steps = int(t[2])
+    if steps == 1:
+        return [start]
     end = float(t[3])
     if t[0] == 'a':
         return [round(start + (end-start)*i/(steps-1), 3) for i in range(steps)]
