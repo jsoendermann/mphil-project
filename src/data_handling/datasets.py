@@ -28,6 +28,10 @@ def create_dataset(data_args={}):
     id_ = randint(10000, 19999)
 
     X, y = make_classification(**data_args)
+    permutation = range(len(X))
+    shuffle(permutation)
+    X = X[permutation]
+    y = y[permutation]
 
     if 'n_classes' in data_args and data_args['n_classes'] != 2:
         binary = False
