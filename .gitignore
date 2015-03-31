@@ -6,3 +6,4 @@ report/report.pdf
 src/data_handling/out/
 data/
 src/data_handling/run.sh
+src/weka/target/*
