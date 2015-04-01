@@ -16,5 +16,7 @@ object Hi {
 
     var clf = new RandomForest()
     clf.buildClassifier(data)
+
+    
   }
 }
