@@ -17,9 +17,13 @@ def _generate_data_for_config(dataset, classifier, param_names, param_values, pe
     t = time()
     
     for train_index, test_index in kf:
-        train_index_subset = train_index[:len(train_index)*percentage_data]
+        #print 'l tr: {}, l te: {}'.format(len(train_index), len(test_index))
+        # TODO select random subset
+        train_index_subset = train_index[:round(len(train_index) * percentage_data)]
+        #print 'l tisub: {}, perc: {}'.format(len(train_index_subset), percentage_data)
         X_train, X_test = X[train_index_subset], X[test_index]
         y_train, y_test = y[train_index_subset], y[test_index]
+        #print y_train
 
         model = classifier(**dict(zip(param_names, param_values)))
         clf = model.fit(X_train, y_train)

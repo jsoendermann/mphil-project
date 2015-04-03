@@ -47,6 +47,11 @@ def convert_y_values_to_ints(y):
 
 def load_dataset(dataset_data):
     name = dataset_data['name']
+    ret = dataset_data.copy()
+
+    for json_dataset_data in datasets_data:
+        if json_dataset_data['name'] == name:
+            ret.update(json_dataset_data)
 
     print('Loading {0}...'.format(name))
 
@@ -78,7 +83,7 @@ def load_dataset(dataset_data):
     X_sk = vec_X.fit_transform(X).toarray()
     y_sk = convert_y_values_to_ints(np.array([yv[class_attribute] for yv in y]))
 
-    ret = dataset_data.copy()
+    
     ret.update({'X': X_sk, 'y': y_sk, 'binary': False, # TODO check if the data is really binary and set this to true if yes
         'X_feature_names': vec_X.get_feature_names(), 'n_samples': len(list_data)})
 
