@@ -4,7 +4,7 @@ for f = files'
     Ds = csvread(f.name, 1);
 
     
-    d = Ds(and(Ds(:,2)==512, Ds(:,3)==1000),:);
+    d = Ds;%(and(Ds(:,2)==512, Ds(:,3)==1000),:);
     
     
     clf;

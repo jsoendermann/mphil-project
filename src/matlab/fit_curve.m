@@ -1,25 +1,18 @@
 %% Load data
 
-D = csvread('../../data/all-numeric-datasets_random-forest_proportion-of-data-used.csv');
+L = load('../../data/rnd_forest-10x10x10/data_rnd_forest_synth___n_features-75__n_informative-20__n_classes-10__n_samples-2500.mat');
+D = L.D;
+d = D(and(D(:,2)==512, D(:,3)==1000),:);
 
-y = D(2,:)';
-t = (1:length(y))';
-t_star = (1:(2*length(y)))';
+t = d(:,4);
+y = d(:,6);
+t_star = ((0:(2*length(y)))')/10;
 
-% y = D(2,:)';
-% l = numel(y);
-% x = linspace(0, 1, l)';
-% 
-% x_train = x(1:l/2,1);
-% x_test = x(l/2+1:l,1);
-% 
-% y_train = y(1:l/2,1);
-% y_test = y(l/2+1:l,1);
 %% Subset
 
-t = t(1:10);
-y = y(1:10);
-t_star = t_star(1:20);
+t = t(1:5);
+y = y(1:5);
+t_star = t_star(1:10);
 
 %% Create kernel function and likelihood function and params
 
@@ -76,8 +69,8 @@ for dummy = 1:1
     plot(t_star, mean, '-', 'color', colorbrew(2));
     % Plot confidence bears.
     jbfill( t_star', ...
-            mean' + 1 * sqrt(var)', ...
-            mean' - 1 * sqrt(var)', ...
+            mean' + 2 * sqrt(var)', ...
+            mean' - 2 * sqrt(var)', ...
             colorbrew(2), 'none', 1, 0.2);
     hold off;
     drawnow;
@@ -87,7 +80,7 @@ end
 meanfunc = @meanZero;
 hyp.mean = [];
 
-covfunc = {@covSum, {@covTest, @covConst}};
+covfunc = {@covSum, {@covExpMixture1d, @covConst}};
 hyp.cov = log([2 2 1 1]);
 
 likfunc = @likGauss;

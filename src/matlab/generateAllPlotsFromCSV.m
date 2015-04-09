@@ -70,6 +70,6 @@ for i_l = 1:length(u_l)
         grid(ax(2),'on')
         title(sprintf('Leafs: %d; %% Data:%d', n_l, n_d));
 
-        print('-dpng', sprintf('vis_out/trees_leafs-%d_data-%f.png', n_l, n_d));
+        %print('-dpng', sprintf('vis_out/trees_leafs-%d_data-%f.png', n_l, n_d));
     end
 end
