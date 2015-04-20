@@ -1,13 +1,14 @@
 from generate_data_for_configuration import generate_data
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 from sys import argv
 from datasets import load_datasets, load_dataset, create_dataset
 from utils import convert_range_string
 from argparse import ArgumentParser
 
 parser = ArgumentParser(description='Collect data')
-parser.add_argument('-a', '--algorithm', type=str, required=True, default='rnd_forest', help='The learning algorithm, one of [rnd_forest, log_reg]')
+parser.add_argument('-a', '--algorithm', type=str, required=True, default='rnd_forest', help='The learning algorithm, one of [rnd_forest, log_reg, svm]')
 
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument('-s', '--synthetic', type=str, help='Create a synthetic dataset with the given parameters')
@@ -24,6 +25,8 @@ if args.algorithm == 'rnd_forest':
     classifier = RandomForestClassifier
 elif args.algorithm == 'log_reg':
     classifier = LogisticRegression
+elif args.algorithm == 'svm':
+    classifier = SVC
 
 if args.synthetic:
     datasets = [create_dataset(eval(args.synthetic))]
