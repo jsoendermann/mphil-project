@@ -14,9 +14,22 @@
 %     print('-dpng', sprintf('vis_out/%d.png', n_s));
 % end
 
+name = 'abalone';
+ name = 'car';
+ name = 'germancredit';
+ name = 'krvskp';
+ name = 'mnist';
+ name = 'semeion';
+% name = 'shuttle';
+% name = 'waveform';
+% name = 'winequalitywhite';
 
-    LR = csvread('data_log_reg_mnist.csv', 1);
-    RF = csvread('data_rnd_forest_mnist.csv', 1);
+    LR = csvread(sprintf('data_log_reg_%s.csv', name), 1);
+    RF = csvread(sprintf('data_rnd_forest_%s.csv', name), 1);
+    
+    RF = RF(and(RF(:,2)==512, RF(:,3)==1024),:);
+    
+    d = D(D(:,3)==1000,:);
     
     clf;
     hold on;

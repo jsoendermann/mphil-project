@@ -2,11 +2,11 @@
 
 L = load('../../data/rnd_forest-10x10x10/data_rnd_forest_synth___n_features-75__n_informative-20__n_classes-10__n_samples-2500.mat');
 D = L.D;
-d = D(and(D(:,2)==512, D(:,3)==1000),:);
+d = D(D(:,3)==1000,:);
 
-t = d(:,4);
+t = d(:,[2;4]);
 y = d(:,6);
-t_star = ((0:(2*length(y)))')/10;
+t_star = t;%((0:(2*length(y)))')/10;
 
 %% Subset
 
@@ -80,16 +80,18 @@ end
 meanfunc = @meanZero;
 hyp.mean = [];
 
-covfunc = {@covSum, {@covExpMixture1d, @covConst}};
-hyp.cov = log([2 2 1 1]);
+exp1 = {@covMask, {[1 0], @covExpMixture1d}};
+exp2 = {@covMask, {[0 1], @covExpMixture1d}};
+covfunc = {@covSum, {{@covProd, {exp1, exp2}}, @covConst}};
+hyp.cov = log([5 2 1 2 2 1 1]);
 
 likfunc = @likGauss;
 hyp.lik = log(0.1);
 
 %% Fit GP
-z = linspace(0, 1, 100)';
 
 hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, t, y);
+nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y);
 [~, ~, m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
 % [m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
 
@@ -97,14 +99,18 @@ hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, t, y);
 % exp(hyp_opt.cov)
 % exp(hyp_opt.lik)
 
-xx = [hyp_opt.cov(1:3), hyp_opt.lik, hyp_opt.cov(4)];
+xx = [hyp_opt.cov];
 exp(xx)
+nlml
 
 %% Show result
 clf;
 hold on; 
-f = [m+2*sqrt(s2); flipdim(m-2*sqrt(s2),1)];
-fill([t_star; flipdim(t_star,1)], f, [7 7 7]/8)
-plot(t_star, m); 
-plot(t, y, '+');
-% plot(t_star, y_test, 'x');
+% f = [m+2*sqrt(s2); flipdim(m-2*sqrt(s2),1)];
+% fill([t_star; flipdim(t_star,1)], f, [7 7 7]/8)
+% plot(t_star, m); 
+% plot(t, y, '+');
+
+surf(unique(d(:,2)), unique(d(:,4)), reshape(y, [10, 10]));
+mesh(unique(d(:,2)), unique(d(:,4)), reshape(m, [10, 10]));
+rotate3d on;

@@ -29,6 +29,7 @@ likfunc = @likGauss; hyp.lik = 0;
 hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, x, y);
 [~, ~, m, sd] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, x, y, z);
 
+
 %% Plot
 
 plot(x, y, 'bo');
