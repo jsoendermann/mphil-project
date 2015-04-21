@@ -85,6 +85,9 @@ exp2 = {@covMask, {[0 1], @covExpMixture1d}};
 covfunc = {@covSum, {{@covProd, {exp1, exp2}}, @covConst}};
 hyp.cov = log([5 2 1 2 2 1 1]);
 
+%covfunc = @covSEiso;
+%hyp.cov = log([1 1]);
+
 likfunc = @likGauss;
 hyp.lik = log(0.1);
 
