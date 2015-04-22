@@ -31,8 +31,8 @@ else                                           % derivatives
     if i == 1                                  % sf
         K = 2 * sf2 * (1/(psi*xi)) ^ (1/xi) ./ ((x_mat + z_mat + (1/(psi*xi))) .^ (1/xi));
     elseif i == 2                              % psi
-        K = sf2 * (1/(psi*xi^2) * (1/(psi*xi))^(1/xi) * 1/(x_mat + z_mat + 1/(psi*xi))^(1/xi+1) - ...
-            1/(psi*xi^2) * (1/(psi*xi))^(1/xi-1) * 1/(x_mat + z_mat + 1/(psi*xi))^(1/xi));
+        K = sf2 * (1/(psi*xi^2) * (1/(psi*xi))^(1/xi) * 1./(x_mat + z_mat + 1/(psi*xi)).^(1/xi+1) - ...
+            1/(psi*xi^2) * (1/(psi*xi))^(1/xi-1) * 1./(x_mat + z_mat + 1/(psi*xi)).^(1/xi));
         
     elseif i == 3                              % xi
         s1 = (1/(psi*xi))^(1/xi) * (-1/xi*log(1/(psi*xi))-1/xi) * 1./(x_mat+z_mat+1/(psi*xi)).^(1/xi);

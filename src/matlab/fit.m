@@ -13,6 +13,7 @@ K_zz = covExpMixture1d(hyp.cov, z);
 %% Generate data
 
 y = chol(K_xx)' * randn(size(x, 1), 1);
+y = sin(linspace(0, 4 * pi, numel(y))') + 0.1 * randn(size(y));
 plot(x, y, 'o');
 
 %% Infer manually
@@ -27,6 +28,7 @@ meanfunc = @meanZero; hyp.mean = [];
 covfunc = @covExpMixture1d;
 likfunc = @likGauss; hyp.lik = 0;
 hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, x, y);
+hyp_opt
 [~, ~, m, sd] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, x, y, z);
 
 
