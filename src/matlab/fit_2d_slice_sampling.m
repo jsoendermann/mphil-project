@@ -1,10 +1,11 @@
 %% Load data
 
-L = csvread('../../data/log-reg_mnist/data_log_reg_mnist.csv', 1);
-d = L;%D(D(:,3)==1000,:);
+L = load('../../data/rnd_forest-10x10x10/data_rnd_forest_synth___n_features-75__n_informative-20__n_classes-10__n_samples-2500.mat');
+D = L.D;
+d = D(D(:,3)==1000,:);
 
-t = d(:,2);
-y = d(:,4);
+t = d(:,[2;4]);
+y = d(:,6);
 t_star = t;%((0:(2*length(y)))')/10;
 
 %% Subset
@@ -13,52 +14,35 @@ t_star = t;%((0:(2*length(y)))')/10;
 % y = y(1:5);
 % t_star = t_star(1:10);
 
-%% :pynfcg typ sfblddukd
-
-% t = t(:,1);
-% t_star = t_star(:,1);
 
 %% Set up kernel
 meanfunc = @meanZero;
 hyp.mean = [];
 
-covfunc = {@covSum, {@covExpMixture1d, @covConst}};
-hyp.cov = log([2 2 1 1]);
+exp1 = {@covMask, {[1 0], @covExpMixture1d}};
+exp2 = {@covMask, {[0 1], @covExpMixture1d}};
+covfunc = {@covSum, {{@covProd, {exp1, exp2}}, @covConst}};
+%covfunc = {@covSum, {exp1, @covConst}};
+hyp.cov = log([2 2 1 2 2 1 1]);
 
-% covfunc = @covSEiso;
-% hyp.cov = log([1 1]);
+% covfunc = {@covMask, {[1 0], @covExpMixture1d}};
+%covfunc = @covExpMixture1d;
+%hyp.cov = log([1 1 1]);
 
 likfunc = @likGauss;
 hyp.lik = log(0.1);
 
-%% Fit GP
 
-hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, t, y);
-nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y);
-[~, ~, m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
-% [m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
-
-% hyp_opt.mean
-% exp(hyp_opt.cov)
-% exp(hyp_opt.lik)
-
-exp(hyp_opt.cov)
-nlml
-
-% plot gp w/ different hyperparams
-% fit 1d data
-
-%% Show result
-clf;
-hold on; 
-f = [m+2*sqrt(s2); flipdim(m-2*sqrt(s2),1)];
-fill([t_star; flipdim(t_star,1)], f, [7 7 7]/8)
-plot(t_star, m); 
-plot(t, y, '+');
 
 %% Create kernel function and likelihood function and params
 
 % Exp mixture decrease
+
+exp1 = {@covMask, {[1 0], @covExpMixture1d}};
+exp2 = {@covMask, {[0 1], @covExpMixture1d}};
+covfunc = {@covSum, {{@covProd, {exp1, exp2}}, @covConst}};
+
+% k = @(x) 
 
 k_t_t     = @(xx) covExpMixture1d([xx(1), xx(2), xx(3)], t, t) + covNoise(xx(4), t) + covConst(xx(5), t);
 k_tstar_tstar_no_noise = @(xx) covExpMixture1d([xx(1), xx(2), xx(3)], t_star, t_star) + covConst(xx(5), t_star);
@@ -118,3 +102,14 @@ for dummy = 1:1
     drawnow;
 end
 
+%% Show result
+clf;
+hold on; 
+% f = [m+2*sqrt(s2); flipdim(m-2*sqrt(s2),1)];
+% fill([t_star; flipdim(t_star,1)], f, [7 7 7]/8)
+% plot(t_star, m); 
+% plot(t, y, '+');
+
+surf(unique(d(:,2)), unique(d(:,4)), reshape(y, [10, 10]));
+mesh(unique(d(:,2)), unique(d(:,4)), reshape(m, [10, 10]));
+rotate3d on;

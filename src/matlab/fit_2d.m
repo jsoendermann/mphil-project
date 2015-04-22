@@ -25,9 +25,9 @@ hyp.mean = [];
 
 exp1 = {@covMask, {[1 0], @covExpMixture1d}};
 exp2 = {@covMask, {[0 1], @covExpMixture1d}};
-%covfunc = {@covSum, {{@covProd, {exp1, exp2}}, @covConst}};
-covfunc = {@covSum, {exp1, @covConst}};
-hyp.cov = log([2 2 1 1]);
+covfunc = {@covSum, {{@covProd, {exp1, exp2}}, @covConst}};
+%covfunc = {@covSum, {exp1, @covConst}};
+hyp.cov = log([2 2 1 2 2 1 1]);
 
 % covfunc = {@covMask, {[1 0], @covExpMixture1d}};
 %covfunc = @covExpMixture1d;
@@ -54,12 +54,16 @@ nlml
 % fit 1d data
 
 %% Plot NLML function
-r = 0.1:0.01:4;
+par_ind = 3;
+v = exp(hyp_opt.cov(par_ind));
+delta = 0.0001;
+r = linspace(v-delta, v+delta, 100);
+
 N = nan(size(r));
 for i = 1:length(r)
-    p1 = r(i);
-    hyp.cov(1) = log(p1);
-    N(i) = gp(hyp, @infExact, meanfunc, covfunc, likfunc, t, y);
+    p = r(i);
+    hyp_opt.cov(3) = log(p);
+    N(i) = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y);
 end
 
 plot(r,N);
