@@ -23,35 +23,24 @@ t_star = t;%((0:(2*length(y)))')/10;
 meanfunc = @meanZero;
 hyp.mean = [];
 
-exp1 = {@covMask, {[1 0], @covExpMixture1d}};
-exp2 = {@covMask, {[0 1], @covExpMixture1d}};
-covfunc = {@covSum, {{@covProd, {exp1, exp2}}, @covConst}};
-%covfunc = {@covSum, {exp1, @covConst}};
-hyp.cov = log([2 2 1 2 2 1 1]);
-
-% covfunc = {@covMask, {[1 0], @covExpMixture1d}};
-%covfunc = @covExpMixture1d;
-%hyp.cov = log([1 1 1]);
+exp1 = {@covMask, {[1,0], @covExpMixture1d}};
+exp2 = {@covMask, {[0,1], @covExpMixture1d}};
+prod = {@covProd, {exp1, exp2}};
+covfunc = {@covSum, {prod, @covConst}};
+hyp.cov = log([1 1 1 1 1 1 1]);
 
 likfunc = @likGauss;
-hyp.lik = log(0.1);
+hyp.lik = 0;
 
 %% Fit GP
 
 hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, t, y);
-nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y);
-[~, ~, m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
-% [m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
-
-% hyp_opt.mean
-% exp(hyp_opt.cov)
-% exp(hyp_opt.lik)
+nlml = gp(hyp, @infExact, meanfunc, covfunc, likfunc, t, y);
+[~, ~, m, s2] = gp(hyp, @infExact, meanfunc, covfunc, likfunc, t, y, t_star);
 
 exp(hyp_opt.cov)
 nlml
 
-% plot gp w/ different hyperparams
-% fit 1d data
 
 %% Plot NLML function
 par_ind = 3;
