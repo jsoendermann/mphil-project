@@ -8,17 +8,6 @@ t = d(:,[2;4]);
 y = d(:,6);
 t_star = t;%((0:(2*length(y)))')/10;
 
-%% Subset
-
-% t = t(1:5);
-% y = y(1:5);
-% t_star = t_star(1:10);
-
-%% :pynfcg typ sfblddukd
-
-% t = t(:,1);
-% t_star = t_star(:,1);
-
 %% Set up kernel
 meanfunc = @meanZero;
 hyp.mean = [];

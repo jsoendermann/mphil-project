@@ -7,13 +7,13 @@ hyp.cov = [1 1 1];
 K_xx = covExpMixture1d(hyp.cov, x);
 noise = 0.001 * max(max(K_xx));
 K_xx = K_xx + noise * eye(size(K_xx));
-K_xz = covExpMixture1d(hyp.cov, x, z);
-K_zz = covExpMixture1d(hyp.cov, z);
+%K_xz = covExpMixture1d(hyp.cov, x, z);
+%K_zz = covExpMixture1d(hyp.cov, z);
 
 %% Generate data
 
 y = chol(K_xx)' * randn(size(x, 1), 1);
-y = sin(linspace(0, 4 * pi, numel(y))') + 0.1 * randn(size(y));
+%y = sin(linspace(0, 4 * pi, numel(y))') + 0.1 * randn(size(y));
 plot(x, y, 'o');
 
 %% Infer manually
