@@ -95,8 +95,8 @@ exp(hyp_opt.cov)
 
 %% Predict
 
- hyp_opt.cov=[1.5055   -1.2403    0.4919   -0.2932   -0.1731    0.2686    1.5802];
- hyp_opt.lik = [-2.3775];
+ hyp_opt.cov=[0.2102   -5.2608    2.0376   -0.4723   -0.1536    1.1491   -0.5293];
+ hyp_opt.lik = [-4.8580];
 
 [~, ~, m, sd] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, xx, y, zz);
 nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, xx, y);

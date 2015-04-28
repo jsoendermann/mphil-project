@@ -12,10 +12,8 @@ if nargin<4, width = 1; end
 for i = 1:iterations
     fprintf('Iteration: %d; current value: %f\n', i, y);
     
-    threshold = -log(rand) + y;
-    
-    
-
+    threshold = y;
+   
     dimensionUpdated = zeros(size(D));
     
     % Sweep through axes (simplest thing)
