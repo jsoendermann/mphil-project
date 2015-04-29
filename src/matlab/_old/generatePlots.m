@@ -9,10 +9,10 @@ for f = files'
     
     clf;
     hold on;
-    [ax,p1,p2]=plotyy(d(:,4), d(:,5), d(:,4), d(:,6), 'plot','plot');
+    [ax,p1,p2]=plotyy(d(:,3), d(:,5), d(:,3), d(:,6), 'plot','plot');
     ylabel(ax(1),'Time') % label left y-axis
     ylabel(ax(2),'Score') % label right y-axis
-    xlabel(ax(1),'% data') % label x-axis
+    xlabel(ax(1),'Min sample leaf') % label x-axis
     grid(ax(2),'on')
     title(f.name);
     

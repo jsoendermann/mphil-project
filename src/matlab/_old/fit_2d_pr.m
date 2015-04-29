@@ -93,6 +93,11 @@ hyp.lik = [0.1];
 hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, xx, y);
 exp(hyp_opt.cov)
 
+%%
+slice_optimisation(
+@(hypcov) gp(struct('cov', hypcov(1:length(hypcov)-1), 'mean', [], 'lik', hypcov(length(hypcov))), @infExact, meanfunc, covfunc, likfunc, xx, y), 
+[1 1 1 1 1 1 1 0.1], 1000)
+
 %% Predict
 
  hyp_opt.cov=[0.2102   -5.2608    2.0376   -0.4723   -0.1536    1.1491   -0.5293];

@@ -1,7 +1,10 @@
 from generate_data_for_configuration import generate_data
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+
 from sys import argv
 from datasets import load_datasets, load_dataset, create_dataset
 from utils import convert_range_string
@@ -27,6 +30,8 @@ elif args.algorithm == 'log_reg':
     classifier = LogisticRegression
 elif args.algorithm == 'svm':
     classifier = SVC
+elif args.algoritm == 'naive_bayes':
+    classifier = GaussianNB
 
 if args.synthetic:
     datasets = [create_dataset(eval(args.synthetic))]
