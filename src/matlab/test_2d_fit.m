@@ -68,7 +68,8 @@ nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, xx, y)
 % gp
 % svm time polynomial
 % anytime algorithm
-% utility = Expected improvement of g2 - g2 truncated at 0
+% utility = Expected improvement of ((gaussian at target - gaussian at
+% current best) truncated at 0)
 % utipity of sth that takes longer than time limet: 0
 % exp_utily/time
 % modelling is interesting
