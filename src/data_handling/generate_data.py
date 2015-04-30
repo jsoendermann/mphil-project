@@ -30,7 +30,7 @@ elif args.algorithm == 'log_reg':
     classifier = LogisticRegression
 elif args.algorithm == 'svm':
     classifier = SVC
-elif args.algoritm == 'naive_bayes':
+elif args.algorithm == 'naive_bayes':
     classifier = GaussianNB
 
 if args.synthetic:
