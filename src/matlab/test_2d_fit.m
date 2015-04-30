@@ -1,11 +1,19 @@
 %% Load real data
 
-L = load('../../data/rnd_forest-10x10x10/data_rnd_forest_synth___n_features-75__n_informative-20__n_classes-10__n_samples-2500.mat');
-D = L.D;
-d = D(D(:,3)==1000,:);
+% Synthetic
+% L = load('../../data/rnd_forest-10x10x10/data_rnd_forest_synth___n_features-75__n_informative-20__n_classes-10__n_samples-2500.mat');
+% D = L.D;
+% d = D(D(:,3)==1000,:);
+% xx = d(:,[2;4]);
+
+% Amazon
+L = csvread('../../data/rnd_forest-10x10x10/data_rnd_forest_amazon.csv', 1);
+D = L;
+d = D(D(:,2)==512,:);
+xx = d(:,[3;4]);
 
 
-xx = d(:,[2;4]);
+
 x1 = unique(xx(:,1));
 x2 = unique(xx(:,2));
 y = d(:,6);
@@ -39,15 +47,15 @@ hyp.lik = log([0.1]);
 %% Optimise using slice optimisation
 
 nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, xx, y);
-          j     
-hyp_opt = hyps_vec_to_struct(slice_optimisation(nlmlfunc, hyps_struct_to_vec(hyp)));
+      
+hyp_opt = hyps_vec_to_struct(slice_optimisation(nlmlfunc, hyps_struct_to_vec(hyp), 20));
 
 %% Optimise using gradient based optimisation
 
 nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, xx, y);
 gradfunc = @(hyps) nlmlfunc_grad(hyps_vec_to_struct(hyps), meanfunc, covfunc, likfunc, xx, y);
 
-hyp_opt = hyps_vec_to_struct(gradient_based_optimisation(nlmlfunc, gradfunc, hyps_struct_to_vec(hyp)));
+hyp_opt = hyps_vec_to_struct(gradient_based_optimisation(nlmlfunc, gradfunc, hyps_struct_to_vec(hyp), 20));
 
 %% Predict & print nlml
 
@@ -55,5 +63,17 @@ hyp_opt = hyps_vec_to_struct(gradient_based_optimisation(nlmlfunc, gradfunc, hyp
 nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, xx, y)
 
 %% Plot 
+
+% min samples leaf 1->50
+% gp
+% svm time polynomial
+% anytime algorithm
+% utility = Expected improvement of g2 - g2 truncated at 0
+% utipity of sth that takes longer than time limet: 0
+% exp_utily/time
+% modelling is interesting
+
+% var of residuals / var of data
+% plot residuals against fitted value 2d->1d
 
 surf(z1, z2, reshape(m, [length(z1), length(z2)]));
