@@ -1,14 +1,50 @@
-from generate_data_for_configuration import generate_data
-
+from csv import writer
+from sklearn.cross_validation import KFold
+from itertools import product
+from joblib import Parallel, delayed
+from generate_data_for_config import generate_data_for_config
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-
-from sys import argv
 from datasets import load_datasets, load_dataset, create_dataset
 from utils import convert_range_string
 from argparse import ArgumentParser
+import sys
+
+
+
+def generate_data(name, classifier, datasets, all_percentage_data_values, parameters, n_folds=10):
+    params_tuples = parameters.items()
+    param_names = [t[0] for t in params_tuples]
+    param_generators = [t[1] for t in params_tuples]
+
+    for dataset in datasets:
+        n_samples = dataset['n_samples']
+        # TODO maybe use random random seed?
+        kf = KFold(n_samples, n_folds, shuffle=True, random_state=42)
+
+        csvfile = open('out/data_{0}_{1}.csv'.format(name, dataset['name']), 'wb')
+
+        datawriter = writer(csvfile)
+        header = ['dataset_id'] + param_names + ['percentage_data', 'time', 'score']
+        datawriter.writerow(header)
+
+        all_parameter_values = product(*param_generators)
+        all_configs = product(all_parameter_values, all_percentage_data_values)
+        
+        for param_values, percentage_data in all_configs:
+            param_values, percentage_data, elapsed_time, avg_score = generate_data_for_config(dataset, classifier, param_names, param_values, percentage_data, kf)
+
+            # Print
+            output = [dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score]
+            sys.stdout.write(' '.join(['{0}: {1:7.2f};'.format(*t) for t in zip(header, output)]) + '\n')
+            sys.stdout.flush()
+
+            # Write to csv
+            datawriter.writerow([dataset['id']] + list(param_values) + [percentage_data, elapsed_time, avg_score])            
+                
+        csvfile.close()
 
 parser = ArgumentParser(description='Collect data')
 parser.add_argument('-a', '--algorithm', type=str, required=True, default='rnd_forest', help='The learning algorithm, one of [rnd_forest, log_reg, svm]')
@@ -21,7 +57,6 @@ group.add_argument('-z', '--datasets-of-size', type=str, help='Load datasets of 
 parser.add_argument('-d', '--all-percentage-data-values', type=str, required=True, help='A range for the percentage of data used. a:0.1:10:10 creates ten evenly spaced steps between 0 percent and 100 percent, g:0.01:10:1:1.1 creates a geometric series from 1 percent to 100 percent with 10 steps and a growth parameter of 1.1')
 parser.add_argument('parameter', metavar='parameter', nargs='*', help='Parameters to the algorithm in the form <param_name>:<int|float>-<a|g>:start:steps:end[:growth_param]')
 
-parser.add_argument('-p', '--parallel', action='store_true', default=False, help='Paralellise data collection')
 args = parser.parse_args()
 
 if args.algorithm == 'rnd_forest':
@@ -51,4 +86,5 @@ for param_str in args.parameter:
         r = [int(round(v)) for v in r]
     parameters[t2[0]] = r
 
-generate_data(args.algorithm, classifier, datasets, all_percentage_data_values, parameters, parallel=args.parallel)
+generate_data(args.algorithm, classifier, datasets, all_percentage_data_values, parameters)
+
