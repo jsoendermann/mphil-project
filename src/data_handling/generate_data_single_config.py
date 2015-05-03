@@ -1,5 +1,5 @@
 from csv import writer
-from generate_data_for_config import generate_data_for_config
+from generate_data_for_config import generate_datum
 from sklearn.cross_validation import KFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -7,6 +7,8 @@ from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from datasets import load_datasets, load_dataset, create_dataset
 from argparse import ArgumentParser
+
+
 
 parser = ArgumentParser(description='Collect data')
 parser.add_argument('-a', '--algorithm', type=str, required=True, default='rnd_forest', help='The learning algorithm, one of [rnd_forest, log_reg, svm, naive_bayes]')
@@ -48,9 +50,7 @@ for param_str in args.parameter:
     elif type_ == 'float':
         param_values.append(float(value_str))
 
-kf = KFold(dataset['n_samples'], 10, shuffle=True, random_state=42)
-
-param_values, percentage_data, elapsed_time, avg_score = generate_data_for_config(dataset, classifier, param_names, param_values, args.percentage_data, kf)
+elapsed_time, avg_score = generate_datum(classifier, dataset, args.percentage_data, dict(zip(param_names, param_values)))
 
 print('Time: {}'.format(elapsed_time))
 print('Score: {}'.format(avg_score))

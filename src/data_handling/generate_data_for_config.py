@@ -3,7 +3,17 @@ from time import time
 import sys
 from sklearn.metrics import roc_auc_score
 
+def generate_datum(classifier, dataset, percentage_data, params):
+    param_items = params.items()
+    param_names = [p[0] for p in param_items]
+    param_values = [p[1] for p in param_items]
 
+    # TODO don't hardcode this stuff
+    kf = KFold(dataset['n_samples'], 10, shuffle=True, random_state=42)
+
+    param_values, percentage_data, elapsed_time, avg_score = generate_data_for_config(dataset, classifier, param_names, param_values, args.percentage_data, kf)
+
+    return (elapsed_time, avg_score)
 
 # TODO STYLE reduce nr of args to this func
 def generate_data_for_config(dataset, classifier, param_names, param_values, percentage_data, kf):

@@ -13,7 +13,6 @@ from argparse import ArgumentParser
 import sys
 
 
-
 def generate_data(name, classifier, datasets, all_percentage_data_values, parameters, n_folds=10):
     params_tuples = parameters.items()
     param_names = [t[0] for t in params_tuples]
