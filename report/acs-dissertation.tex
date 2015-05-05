@@ -24,6 +24,7 @@
 % TODO If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 
 % TODO Appendices should be avoided where possible, but may be appropriate in some cases
+% TODO mention ec2
 
 % TODO Where a project has as its main aim the production of a piece of software, the project report should state clearly what test procedures were adopted and should include test output
 % TODO The report should explicitly describe the starting point for the project, making clear what existing software or other resources were used
@@ -81,6 +82,9 @@
 \pagenumbering{arabic} 
 \setcounter{page}{1} 
 
+- context
+- motivation
+- general overview
 % TODO context (why did you do it (motivation), what was the hoped-for outcome (aims) --- as well as trying to give a brief overview of what you actually did)
 
 
@@ -90,12 +94,17 @@
 
 
 \chapter{Background} 
+- ML + algos
+- GPs/GPML
 
 % TODO A more extensive coverage of what's required to understand your work. In general you should assume the reader has a good undergraduate degree in computer science, but is not necessarily an expert in the particular area you've been working on. Hence this chapter may need to summarise some ``text book'' material. 
 
 
 
 \chapter{Related Work} 
+
+- hyper param optim
+- multi armed bandits
 
 % TODO This chapter covers relevant (and typically, recent) research which you build upon (or improve upon). There are two complementary goals for this chapter: - to show that you know and understand the state of the art; and to put your work in context
 
@@ -107,8 +116,16 @@
 \chapter{Design and Implementation} 
 
 
-\chapter{Evaluation} 
+1. modelling
+- optimisation
+- 1d/2d
 
+2. decisions
+
+\chapter{Evaluation} 
+- model evidence
+- testing
+- how well it performs
 
 
 \chapter{Summary and Conclusions} 

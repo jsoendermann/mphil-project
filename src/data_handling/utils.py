@@ -1,3 +1,8 @@
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+
 def percentages_with_total_number_of_steps(n_steps):
     return [round(x * 1.0/n_steps, 3) for x in range(1, n_steps + 1)]
 
@@ -20,3 +25,14 @@ def convert_range_string(s):
         growth_param = float(t[4])
         return exp_incl_float_range(start, steps, end, growth_param)
 
+def name_to_classifier_object(name):
+    classifier = None
+    if name == 'rnd_forest':
+        classifier = RandomForestClassifier
+    elif name == 'log_reg':
+        classifier = LogisticRegression
+    elif name == 'svm':
+        classifier = SVC
+    elif name == 'naive_bayes':
+        classifier = GaussianNB
+    return classifier

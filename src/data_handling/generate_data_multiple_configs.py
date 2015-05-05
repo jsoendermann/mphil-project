@@ -1,14 +1,9 @@
 from csv import writer
 from sklearn.cross_validation import KFold
 from itertools import product
-from joblib import Parallel, delayed
 from generate_data_for_config import generate_data_for_config
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.naive_bayes import GaussianNB
 from datasets import load_datasets, load_dataset, create_dataset
-from utils import convert_range_string
+from utils import convert_range_string, name_to_classifier_object
 from argparse import ArgumentParser
 import sys
 
@@ -58,14 +53,7 @@ parser.add_argument('parameter', metavar='parameter', nargs='*', help='Parameter
 
 args = parser.parse_args()
 
-if args.algorithm == 'rnd_forest':
-    classifier = RandomForestClassifier
-elif args.algorithm == 'log_reg':
-    classifier = LogisticRegression
-elif args.algorithm == 'svm':
-    classifier = SVC
-elif args.algorithm == 'naive_bayes':
-    classifier = GaussianNB
+classifier = name_to_classifier_object(args.algorithm)
 
 if args.synthetic:
     datasets = [create_dataset(eval(args.synthetic))]

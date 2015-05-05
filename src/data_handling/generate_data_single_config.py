@@ -1,10 +1,7 @@
 from csv import writer
 from generate_data_for_config import generate_datum
 from sklearn.cross_validation import KFold
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.naive_bayes import GaussianNB
+from utils import name_to_classifier_object
 from datasets import load_datasets, load_dataset, create_dataset
 from argparse import ArgumentParser
 
@@ -25,14 +22,7 @@ parser.add_argument('parameter', metavar='parameter', nargs='*', help='Parameter
 # TODO add option to set # folds
 args = parser.parse_args()
 
-if args.algorithm == 'rnd_forest':
-    classifier = RandomForestClassifier
-elif args.algorithm == 'log_reg':
-    classifier = LogisticRegression
-elif args.algorithm == 'svm':
-    classifier = SVC
-elif args.algorithm == 'naive_bayes':
-    classifier = GaussianNB
+classifier = name_to_classifier_object(args.algorithm)
 
 if args.synthetic:
     dataset = create_dataset(eval(args.synthetic))
@@ -50,7 +40,7 @@ for param_str in args.parameter:
     elif type_ == 'float':
         param_values.append(float(value_str))
 
-elapsed_time, avg_score = generate_datum(classifier, dataset, args.percentage_data, dict(zip(param_names, param_values)))
+elapsed_time, avg_score = generate_datum(dataset, classifier, args.percentage_data, dict(zip(param_names, param_values)))
 
 print('Time: {}'.format(elapsed_time))
 print('Score: {}'.format(avg_score))

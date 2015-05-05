@@ -6,7 +6,7 @@ meanfunc = @meanZero;
 likfunc = @likGauss;
 switch function_type
     case 'linear'
-        covfunc = {@covSum, {@covLIN, @covConst}}
+        covfunc = {@covSum, {{@covProd, {@covConst, @covLIN}}, @covConst}};
     case 'exp'
         covfunc = {@covSum, {@covExpMixture1d, @covConst}};
 end
@@ -16,7 +16,7 @@ if nargin < 5
     hyp.lik = log(0.1);
     switch function_type
         case 'linear'
-            hyp.cov = log(1);
+            hyp.cov = log([1 1]);
         case 'exp'
             hyp.cov = log([1 1 1 1]);
     end
