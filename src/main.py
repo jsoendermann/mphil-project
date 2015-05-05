@@ -13,7 +13,15 @@ VAR_DIR = '/Users/jan/Dropbox/mphil_project/repo/var/'
 DATA_FILENAME = 'data.txt'
 # TODO change filename to models_and...
 MODEL_AND_DECISION_FILENAME = 'model_and_decision.txt'
-COLOURS = {'rnd_forest': {'single_letter': 'r', 'full_name': 'red'}, 'log_reg': {'single_letter': 'b', 'full_name': 'blue'}}
+MATLAB_EXECUTABLE = '/Applications/MATLAB_R2014b.app/bin/matlab'
+MATLAB_SCRIPT = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/model_and_decide.m'
+
+ALGORITHMS = {
+           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 8}}, 
+           'log_reg': {'single_letter': 'b', 'full_name': 'blue', 'params': {}}, 
+           #'naive_bayes': {'single_letter': 'g', 'full_name': 'green', 'params': {}}
+           }
+
 
 class Datum:
     def __init__(self, x, time, score):
@@ -63,15 +71,14 @@ def write_data_to_file(data):
             f.write('\n')
             
 def call_matlab_script():
-    # TODO move dir names to constants
-    call(["/Applications/MATLAB_R2014b.app/bin/matlab",
+    call([MATLAB_EXECUTABLE,
           "-nodisplay", 
           "-nosplash", 
           "-nodesktop", 
           "-r", 
-          "run('/Users/jan/Dropbox/mphil_project/repo/src/matlab/model_and_decide.m'); exit();"])
+          "run('{}'); exit();".format(MATLAB_SCRIPT)])
 
-def read_model_and_decision_file():
+def read_model_and_decision_file(data):
     filename = join(VAR_DIR, MODEL_AND_DECISION_FILENAME)
 
     with open(filename) as f:
@@ -89,61 +96,94 @@ def read_model_and_decision_file():
             new_x = float(lines[i + 2])
             return (name, new_x)
         else:
+            #print(lines[i])
             name = lines[i]
             time_m_raw = lines[i + 1]
             time_sd_raw = lines[i + 2]
             score_m_raw = lines[i + 3]
             score_sd_raw = lines[i + 4]
+            time_by_score_x_lower_raw = lines[i + 5]
+            time_by_score_x_upper_raw = lines[i + 6]
+            time_by_score_m_raw = lines[i + 7]
+            time_by_score_sd_raw = lines[i + 8]
 
             time_m_str = time_m_raw[len('time_m: '):]
             time_sd_str = time_sd_raw[len('time_sd: '):]
             score_m_str = score_m_raw[len('score_m: '):]
             score_sd_str = score_sd_raw[len('score_sd: '):]
+            time_by_score_x_lower_str = time_by_score_x_lower_raw[len('time_by_score_x_lower: '):]
+            time_by_score_x_upper_str = time_by_score_x_upper_raw[len('time_by_score_x_upper: '):]
+            time_by_score_m_str = time_by_score_m_raw[len('time_by_score_m: '):]
+            time_by_score_sd_str = time_by_score_sd_raw[len('time_by_score_sd: '):]
+        
 
             time_m = map(lambda s: float(s), time_m_str.split())
             time_sd = map(lambda s: float(s), time_sd_str.split())
             score_m = map(lambda s: float(s), score_m_str.split())
             score_sd = map(lambda s: float(s), score_sd_str.split())
+            time_by_score_x_lower = float(time_by_score_x_lower_str)
+            time_by_score_x_upper = float(time_by_score_x_upper_str)
+            time_by_score_m = map(lambda s: float(s), time_by_score_m_str.split())
+            time_by_score_sd = map(lambda s: float(s), time_by_score_sd_str.split())
 
-            models[name] = {'time': Model(0, 1, time_m, time_sd), 'score': Model(0, 1, score_m, score_sd)}
+            #times = [d.time for d in data[name]]
+            #if times:
+                #times_lower = min(times) - 1
+                #times_upper = max(times) + 1
+            #else:
+                #times_lower = 0
+                #times_upper = 1
+            models[name] = {'time': Model(0, 1, time_m, time_sd), 
+                            'score': Model(0, 1, score_m, score_sd), 
+                            'time_by_score': Model(time_by_score_x_lower, time_by_score_x_upper, time_by_score_m, time_by_score_sd)}
 
-            i += 6
+            i += 10
 
 def update_plot(data, models, plt, ax1, ax2):
     ax1.cla()
     ax2.cla()
+    ax3.cla()
 
     for name, datapoints in data.items():
         xs = [d.x for d in datapoints]
         times = [d.time for d in datapoints]
         scores = [d.score for d in datapoints]
 
-        ax1.plot(xs, times, COLOURS[name]['single_letter']+'o')
-        ax2.plot(xs, scores, COLOURS[name]['single_letter']+'o')
+        ax1.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
+        ax2.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
+        ax3.plot(times, scores, ALGORITHMS[name]['single_letter']+'o')
 
     for name, models in models.items():
         model_time = models['time']
         model_score = models['score']
+        model_time_by_score = models['time_by_score']
 
         if model_time:
+            ax1.plot(model_time.x(), model_time.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
             ax1.fill_between(model_time.x(), 
                              model_time.twice_std_dev_below(), 
                              model_time.twice_std_dev_above(), 
-                             facecolor=COLOURS[name]['full_name'], 
+                             facecolor=ALGORITHMS[name]['full_name'], 
                              alpha=0.1, 
                              interpolate=True)
         if model_score:
-            print(model_score.mean)
-            print(model_score.std_dev)
-            print(model_score.x())
-            print(model_score.twice_std_dev_below())
-
+            ax2.plot(model_score.x(), model_score.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
             ax2.fill_between(model_score.x(), 
                              model_score.twice_std_dev_below(), 
                              model_score.twice_std_dev_above(), 
-                             facecolor=COLOURS[name]['full_name'], 
+                             facecolor=ALGORITHMS[name]['full_name'], 
                              alpha=0.1, 
                              interpolate=True)
+
+        if model_time_by_score:
+            ax3.plot(model_time_by_score.x(), model_time_by_score.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
+            ax3.fill_between(model_time_by_score.x(), 
+                             model_time_by_score.twice_std_dev_below(), 
+                             model_time_by_score.twice_std_dev_above(), 
+                             facecolor=ALGORITHMS[name]['full_name'], 
+                             alpha=0.1, 
+                             interpolate=True)
+
 
 
     ax1.set_xlabel('% of data used')
@@ -152,41 +192,47 @@ def update_plot(data, models, plt, ax1, ax2):
     ax2.set_xlabel('% of data used')
     ax2.set_ylabel('Score')
 
-    #ax1.xlim(0, 1)
-    #ax1.ylim(0, None)
-    #ax2.xlim(0, 1)
-    #ax2.ylim(0, 1)
+    ax3.set_xlabel('Time')
+    ax3.set_ylabel('Score')
 
     plt.draw()
 
 
 
+data = {}
+models = {}
+for name, _ in ALGORITHMS.items():
+    data[name] = []
+    models[name] = {'time': None, 'score': None}
 
-    
 
-#data = {'rnd_forest': [Datum(0.1, 1.1, 0.65), Datum(0.2, 2.2, 0.72), Datum(0.3, 3.3, 0.75)],
-#        'log_reg': [Datum(0.1, 0.3, 0.5), Datum(0.2, 0.4, 0.56)]}
-data = {'rnd_forest': [], 'log_reg': []}
-models = {'rnd_forest': {'time': None, 'score': None}, 'log_reg': {'time': None, 'score': None}}
+#data = {'rnd_forest': [], 'log_reg': [], 'naive_bayes': []}
+#models = {'rnd_forest': {'time': None, 'score': None}, 
+          #'log_reg': {'time': None, 'score': None},
+          #'naive_bayes': {'time': None, 'score': None}}
 
-params = {'rnd_forest': {}, 'log_reg': {}}
+#params = {'rnd_forest': {}, 'log_reg': {}, 'naive_bayes': {}}
 
 
 # Set up plot
 plt.ion()
-fig = plt.figure(1)
+fig = plt.figure(1, figsize=(8, 10), dpi=80)
 
 # Times
-ax1 = plt.subplot(211)
+ax1 = plt.subplot(311)
 plt.xlim(0, 1)
 #plt.ylim(0, None)
 
 # Scores
-ax2 = plt.subplot(212)
+ax2 = plt.subplot(312)
 plt.xlim(0, 1)
 #plt.ylim(0, 1)
 
-fig.subplots_adjust(hspace=0.25)
+ax3 = plt.subplot(313)
+plt.xlim(0, None)
+#plt.ylim(0, 1)
+
+fig.subplots_adjust(hspace=0.5)
 plt.draw()
 
 parser = ArgumentParser(description='Collect data')
@@ -203,87 +249,17 @@ elif args.load_arff:
 while True:
     write_data_to_file(data)
     call_matlab_script()
-    update_plot(data, models, plt, ax1, ax2)
-    name, next_x = read_model_and_decision_file()
-    if name == 'STOP':
-        while True:
-            sleep(1)
     
-    elapsed_time, avg_score = generate_datum(dataset, name_to_classifier_object(name), next_x, params[name])
+    name, next_x = read_model_and_decision_file(data)
+    update_plot(data, models, plt, ax1, ax2)
+
+    if name == 'STOP':
+        raw_input("Press Enter to terminate...")
+
+    print('Running {}...'.format(name))
+    elapsed_time, avg_score = generate_datum(dataset, name_to_classifier_object(name), next_x, ALGORITHMS[name]['params'])
     data[name].append(Datum(next_x, elapsed_time, avg_score))
     
-    update_plot(data, models, plt, ax1, ax2)
+   # update_plot(data, models, plt, ax1, ax2)
 
 
-#call_matlab_script()
-#update_plot(data, models, plt, ax1, ax2)
-#print('data')
-#sleep(2)
-#read_model_and_decision_file()
-#update_plot(data, models, plt, ax1, ax2)
-#print('with models')
-#sleep(100)
-
-#ax1.cla()
-
-##plt.plot(t2, np.cos(2*np.pi*t2), 'r--')
-
-##plt.show()
-
-
-##
-
-#print (rnd_forest_x)
-#print (rnd_forest_time_y)
-#print np.array(rnd_forest_time_prediction.x())
-#print np.array(rnd_forest_time_prediction.mean)
-
-#plt.plot(rnd_forest_x, rnd_forest_time_y, 'bo')
-#plt.plot(rnd_forest_time_prediction.x(), np.array(rnd_forest_time_prediction.mean), 'k')
-#plt.fill_between(rnd_forest_time_prediction.x(), rnd_forest_time_prediction.twice_std_dev_below(), rnd_forest_time_prediction.twice_std_dev_above(), facecolor='blue', alpha=0.1, interpolate=True)
-
-
-#sleep(0.05)
-#while True:
-    #pass
-
-#/Applications/MATLAB_R2014b.app/bin/matlab -nodisplay -nosplash -nodesktop -r "run('/Users/jan/Dropbox/mphil_project/repo/src/matlab/model_and_decide.m'); exit();"
-
-# 
-
-#f, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=True)
-#ax1.plot(rnd_forest_x, rnd_forest_score_y, 'bo', rnd_forest_x, rnd_forest_score_y, 'k')
-#ax1.set_title('Random forest')
-
-#ax1.set_ylabel('Score')
-#ax2.set_ylabel('Time')
-#ax2.set_xlabel('% of data used')
-
-##ax2.scatter(x, y)
-##ax3.scatter(x, 2 * y ** 2 - 1, color='r')
-## Fine-tune figure; make subplots close to each other and hide x ticks for
-## all but bottom plot.
-#f.subplots_adjust(hspace=0)
-#plt.setp([a.get_xticklabels() for a in f.axes[:-1]], visible=False)
-
-
-##fig, (ax1, ax2) = plt.subplots(2, sharex=True, sharey=True)
-
-
-
-###ax1 = plt.subplot(211)
-
-#plt.xlim(0, 1)
-#plt.ylim(0, 1)
-
-###ax1.plot(X, Y, 'bo', X, Y, 'k')
-
-###ax1.set_xlabel('% of data used')
-###ax1.set_ylabel('Score')
-
-###ax2 = plt.subplot(212)
-
-#####ax2.set_ylabel('Time')
-
-###plt.plot(t2, np.cos(2*np.pi*t2), 'r--')
-#plt.show()

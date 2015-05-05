@@ -5,6 +5,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import KFold
 
 def generate_datum(dataset, classifier, percentage_data, params):
+    print('generate_datum; percentage_data: {}, params: {}'.format(percentage_data, str(params)))
     param_items = params.items()
     param_names = [p[0] for p in param_items]
     param_values = [p[1] for p in param_items]
