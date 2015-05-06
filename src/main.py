@@ -17,7 +17,7 @@ MATLAB_EXECUTABLE = '/Applications/MATLAB_R2014b.app/bin/matlab'
 MATLAB_SCRIPT = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/model_and_decide.m'
 
 ALGORITHMS = {
-           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 8}}, 
+           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 3}}, 
            'log_reg': {'single_letter': 'b', 'full_name': 'blue', 'params': {}}, 
            #'naive_bayes': {'single_letter': 'g', 'full_name': 'green', 'params': {}}
            }
@@ -49,6 +49,19 @@ class Model:
     def twice_std_dev_below(self):
         return self.mean - 2 * self.std_dev
 
+def max_time_value(data):
+    time_max = 0.01
+    for _, datapoints in data.items():
+        for datum in datapoints:
+            time_max = max(time_max, datum.time)
+    return time_max
+
+def max_score_value(data):
+    score_max = 0
+    for _, datapoints in data.items():
+        for datum in datapoints:
+            score_max = max(score_max, datum.score)
+    return score_max
 
 def write_data_to_file(data):
     filename = join(VAR_DIR, DATA_FILENAME)
@@ -57,6 +70,10 @@ def write_data_to_file(data):
         remove(filename)
     
     with open(filename, 'a') as f:
+        f.write('time_max\n')
+        f.write(str(max_time_value(data)))
+        f.write('\n\n')
+
         for name, datapoints in data.items():
             f.write(name + '\n')
             
@@ -64,6 +81,7 @@ def write_data_to_file(data):
             times_str = [str(d.time) for d in datapoints]
             scores_str = [str(d.score) for d in datapoints]
 
+            
             f.write('[{}] % xs\n'.format(' '.join(xs_str)))
             f.write('[{}] % times\n'.format(' '.join(times_str)))
             f.write('[{}] % scores\n'.format(' '.join(scores_str)))
@@ -102,17 +120,17 @@ def read_model_and_decision_file(data):
             time_sd_raw = lines[i + 2]
             score_m_raw = lines[i + 3]
             score_sd_raw = lines[i + 4]
-            time_by_score_x_lower_raw = lines[i + 5]
-            time_by_score_x_upper_raw = lines[i + 6]
-            time_by_score_m_raw = lines[i + 7]
-            time_by_score_sd_raw = lines[i + 8]
+            #time_by_score_x_lower_raw = lines[i + 5]
+            #time_by_score_x_upper_raw = lines[i + 6]
+            time_by_score_m_raw = lines[i + 5]
+            time_by_score_sd_raw = lines[i + 6]
 
             time_m_str = time_m_raw[len('time_m: '):]
             time_sd_str = time_sd_raw[len('time_sd: '):]
             score_m_str = score_m_raw[len('score_m: '):]
             score_sd_str = score_sd_raw[len('score_sd: '):]
-            time_by_score_x_lower_str = time_by_score_x_lower_raw[len('time_by_score_x_lower: '):]
-            time_by_score_x_upper_str = time_by_score_x_upper_raw[len('time_by_score_x_upper: '):]
+            #time_by_score_x_lower_str = time_by_score_x_lower_raw[len('time_by_score_x_lower: '):]
+            #time_by_score_x_upper_str = time_by_score_x_upper_raw[len('time_by_score_x_upper: '):]
             time_by_score_m_str = time_by_score_m_raw[len('time_by_score_m: '):]
             time_by_score_sd_str = time_by_score_sd_raw[len('time_by_score_sd: '):]
         
@@ -121,8 +139,8 @@ def read_model_and_decision_file(data):
             time_sd = map(lambda s: float(s), time_sd_str.split())
             score_m = map(lambda s: float(s), score_m_str.split())
             score_sd = map(lambda s: float(s), score_sd_str.split())
-            time_by_score_x_lower = float(time_by_score_x_lower_str)
-            time_by_score_x_upper = float(time_by_score_x_upper_str)
+            #time_by_score_x_lower = float(time_by_score_x_lower_str)
+            #time_by_score_x_upper = float(time_by_score_x_upper_str)
             time_by_score_m = map(lambda s: float(s), time_by_score_m_str.split())
             time_by_score_sd = map(lambda s: float(s), time_by_score_sd_str.split())
 
@@ -135,22 +153,24 @@ def read_model_and_decision_file(data):
                 #times_upper = 1
             models[name] = {'time': Model(0, 1, time_m, time_sd), 
                             'score': Model(0, 1, score_m, score_sd), 
-                            'time_by_score': Model(time_by_score_x_lower, time_by_score_x_upper, time_by_score_m, time_by_score_sd)}
+                            'time_by_score': Model(0, max_time_value(data) * 1.5, time_by_score_m, time_by_score_sd)}
 
-            i += 10
+            i += 8
 
-def update_plot(data, models, plt, ax1, ax2):
-    ax1.cla()
-    ax2.cla()
+
+def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax3, ax_highest_score):
+    ax_time.cla()
+    ax_score.cla()
     ax3.cla()
+    ax_highest_score.cla()
 
     for name, datapoints in data.items():
         xs = [d.x for d in datapoints]
         times = [d.time for d in datapoints]
         scores = [d.score for d in datapoints]
 
-        ax1.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
-        ax2.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
+        ax_time.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
+        ax_score.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
         ax3.plot(times, scores, ALGORITHMS[name]['single_letter']+'o')
 
     for name, models in models.items():
@@ -159,16 +179,16 @@ def update_plot(data, models, plt, ax1, ax2):
         model_time_by_score = models['time_by_score']
 
         if model_time:
-            ax1.plot(model_time.x(), model_time.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
-            ax1.fill_between(model_time.x(), 
+            ax_time.plot(model_time.x(), model_time.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
+            ax_time.fill_between(model_time.x(), 
                              model_time.twice_std_dev_below(), 
                              model_time.twice_std_dev_above(), 
                              facecolor=ALGORITHMS[name]['full_name'], 
                              alpha=0.1, 
                              interpolate=True)
         if model_score:
-            ax2.plot(model_score.x(), model_score.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
-            ax2.fill_between(model_score.x(), 
+            ax_score.plot(model_score.x(), model_score.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
+            ax_score.fill_between(model_score.x(), 
                              model_score.twice_std_dev_below(), 
                              model_score.twice_std_dev_above(), 
                              facecolor=ALGORITHMS[name]['full_name'], 
@@ -184,16 +204,56 @@ def update_plot(data, models, plt, ax1, ax2):
                              alpha=0.1, 
                              interpolate=True)
 
+    ax_highest_score.plot(cumulative_time, highest_scores, 'k-')
 
-
-    ax1.set_xlabel('% of data used')
-    ax1.set_ylabel('Time')
     
-    ax2.set_xlabel('% of data used')
-    ax2.set_ylabel('Score')
+    time_bounds = [10e5, 0]
+    # TODO remove plural s
+    scores_bounds = [10e5, 0]
+    for _, datapoints in data.items():
+        for datum in datapoints:
+            time_bounds[0] = min(time_bounds[0], datum.time)
+            time_bounds[1] = max(time_bounds[1], datum.time)
+            scores_bounds[0] = min(scores_bounds[0], datum.score)
+            scores_bounds[1] = max(scores_bounds[1], datum.score)
+    if time_bounds[0] > 10e4:
+        time_bounds = [0, 1]
+    if scores_bounds[0] > 10e4:
+        scores_bounds = [0, 1]
+
+    time_d = time_bounds[1] - time_bounds[0]
+    if time_d == 0:
+        time_d = 0.1
+    scores_d = scores_bounds[1] - scores_bounds[0]
+    if scores_d == 0:
+        scores_d = 0.1
+    
+    ZOOM = 0.5
+    time_bounds[0] -= time_d * ZOOM
+    time_bounds[1] += time_d * ZOOM
+    scores_bounds[0] -= scores_d * ZOOM
+    scores_bounds[1] += scores_d * ZOOM
+    
+    
+    ax_time.set_xlabel('% of data used')
+    ax_time.set_ylabel('Time')
+    ax_time.set_ylim(time_bounds)
+    
+    ax_score.set_xlabel('% of data used')
+    ax_score.set_ylabel('Score')
+    ax_score.set_ylim(scores_bounds)
 
     ax3.set_xlabel('Time')
     ax3.set_ylabel('Score')
+    ax3.set_xlim(0, max_time_value(data) * 1.5)
+    ax3.set_ylim(scores_bounds)
+
+    ax_highest_score.set_xlabel('Cumulative time')
+    ax_highest_score.set_ylabel('Highest score')
+    if cumulative_time:
+        ax_highest_score.set_xlim(0, cumulative_time[len(cumulative_time)-1] * 1.1)
+    else:
+        ax_highest_score.set_xlim(0, 1)
 
     plt.draw()
 
@@ -216,21 +276,25 @@ for name, _ in ALGORITHMS.items():
 
 # Set up plot
 plt.ion()
-fig = plt.figure(1, figsize=(8, 10), dpi=80)
+fig = plt.figure(1, figsize=(12, 6), dpi=80)
 
 # Times
-ax1 = plt.subplot(311)
+ax_time = plt.subplot(411)
 plt.xlim(0, 1)
 #plt.ylim(0, None)
 
 # Scores
-ax2 = plt.subplot(312)
+ax_score = plt.subplot(412)
 plt.xlim(0, 1)
 #plt.ylim(0, 1)
 
-ax3 = plt.subplot(313)
+ax3 = plt.subplot(413)
 plt.xlim(0, None)
 #plt.ylim(0, 1)
+
+ax_highest_score = plt.subplot(414)
+plt.xlim(0, None)
+
 
 fig.subplots_adjust(hspace=0.5)
 plt.draw()
@@ -246,12 +310,16 @@ if args.synthetic:
 elif args.load_arff:
     dataset = load_dataset({'name': args.load_arff})
 
+cumulative_time = [0]
+highest_scores = [0]
 while True:
     write_data_to_file(data)
     call_matlab_script()
     
     name, next_x = read_model_and_decision_file(data)
-    update_plot(data, models, plt, ax1, ax2)
+
+    
+    update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax3, ax_highest_score)
 
     if name == 'STOP':
         raw_input("Press Enter to terminate...")
@@ -260,6 +328,8 @@ while True:
     elapsed_time, avg_score = generate_datum(dataset, name_to_classifier_object(name), next_x, ALGORITHMS[name]['params'])
     data[name].append(Datum(next_x, elapsed_time, avg_score))
     
-   # update_plot(data, models, plt, ax1, ax2)
+    highest_scores.append(max_score_value(data))
+    cumulative_time.append(elapsed_time + cumulative_time[len(cumulative_time)-1])
 
+   # update_plot(data, models, plt, ax_time, ax_score)
 

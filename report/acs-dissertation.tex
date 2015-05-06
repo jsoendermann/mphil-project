@@ -115,14 +115,44 @@
 
 \chapter{Design and Implementation} 
 
+\section{Modelling}
+% TODO different names for these two subsections
+\subsection{Implementing an appropriate kernel}
+\subsection{Adapting hyperparameters}
+
+% TODO for this subsection: show plots of likelihood function
+% TODO maybe include pseudocode for every step?
+
+first we tried using the minimisation function that comes with gpml. that, however, only worked occasionally and most of the time stopped optimising after a very small number of steps when the minimum clearly hadn't been reached yet.
+% TODO mention numerical instability
+% TODO this algorithm is "too clever"
+
+
+we then tried slice sampling, a sampling method that does not optimise the parameter but instead integrates them out and @draws samples from the posteriour?@. this worked quite well in the limited number of cases we tested.
+
+because we wanted an optimisation technique @why? fast. ease of use@, we decided to implement an optimisation method that works similarly to slice sampling @is there any literature on this?@ this algorithm works by considering a window around the current value, updating if a smaller y was found and narrowing the window size otherwise. pseudo code for this is shown in X.
+
+we also implemented a gradient based approach (b/c otherwise moving in a direction that's not axis aligned is slow) but that never really worked (describe nonetheless, also describe attempts to make it work
+
+this worked fairly well but not in @more complex? noisier@ examples. describe problem with cholesky decomposition. noise param was optimised to very low value, overfitting? show diagram
+
+After observing that restarting this algorithm with data for which it failed with a different random seed sometimes successfully optimised the parameters, we implemented a wrapper around our algorithm that reruns it multiple times, ignoring the result for cholesky errors.
+
+this produced satisfying results but took a long time to optimise. to cut down the run time, we added a final improvement by making the algorithm terminate early if y doesn't get updated in 5 successive iterations. this happens often and makes the algorithm fast. figure X shows pseudocode for this final version of the algorithm
 
 1. modelling
+to model, two things are necessary: 1. appropriate kernel function, 2. inference
+for inference, we use optimisation
 - optimisation
 - 1d/2d
 
 2. decisions
 
 \chapter{Evaluation} 
+\section{Data sources}
+- explain where the data came from and how it was preprocessed
+
+
 - model evidence
 - testing
 - how well it performs

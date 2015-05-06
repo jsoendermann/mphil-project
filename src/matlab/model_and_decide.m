@@ -13,6 +13,11 @@ addpath(mydir(1:end-1));
 addpath([mydir,'util']);
 
 fin = fopen(strcat(VAR_DIR, IN_FILENAME));
+
+fgetl(fin); % TODO check that this is == 'time_max'
+time_max = eval(fgetl(fin));
+fgetl(fin);
+
 delete(strcat(VAR_DIR, OUT_FILENAME));
 fout = fopen(strcat(VAR_DIR, OUT_FILENAME), 'w');
 
@@ -37,8 +42,8 @@ for i = 1:intmax
         fprintf(fout, 'time_sd: %s\n', num2str(zeros(1,100)));
         fprintf(fout, 'score_m: %s\n', num2str(zeros(1,100)));
         fprintf(fout, 'score_sd: %s\n', num2str(zeros(1,100)));
-        fprintf(fout, 'time_by_score_x_lower: 0\n');
-        fprintf(fout, 'time_by_score_x_upper: 1\n');
+        %fprintf(fout, 'time_by_score_x_lower: 0\n');
+        %fprintf(fout, 'time_by_score_x_upper: 1\n');
         fprintf(fout, 'time_by_score_m: %s\n', num2str(zeros(1,100)));
         fprintf(fout, 'time_by_score_sd: %s\n', num2str(zeros(1,100)));
         fprintf(fout, '\n');
@@ -63,25 +68,48 @@ for i = 1:intmax
         [hyp_opt_time, time_m, time_sd] = gp_wrapper(time_function_type, x, time);
         fprintf('hyp_opt_time: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_time))));
 
+%         fh=figure;
+%         hold on;
+%         plot(x, time, 'bo');
+%         plot(linspace(0,1,100), time_m);
+%         plot(linspace(0,1,100), time_m + 2 * time_sd);
+%         plot(linspace(0,1,100), time_m - 2 * time_sd);
+%         waitfor(fh);
+
         %fprintf('%s score\n', name);
         [hyp_opt_score, score_m, score_sd] = gp_wrapper(score_function_type, x, score);
         fprintf('hyp_opt_score: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_score))));
         
+%         fh=figure;
+%         hold on;
+%         plot(x, score, 'bo');
+%         plot(linspace(0,1,100), score_m);
+%         plot(linspace(0,1,100), score_m + 2 * score_sd);
+%         plot(linspace(0,1,100), score_m - 2 * score_sd);
+%         waitfor(fh);
+        
         %fprintf('%s time_by_score\n', name);
         min_x = 0;%max(min(time)-1, 0);
-        max_x = max(time) * 2;
+        max_x = time_max * 1.5; %max(time) * 2;
         z = linspace(min_x, max_x, 100)';
         [hyp_opt_time_by_score, time_by_score_m, time_by_score_sd] = gp_wrapper(time_by_score_function_type, time, score, z);
         fprintf('hyp_opt_time_by_score: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_time_by_score))));
         
+%         fh=figure;
+%         hold on;
+%         plot(time, score, 'bo');
+%         plot(linspace(min_x, max_x, 100), time_by_score_m);
+%         plot(linspace(min_x, max_x, 100), time_by_score_m + 2 * time_by_score_sd);
+%         plot(linspace(min_x, max_x, 100), time_by_score_m - 2 * time_by_score_sd);
+%         waitfor(fh);
 
         fprintf(fout, '%s\n', name);
         fprintf(fout, 'time_m: %s\n', num2str(time_m'));
         fprintf(fout, 'time_sd: %s\n', num2str(time_sd'));
         fprintf(fout, 'score_m: %s\n', num2str(score_m'));
         fprintf(fout, 'score_sd: %s\n', num2str(score_sd'));
-        fprintf(fout, 'time_by_score_x_lower: %f\n', min_x);
-        fprintf(fout, 'time_by_score_x_upper: %f\n', max_x);
+        %fprintf(fout, 'time_by_score_x_lower: %f\n', min_x);
+        %fprintf(fout, 'time_by_score_x_upper: %f\n', max_x);
         fprintf(fout, 'time_by_score_m: %s\n', num2str(time_by_score_m'));
         fprintf(fout, 'time_by_score_sd: %s\n', num2str(time_by_score_sd'));
         fprintf(fout, '\n');
@@ -112,7 +140,7 @@ fprintf(fout, 'next\n');
 if strcmp(next, 'STOP') || min_x >= 1.0
     fprintf(fout, 'STOP\n\n');
 else
-    fprintf(fout, '%s\n%f\n', next, (min_x + 0.1));
+    fprintf(fout, '%s\n%f\n', next, (min_x + 0.025));
 end
 
 fclose(fout);

@@ -16,14 +16,14 @@ if nargin < 5
     hyp.lik = log(1);
     switch function_type
         case 'linear'
-            hyp.cov = log([0.1 0.1]);
+            hyp.cov = log([1 1]);
         case 'exp'
-            hyp.cov = log([0.1 0.1 0.1 0.1]);
+            hyp.cov = log([1 1 1 1]);
     end
     
     % Slice optimisation
     nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, x, y); 
-    hyp_opt = hyps_vec_to_struct(slice_optimisation(nlmlfunc, hyps_struct_to_vec(hyp), 50));
+    hyp_opt = hyps_vec_to_struct(slice_optimisation_with_restarts(5, nlmlfunc, hyps_struct_to_vec(hyp), 200));
     
     % Gradient based optimisation
     % nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, x, y);

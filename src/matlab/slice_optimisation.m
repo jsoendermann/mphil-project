@@ -1,11 +1,18 @@
-function [x] = slice_optimisation(f, x, iterations, width)
+function [x, y] = slice_optimisation(f, x, iterations, width, return_when_flat)
 
 % startup stuff
 D = numel(x);
-y = f(x);
-initial_y = y;
+try
+    y = f(x);
+catch
+	y = intmax;
+    fprintf(' cholesky error!\n');
+	return
+end
+Y = nan(iterations, 1);
 if nargin<3, iterations = 100; end
 if nargin<4, width = 1; end
+if nargin<5, return_when_flat = true; end
 
 %fprintf('Optimising: %7.2f', y);
 fprintf('Optimising: %.2f', y);
@@ -30,7 +37,13 @@ for i = 1:iterations
 
         for j = 1:15
             xprime(dim) = rand() * (x_r(dim) - x_l(dim)) + x_l(dim);
-            y_new = f(xprime);
+            try
+                y_new = f(xprime);
+            catch
+                y = intmax;
+                fprintf(' cholesky error!\n');
+                return
+            end
             
             if y_new < y
                 y = y_new;
@@ -47,9 +60,18 @@ for i = 1:iterations
             end
         end
     end
+    
+    Y(i) = y;
+    
+    if i > 5 && return_when_flat
+        if abs(y - Y(i - 5)) < 0.01
+            fprintf(' flat. Returning %f\n', y);
+            return
+        end
+    end
 end
 
-%fprintf('\n(%.2f -> %.2f)\n', initial_y, y);
+%fprintf('\n(%.2f -> %.2f)\n', Y(1), y);
 fprintf('\n');
 
 
