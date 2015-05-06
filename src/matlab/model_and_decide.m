@@ -14,9 +14,9 @@ addpath([mydir,'util']);
 
 fin = fopen(strcat(VAR_DIR, IN_FILENAME));
 
-fgetl(fin); % TODO check that this is == 'time_max'
-time_max = eval(fgetl(fin));
-fgetl(fin);
+% fgetl(fin); % TODO check that this is == 'time_max'
+% time_max = eval(fgetl(fin));
+% fgetl(fin);
 
 delete(strcat(VAR_DIR, OUT_FILENAME));
 fout = fopen(strcat(VAR_DIR, OUT_FILENAME), 'w');
@@ -44,8 +44,8 @@ for i = 1:intmax
         fprintf(fout, 'score_sd: %s\n', num2str(zeros(1,100)));
         %fprintf(fout, 'time_by_score_x_lower: 0\n');
         %fprintf(fout, 'time_by_score_x_upper: 1\n');
-        fprintf(fout, 'time_by_score_m: %s\n', num2str(zeros(1,100)));
-        fprintf(fout, 'time_by_score_sd: %s\n', num2str(zeros(1,100)));
+%         fprintf(fout, 'time_by_score_m: %s\n', num2str(zeros(1,100)));
+%         fprintf(fout, 'time_by_score_sd: %s\n', num2str(zeros(1,100)));
         fprintf(fout, '\n');
         fgetl(fin);
     else
@@ -89,11 +89,11 @@ for i = 1:intmax
 %         waitfor(fh);
         
         %fprintf('%s time_by_score\n', name);
-        min_x = 0;%max(min(time)-1, 0);
-        max_x = time_max * 1.5; %max(time) * 2;
-        z = linspace(min_x, max_x, 100)';
-        [hyp_opt_time_by_score, time_by_score_m, time_by_score_sd] = gp_wrapper(time_by_score_function_type, time, score, z);
-        fprintf('hyp_opt_time_by_score: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_time_by_score))));
+%         min_x = 0;%max(min(time)-1, 0);
+%         max_x = time_max * 1.5; %max(time) * 2;
+%         z = linspace(min_x, max_x, 100)';
+%         [hyp_opt_time_by_score, time_by_score_m, time_by_score_sd] = gp_wrapper(time_by_score_function_type, time, score, z);
+%         fprintf('hyp_opt_time_by_score: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_time_by_score))));
         
 %         fh=figure;
 %         hold on;
@@ -110,8 +110,8 @@ for i = 1:intmax
         fprintf(fout, 'score_sd: %s\n', num2str(score_sd'));
         %fprintf(fout, 'time_by_score_x_lower: %f\n', min_x);
         %fprintf(fout, 'time_by_score_x_upper: %f\n', max_x);
-        fprintf(fout, 'time_by_score_m: %s\n', num2str(time_by_score_m'));
-        fprintf(fout, 'time_by_score_sd: %s\n', num2str(time_by_score_sd'));
+%         fprintf(fout, 'time_by_score_m: %s\n', num2str(time_by_score_m'));
+%         fprintf(fout, 'time_by_score_sd: %s\n', num2str(time_by_score_sd'));
         fprintf(fout, '\n');
         fgetl(fin);
     end

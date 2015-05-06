@@ -49,12 +49,12 @@ class Model:
     def twice_std_dev_below(self):
         return self.mean - 2 * self.std_dev
 
-def max_time_value(data):
-    time_max = 0.01
-    for _, datapoints in data.items():
-        for datum in datapoints:
-            time_max = max(time_max, datum.time)
-    return time_max
+#def max_time_value(data):
+    #time_max = 0.01
+    #for _, datapoints in data.items():
+        #for datum in datapoints:
+            #time_max = max(time_max, datum.time)
+    #return time_max
 
 def max_score_value(data):
     score_max = 0
@@ -70,9 +70,9 @@ def write_data_to_file(data):
         remove(filename)
     
     with open(filename, 'a') as f:
-        f.write('time_max\n')
-        f.write(str(max_time_value(data)))
-        f.write('\n\n')
+        #f.write('time_max\n')
+        #f.write(str(max_time_value(data)))
+        #f.write('\n\n')
 
         for name, datapoints in data.items():
             f.write(name + '\n')
@@ -122,8 +122,8 @@ def read_model_and_decision_file(data):
             score_sd_raw = lines[i + 4]
             #time_by_score_x_lower_raw = lines[i + 5]
             #time_by_score_x_upper_raw = lines[i + 6]
-            time_by_score_m_raw = lines[i + 5]
-            time_by_score_sd_raw = lines[i + 6]
+            #time_by_score_m_raw = lines[i + 5]
+            #time_by_score_sd_raw = lines[i + 6]
 
             time_m_str = time_m_raw[len('time_m: '):]
             time_sd_str = time_sd_raw[len('time_sd: '):]
@@ -131,8 +131,8 @@ def read_model_and_decision_file(data):
             score_sd_str = score_sd_raw[len('score_sd: '):]
             #time_by_score_x_lower_str = time_by_score_x_lower_raw[len('time_by_score_x_lower: '):]
             #time_by_score_x_upper_str = time_by_score_x_upper_raw[len('time_by_score_x_upper: '):]
-            time_by_score_m_str = time_by_score_m_raw[len('time_by_score_m: '):]
-            time_by_score_sd_str = time_by_score_sd_raw[len('time_by_score_sd: '):]
+            #time_by_score_m_str = time_by_score_m_raw[len('time_by_score_m: '):]
+            #time_by_score_sd_str = time_by_score_sd_raw[len('time_by_score_sd: '):]
         
 
             time_m = map(lambda s: float(s), time_m_str.split())
@@ -141,8 +141,8 @@ def read_model_and_decision_file(data):
             score_sd = map(lambda s: float(s), score_sd_str.split())
             #time_by_score_x_lower = float(time_by_score_x_lower_str)
             #time_by_score_x_upper = float(time_by_score_x_upper_str)
-            time_by_score_m = map(lambda s: float(s), time_by_score_m_str.split())
-            time_by_score_sd = map(lambda s: float(s), time_by_score_sd_str.split())
+            #time_by_score_m = map(lambda s: float(s), time_by_score_m_str.split())
+            #time_by_score_sd = map(lambda s: float(s), time_by_score_sd_str.split())
 
             #times = [d.time for d in data[name]]
             #if times:
@@ -152,16 +152,15 @@ def read_model_and_decision_file(data):
                 #times_lower = 0
                 #times_upper = 1
             models[name] = {'time': Model(0, 1, time_m, time_sd), 
-                            'score': Model(0, 1, score_m, score_sd), 
-                            'time_by_score': Model(0, max_time_value(data) * 1.5, time_by_score_m, time_by_score_sd)}
+                            'score': Model(0, 1, score_m, score_sd)}
+                            #'time_by_score': Model(0, max_time_value(data) * 1.5, time_by_score_m, time_by_score_sd)}
 
-            i += 8
+            i += 6
 
 
-def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax3, ax_highest_score):
+def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax_highest_score):
     ax_time.cla()
     ax_score.cla()
-    ax3.cla()
     ax_highest_score.cla()
 
     for name, datapoints in data.items():
@@ -171,12 +170,11 @@ def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_
 
         ax_time.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
         ax_score.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
-        ax3.plot(times, scores, ALGORITHMS[name]['single_letter']+'o')
 
     for name, models in models.items():
         model_time = models['time']
         model_score = models['score']
-        model_time_by_score = models['time_by_score']
+        #model_time_by_score = models['time_by_score']
 
         if model_time:
             ax_time.plot(model_time.x(), model_time.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
@@ -191,15 +189,6 @@ def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_
             ax_score.fill_between(model_score.x(), 
                              model_score.twice_std_dev_below(), 
                              model_score.twice_std_dev_above(), 
-                             facecolor=ALGORITHMS[name]['full_name'], 
-                             alpha=0.1, 
-                             interpolate=True)
-
-        if model_time_by_score:
-            ax3.plot(model_time_by_score.x(), model_time_by_score.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
-            ax3.fill_between(model_time_by_score.x(), 
-                             model_time_by_score.twice_std_dev_below(), 
-                             model_time_by_score.twice_std_dev_above(), 
                              facecolor=ALGORITHMS[name]['full_name'], 
                              alpha=0.1, 
                              interpolate=True)
@@ -243,10 +232,10 @@ def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_
     ax_score.set_ylabel('Score')
     ax_score.set_ylim(scores_bounds)
 
-    ax3.set_xlabel('Time')
-    ax3.set_ylabel('Score')
-    ax3.set_xlim(0, max_time_value(data) * 1.5)
-    ax3.set_ylim(scores_bounds)
+    #ax3.set_xlabel('Time')
+    #ax3.set_ylabel('Score')
+    #ax3.set_xlim(0, max_time_value(data) * 1.5)
+    #ax3.set_ylim(scores_bounds)
 
     ax_highest_score.set_xlabel('Cumulative time')
     ax_highest_score.set_ylabel('Highest score')
@@ -276,23 +265,23 @@ for name, _ in ALGORITHMS.items():
 
 # Set up plot
 plt.ion()
-fig = plt.figure(1, figsize=(12, 6), dpi=80)
+fig = plt.figure(1, figsize=(8, 12), dpi=80)
 
 # Times
-ax_time = plt.subplot(411)
+ax_time = plt.subplot(311)
 plt.xlim(0, 1)
 #plt.ylim(0, None)
 
 # Scores
-ax_score = plt.subplot(412)
+ax_score = plt.subplot(312)
 plt.xlim(0, 1)
 #plt.ylim(0, 1)
 
-ax3 = plt.subplot(413)
-plt.xlim(0, None)
+#ax3 = plt.subplot(413)
+#plt.xlim(0, None)
 #plt.ylim(0, 1)
 
-ax_highest_score = plt.subplot(414)
+ax_highest_score = plt.subplot(313)
 plt.xlim(0, None)
 
 
@@ -319,7 +308,7 @@ while True:
     name, next_x = read_model_and_decision_file(data)
 
     
-    update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax3, ax_highest_score)
+    update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax_highest_score)
 
     if name == 'STOP':
         raw_input("Press Enter to terminate...")
