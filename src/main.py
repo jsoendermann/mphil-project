@@ -8,8 +8,10 @@ from subprocess import call
 from argparse import ArgumentParser
 from data_handling.datasets import load_dataset, create_dataset
 from data_handling.utils import name_to_classifier_object
+import datetime
 
 VAR_DIR = '/Users/jan/Dropbox/mphil_project/repo/var/'
+FIG_DIR = '/Users/jan/Dropbox/mphil_project/repo/figs/'
 DATA_FILENAME = 'data.txt'
 # TODO change filename to models_and...
 MODEL_AND_DECISION_FILENAME = 'model_and_decision.txt'
@@ -245,6 +247,9 @@ def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_
         ax_highest_score.set_xlim(0, 1)
 
     plt.draw()
+
+    now = datetime.datetime.now()
+    plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(now.strftime('%Y-%m-%d-%H-%m-%S-%f')), format='pdf')
 
 
 
