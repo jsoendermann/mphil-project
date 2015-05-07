@@ -116,8 +116,20 @@
 \chapter{Design and Implementation} 
 
 \section{Modelling}
+1. modelling
+to model, two things are necessary: 1. appropriate kernel function, 2. inference
+for inference, we use optimisation
+- optimisation
+- 1d/2d
+
+to achieve what we want to achieve (@which is what? read proposal and michael jordan paper again@) the first ingredient is to be able to model param->score and param->time.
+
+show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
+
+time easy: linear (mention kernel)
+
 % TODO different names for these two subsections
-\subsection{Implementing an appropriate kernel}
+\subsection{Implementing an appropriate kernel to model @relationship between param & score@}
 \subsection{Adapting hyperparameters}
 
 % TODO for this subsection: show plots of likelihood function
@@ -140,13 +152,9 @@ After observing that restarting this algorithm with data for which it failed wit
 
 this produced satisfying results but took a long time to optimise. to cut down the run time, we added a final improvement by making the algorithm terminate early if y doesn't get updated in 5 successive iterations. this happens often and makes the algorithm fast. figure X shows pseudocode for this final version of the algorithm
 
-1. modelling
-to model, two things are necessary: 1. appropriate kernel function, 2. inference
-for inference, we use optimisation
-- optimisation
-- 1d/2d
+\section{Decider} % TODO different name
 
-2. decisions
+
 
 \chapter{Evaluation} 
 \section{Data sources}
