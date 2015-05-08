@@ -3,18 +3,18 @@ import matplotlib.pyplot as plt
 from data_handling.generate_data_for_config import generate_datum
 from os.path import isfile, join
 from os import remove
-from time import sleep
 from subprocess import call
 from argparse import ArgumentParser
 from data_handling.datasets import load_dataset, create_dataset
-from data_handling.utils import name_to_classifier_object
+from data_handling.utils import name_to_classifier_object, exp_incl_float_range
 import datetime
+from json import dumps, load
+from itertools import product
 
 VAR_DIR = '/Users/jan/Dropbox/mphil_project/repo/var/'
 FIG_DIR = '/Users/jan/Dropbox/mphil_project/repo/figs/'
-DATA_FILENAME = 'data.txt'
-# TODO change filename to models_and...
-MODEL_AND_DECISION_FILENAME = 'model_and_decision.txt'
+OUT_FILENAME = 'scheduler_data.json'
+IN_FILENAME = 'models_and_decision.json'
 MATLAB_EXECUTABLE = '/Applications/MATLAB_R2014b.app/bin/matlab'
 MATLAB_SCRIPT = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/model_and_decide.m'
 
@@ -23,6 +23,8 @@ ALGORITHMS = {
            'log_reg': {'single_letter': 'b', 'full_name': 'blue', 'params': {}}, 
            #'naive_bayes': {'single_letter': 'g', 'full_name': 'green', 'params': {}}
            }
+
+
 
 
 class Datum:
@@ -51,45 +53,168 @@ class Model:
     def twice_std_dev_below(self):
         return self.mean - 2 * self.std_dev
 
-#def max_time_value(data):
-    #time_max = 0.01
-    #for _, datapoints in data.items():
-        #for datum in datapoints:
-            #time_max = max(time_max, datum.time)
-    #return time_max
+class Scheduler:
+    def __init__(self, scheduler_name, type_):
+        self.scheduler_name = scheduler_name
+        self.type_ = type_
+        self.ax_time = None
+        self.ax_score = None
+        self.ax_time_by_score = None
 
-def max_score_value(data):
-    score_max = 0
-    for _, datapoints in data.items():
-        for datum in datapoints:
-            score_max = max(score_max, datum.score)
-    return score_max
+        self.data = {}
+        self.models = {}
 
-def write_data_to_file(data):
-    filename = join(VAR_DIR, DATA_FILENAME)
+        self.cumulative_time = [0]
+        self.highest_scores = [0]
 
-    if isfile(filename):
-        remove(filename)
-    
-    with open(filename, 'a') as f:
-        #f.write('time_max\n')
-        #f.write(str(max_time_value(data)))
-        #f.write('\n\n')
+        self.decision = None
 
-        for name, datapoints in data.items():
-            f.write(name + '\n')
-            
-            xs_str = [str(d.x) for d in datapoints]
-            times_str = [str(d.time) for d in datapoints]
-            scores_str = [str(d.score) for d in datapoints]
+        for name, _ in ALGORITHMS.items():
+            self.data[name] = []
+            self.models[name] = {'time': None, 'score': None}
 
-            
-            f.write('[{}] % xs\n'.format(' '.join(xs_str)))
-            f.write('[{}] % times\n'.format(' '.join(times_str)))
-            f.write('[{}] % scores\n'.format(' '.join(scores_str)))
+        self.scheduler_specific = {}
 
-            f.write('\n')
-            
+
+    def write_to_file(self):
+        res = {'type': self.type_, 'scheduler_specific': self.scheduler_specific}
+        out_data = []
+        for name, datapoints in self.data.items():
+            x_percent_data = [d.x for d in datapoints]
+            y_times = [d.time for d in datapoints]
+            y_scores = [d.score for d in datapoints]
+            out_data.append({'algorithm': name, 'x_percent_data': x_percent_data, 'y_times': y_times, 'y_scores': y_scores})
+        res['data'] = out_data
+
+        filename = join(VAR_DIR, OUT_FILENAME)
+        if isfile(filename):
+            remove(filename)
+        with open(filename, 'a') as f:
+            f.write(dumps(res))
+                    
+    def load_models_and_decision(self): 
+        filename = join(VAR_DIR, IN_FILENAME)
+
+        with open(filename) as f:
+            D = load(f)
+
+        for model_data in D['models']:
+            time_model = Model(0, 1, model_data['time']['m'], model_data['time']['sd'])
+            score_model = Model(0, 1, model_data['score']['m'], model_data['score']['sd'])
+            self.models[model_data['algorithm']] = {'time': time_model, 'score': score_model}
+
+        self.decision = D['decision']
+        
+
+    def execute_decision(self):
+        if not self.decision or self.decision['stop']:
+            return
+        else:
+            next_algorithm = self.decision['next_algorithm']
+            next_x = self.decision['next_x']
+            elapsed_time, avg_score = generate_datum(dataset, 
+                                                     name_to_classifier_object(next_algorithm), 
+                                                     next_x, 
+                                                     ALGORITHMS[next_algorithm]['params'])
+            self.data[next_algorithm].append(Datum(next_x, elapsed_time, avg_score))
+            self.cumulative_time.append(self.cumulative_time[len(self.cumulative_time)-1] + elapsed_time)
+            self.highest_scores.append(max(self.highest_scores + [avg_score]))
+
+
+    def draw_data_and_models(self, plt):
+        self.ax_time.cla()
+        self.ax_score.cla()
+        self.ax_time_by_score.cla()
+
+        for name, datapoints in self.data.items():
+            xs = [d.x for d in datapoints]
+            times = [d.time for d in datapoints]
+            scores = [d.score for d in datapoints]
+
+            self.ax_time.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
+            self.ax_score.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
+ 
+        for name, models in self.models.items():
+            model_time = models['time']
+            model_score = models['score']
+
+            if model_time:
+                self.ax_time.plot(model_time.x(), model_time.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
+                self.ax_time.fill_between(model_time.x(), 
+                                 model_time.twice_std_dev_below(), 
+                                 model_time.twice_std_dev_above(), 
+                                 facecolor=ALGORITHMS[name]['full_name'], 
+                                 alpha=0.1, 
+                                 interpolate=True)
+            if model_score:
+                self.ax_score.plot(model_score.x(), model_score.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
+                self.ax_score.fill_between(model_score.x(), 
+                                 model_score.twice_std_dev_below(), 
+                                 model_score.twice_std_dev_above(), 
+                                 facecolor=ALGORITHMS[name]['full_name'], 
+                                 alpha=0.1, 
+                                 interpolate=True)
+
+            if model_time and model_score:
+                self.ax_time_by_score.plot(model_time.mean, model_score.mean, ALGORITHMS[name]['single_letter']+'.')
+                self.ax_time_by_score.set_xlabel('Time')
+                self.ax_time_by_score.set_ylabel('Score')
+                self.ax_time_by_score.set_xlim(max(0, min(model_score.mean)), None)
+
+        time_y_lim = [10e5, 0]
+        score_y_lim = [10e5, 0]
+        for _, datapoints in self.data.items():
+            for datum in datapoints:
+                time_y_lim[0] = min(time_y_lim[0], datum.time)
+                time_y_lim[1] = max(time_y_lim[1], datum.time)
+                score_y_lim[0] = min(score_y_lim[0], datum.score)
+                score_y_lim[1] = max(score_y_lim[1], datum.score)
+        if time_y_lim[0] > 10e4:
+            time_y_lim = [0, 1]
+        if score_y_lim[0] > 10e4:
+            score_y_lim = [0, 1]
+
+        time_d = time_y_lim[1] - time_y_lim[0]
+        if time_d == 0:
+            time_d = 0.1
+        score_d = score_y_lim[1] - score_y_lim[0]
+        if score_d == 0:
+            score_d = 0.1
+        
+        ZOOM = 0.5
+        time_y_lim[0] -= time_d * ZOOM
+        time_y_lim[1] += time_d * ZOOM
+        score_y_lim[0] -= score_d * ZOOM
+        score_y_lim[1] += score_d * ZOOM
+        
+        
+        self.ax_time.set_xlabel('% of data used')
+        self.ax_time.set_ylabel('Time')
+        self.ax_time.set_ylim(max(time_y_lim[0], 0), time_y_lim[1])
+        
+        self.ax_score.set_title(self.scheduler_name)
+        self.ax_score.set_xlabel('% of data used')
+        self.ax_score.set_ylabel('Score')
+        self.ax_score.set_ylim(score_y_lim)
+
+        
+        #self.ax_time_by_score.set_ylim(0, 1)
+
+
+        plt.draw()
+         
+class FixedSequenceScheduler(Scheduler):
+    def __init__(self, scheduler_name, sequence):
+        Scheduler.__init__(self, scheduler_name, 'fixed')
+        algorithms = ALGORITHMS.keys()
+
+        self.scheduler_specific = {'sequence': list(product(sequence, algorithms)), 'sequence_index': 0}
+                
+    def load_models_and_decision(self):
+        Scheduler.load_models_and_decision(self)
+        self.scheduler_specific['sequence_index'] += 1
+
+
 def call_matlab_script():
     call([MATLAB_EXECUTABLE,
           "-nodisplay", 
@@ -98,200 +223,13 @@ def call_matlab_script():
           "-r", 
           "run('{}'); exit();".format(MATLAB_SCRIPT)])
 
-def read_model_and_decision_file(data):
-    filename = join(VAR_DIR, MODEL_AND_DECISION_FILENAME)
-
-    with open(filename) as f:
-        lines = f.readlines()
-        lines = map(lambda l: l.strip(), lines)
-
-    new_models = {}
-
-    i = 0
-    while True:
-        if lines[i] == 'next':
-            name = lines[i + 1]
-            if name == 'STOP':
-                return (name, None)
-            new_x = float(lines[i + 2])
-            return (name, new_x)
-        else:
-            #print(lines[i])
-            name = lines[i]
-            time_m_raw = lines[i + 1]
-            time_sd_raw = lines[i + 2]
-            score_m_raw = lines[i + 3]
-            score_sd_raw = lines[i + 4]
-            #time_by_score_x_lower_raw = lines[i + 5]
-            #time_by_score_x_upper_raw = lines[i + 6]
-            #time_by_score_m_raw = lines[i + 5]
-            #time_by_score_sd_raw = lines[i + 6]
-
-            time_m_str = time_m_raw[len('time_m: '):]
-            time_sd_str = time_sd_raw[len('time_sd: '):]
-            score_m_str = score_m_raw[len('score_m: '):]
-            score_sd_str = score_sd_raw[len('score_sd: '):]
-            #time_by_score_x_lower_str = time_by_score_x_lower_raw[len('time_by_score_x_lower: '):]
-            #time_by_score_x_upper_str = time_by_score_x_upper_raw[len('time_by_score_x_upper: '):]
-            #time_by_score_m_str = time_by_score_m_raw[len('time_by_score_m: '):]
-            #time_by_score_sd_str = time_by_score_sd_raw[len('time_by_score_sd: '):]
-        
-
-            time_m = map(lambda s: float(s), time_m_str.split())
-            time_sd = map(lambda s: float(s), time_sd_str.split())
-            score_m = map(lambda s: float(s), score_m_str.split())
-            score_sd = map(lambda s: float(s), score_sd_str.split())
-            #time_by_score_x_lower = float(time_by_score_x_lower_str)
-            #time_by_score_x_upper = float(time_by_score_x_upper_str)
-            #time_by_score_m = map(lambda s: float(s), time_by_score_m_str.split())
-            #time_by_score_sd = map(lambda s: float(s), time_by_score_sd_str.split())
-
-            #times = [d.time for d in data[name]]
-            #if times:
-                #times_lower = min(times) - 1
-                #times_upper = max(times) + 1
-            #else:
-                #times_lower = 0
-                #times_upper = 1
-            models[name] = {'time': Model(0, 1, time_m, time_sd), 
-                            'score': Model(0, 1, score_m, score_sd)}
-                            #'time_by_score': Model(0, max_time_value(data) * 1.5, time_by_score_m, time_by_score_sd)}
-
-            i += 6
-
-
-def update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax_highest_score):
-    ax_time.cla()
-    ax_score.cla()
-    ax_highest_score.cla()
-
-    for name, datapoints in data.items():
-        xs = [d.x for d in datapoints]
-        times = [d.time for d in datapoints]
-        scores = [d.score for d in datapoints]
-
-        ax_time.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
-        ax_score.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
-
-    for name, models in models.items():
-        model_time = models['time']
-        model_score = models['score']
-        #model_time_by_score = models['time_by_score']
-
-        if model_time:
-            ax_time.plot(model_time.x(), model_time.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
-            ax_time.fill_between(model_time.x(), 
-                             model_time.twice_std_dev_below(), 
-                             model_time.twice_std_dev_above(), 
-                             facecolor=ALGORITHMS[name]['full_name'], 
-                             alpha=0.1, 
-                             interpolate=True)
-        if model_score:
-            ax_score.plot(model_score.x(), model_score.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
-            ax_score.fill_between(model_score.x(), 
-                             model_score.twice_std_dev_below(), 
-                             model_score.twice_std_dev_above(), 
-                             facecolor=ALGORITHMS[name]['full_name'], 
-                             alpha=0.1, 
-                             interpolate=True)
-
-    ax_highest_score.plot(cumulative_time, highest_scores, 'k-')
-
+def update_highest_score_fig(schedulers, plt, ax):
+    ax.cla()
+    for scheduler in schedulers:
+        ax.plot(scheduler.cumulative_time, scheduler.highest_scores, '-', label=scheduler.scheduler_name)
     
-    time_bounds = [10e5, 0]
-    # TODO remove plural s
-    scores_bounds = [10e5, 0]
-    for _, datapoints in data.items():
-        for datum in datapoints:
-            time_bounds[0] = min(time_bounds[0], datum.time)
-            time_bounds[1] = max(time_bounds[1], datum.time)
-            scores_bounds[0] = min(scores_bounds[0], datum.score)
-            scores_bounds[1] = max(scores_bounds[1], datum.score)
-    if time_bounds[0] > 10e4:
-        time_bounds = [0, 1]
-    if scores_bounds[0] > 10e4:
-        scores_bounds = [0, 1]
-
-    time_d = time_bounds[1] - time_bounds[0]
-    if time_d == 0:
-        time_d = 0.1
-    scores_d = scores_bounds[1] - scores_bounds[0]
-    if scores_d == 0:
-        scores_d = 0.1
-    
-    ZOOM = 0.5
-    time_bounds[0] -= time_d * ZOOM
-    time_bounds[1] += time_d * ZOOM
-    scores_bounds[0] -= scores_d * ZOOM
-    scores_bounds[1] += scores_d * ZOOM
-    
-    
-    ax_time.set_xlabel('% of data used')
-    ax_time.set_ylabel('Time')
-    ax_time.set_ylim(time_bounds)
-    
-    ax_score.set_xlabel('% of data used')
-    ax_score.set_ylabel('Score')
-    ax_score.set_ylim(scores_bounds)
-
-    #ax3.set_xlabel('Time')
-    #ax3.set_ylabel('Score')
-    #ax3.set_xlim(0, max_time_value(data) * 1.5)
-    #ax3.set_ylim(scores_bounds)
-
-    ax_highest_score.set_xlabel('Cumulative time')
-    ax_highest_score.set_ylabel('Highest score')
-    if cumulative_time:
-        ax_highest_score.set_xlim(0, cumulative_time[len(cumulative_time)-1] * 1.1)
-    else:
-        ax_highest_score.set_xlim(0, 1)
-
+    plt.legend(loc=4)
     plt.draw()
-
-    now = datetime.datetime.now()
-    plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(now.strftime('%Y-%m-%d-%H-%m-%S-%f')), format='pdf')
-
-
-
-data = {}
-models = {}
-for name, _ in ALGORITHMS.items():
-    data[name] = []
-    models[name] = {'time': None, 'score': None}
-
-
-#data = {'rnd_forest': [], 'log_reg': [], 'naive_bayes': []}
-#models = {'rnd_forest': {'time': None, 'score': None}, 
-          #'log_reg': {'time': None, 'score': None},
-          #'naive_bayes': {'time': None, 'score': None}}
-
-#params = {'rnd_forest': {}, 'log_reg': {}, 'naive_bayes': {}}
-
-
-# Set up plot
-plt.ion()
-fig = plt.figure(1, figsize=(8, 12), dpi=80)
-
-# Times
-ax_time = plt.subplot(311)
-plt.xlim(0, 1)
-#plt.ylim(0, None)
-
-# Scores
-ax_score = plt.subplot(312)
-plt.xlim(0, 1)
-#plt.ylim(0, 1)
-
-#ax3 = plt.subplot(413)
-#plt.xlim(0, None)
-#plt.ylim(0, 1)
-
-ax_highest_score = plt.subplot(313)
-plt.xlim(0, None)
-
-
-fig.subplots_adjust(hspace=0.5)
-plt.draw()
 
 parser = ArgumentParser(description='Collect data')
 group = parser.add_mutually_exclusive_group(required=True)
@@ -304,26 +242,60 @@ if args.synthetic:
 elif args.load_arff:
     dataset = load_dataset({'name': args.load_arff})
 
-cumulative_time = [0]
-highest_scores = [0]
+
+
+schedulers = [FixedSequenceScheduler('fixed_linear', [0.05 + x/20.0 for x in range(20)]), 
+        FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 20, 1.0, 1.1))]
+n_schedulers = len(schedulers)
+
+
+# Set up plot
+plt.ion()
+fig = plt.figure(1, figsize=(15, 12), dpi=80)
+
+ax_counter = 1
+for scheduler in schedulers:
+    # Time
+    ax_time = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    plt.xlim(0, 1)
+    ax_counter += 1
+
+    # Score
+    ax_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    plt.xlim(0, 1)
+    ax_counter += 1
+
+    # Time by score
+    ax_time_by_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    plt.xlim(0, 1)
+    ax_counter += 1
+
+
+    scheduler.ax_time = ax_time
+    scheduler.ax_score = ax_score
+    scheduler.ax_time_by_score = ax_time_by_score
+
+
+ax_highest_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+#plt.xlim(0, None)
+
+
+fig.subplots_adjust(hspace=0.35)
+plt.draw()
+
+
 while True:
-    write_data_to_file(data)
-    call_matlab_script()
+    for scheduler in schedulers:
+        scheduler.write_to_file()
+        call_matlab_script()
+        scheduler.load_models_and_decision()
+
+        scheduler.draw_data_and_models(plt)
+    update_highest_score_fig(schedulers, plt, ax_highest_score)
+
+    now = datetime.datetime.now()
+    plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(now.strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
     
-    name, next_x = read_model_and_decision_file(data)
-
-    
-    update_plot(data, models, cumulative_time, highest_scores, plt, ax_time, ax_score, ax_highest_score)
-
-    if name == 'STOP':
-        raw_input("Press Enter to terminate...")
-
-    print('Running {}...'.format(name))
-    elapsed_time, avg_score = generate_datum(dataset, name_to_classifier_object(name), next_x, ALGORITHMS[name]['params'])
-    data[name].append(Datum(next_x, elapsed_time, avg_score))
-    
-    highest_scores.append(max_score_value(data))
-    cumulative_time.append(elapsed_time + cumulative_time[len(cumulative_time)-1])
-
-   # update_plot(data, models, plt, ax_time, ax_score)
+    for scheduler in schedulers:
+        scheduler.execute_decision()
 

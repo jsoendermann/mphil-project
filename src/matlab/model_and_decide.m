@@ -1,151 +1,93 @@
-%try
 VAR_DIR = '/Users/jan/Dropbox/mphil_project/repo/var/';
 GPML_DIR = '/Users/jan/Dropbox/mphil_project/gpml-matlab-v3.5-2014-12-08/';
-IN_FILENAME = 'data.txt';
-OUT_FILENAME = 'model_and_decision.txt';
+JSONLAB_DIR = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/jsonlab/';
+IN_FILENAME = 'scheduler_data.json';
+OUT_FILENAME = 'models_and_decision.json';
 
+% Add all the necessary dirs do the path
 run(strcat(GPML_DIR, 'startup.m'));
-
+addpath(JSONLAB_DIR);
 me = mfilename;                                            % what is my filename
 mydir = which(me); 
 mydir = mydir(1:end-2-numel(me));        % where am I located
 addpath(mydir(1:end-1));
 addpath([mydir,'util']);
 
-fin = fopen(strcat(VAR_DIR, IN_FILENAME));
+I = loadjson(strcat(VAR_DIR, IN_FILENAME));
 
-% fgetl(fin); % TODO check that this is == 'time_max'
-% time_max = eval(fgetl(fin));
-% fgetl(fin);
+O = struct();
+O.models = {};
 
-delete(strcat(VAR_DIR, OUT_FILENAME));
-fout = fopen(strcat(VAR_DIR, OUT_FILENAME), 'w');
-
-D = {};
-
-for i = 1:intmax
-    name = fgetl(fin);
-    if isempty(name) || ~ischar(name)
-        break;
+for i = 1:length(I.data)
+    
+    D = I.data{i};
+    
+    disp(D.algorithm);
+    
+    switch D.algorithm
+        case {'log_reg', 'rnd_forest', 'naive_bayes'}
+            time_function_type = 'linear';
+            score_function_type = 'exp';
     end
-  
-    x = eval(fgetl(fin))';
-    time = eval(fgetl(fin))';
-    score = eval(fgetl(fin))';
-    % TODO check that all vectors are of the same length
+
+    x_percent_data = D.x_percent_data';
+    y_times = D.y_times';
+    y_scores = D.y_scores';
     
-    D{i} = {name, x, time, score};
-    
-    if isempty(x)
-        fprintf(fout, '%s\n', name);
-        fprintf(fout, 'time_m: %s\n', num2str(zeros(1,100)));
-        fprintf(fout, 'time_sd: %s\n', num2str(zeros(1,100)));
-        fprintf(fout, 'score_m: %s\n', num2str(zeros(1,100)));
-        fprintf(fout, 'score_sd: %s\n', num2str(zeros(1,100)));
-        %fprintf(fout, 'time_by_score_x_lower: 0\n');
-        %fprintf(fout, 'time_by_score_x_upper: 1\n');
-%         fprintf(fout, 'time_by_score_m: %s\n', num2str(zeros(1,100)));
-%         fprintf(fout, 'time_by_score_sd: %s\n', num2str(zeros(1,100)));
-        fprintf(fout, '\n');
-        fgetl(fin);
+    if isempty(x_percent_data)
+        time_m = zeros(100, 1);
+        time_sd = zeros(100, 1);
+        score_m = zeros(100, 1);
+        score_sd = zeros(100, 1);
     else
-        switch name
-            case 'log_reg'
-                time_function_type = 'linear';
-                score_function_type = 'exp';
-                time_by_score_function_type = 'exp';
-            case 'rnd_forest'
-                time_function_type = 'linear';
-                score_function_type = 'exp';
-                time_by_score_function_type = 'exp';
-            case 'naive_bayes'
-                time_function_type = 'linear';
-                score_function_type = 'exp';  
-                time_by_score_function_type = 'exp';
+        [~, time_m, time_sd] = gp_wrapper(time_function_type, x_percent_data, y_times);
+        [~, score_m, score_sd] = gp_wrapper(score_function_type, x_percent_data, y_scores);
+    end
+    
+    M = struct();
+    M.algorithm = D.algorithm;
+    M.time = struct('m', time_m', 'sd', time_sd');
+    M.score = struct('m', score_m', 'sd', score_sd');
+    O.models{i} = M;
+end
+
+switch I.type
+    case 'fixed'
+        sequence = I.scheduler_specific.sequence;
+        sequence_index = I.scheduler_specific.sequence_index;
+        
+        sequence_index = sequence_index + 1;
+        if sequence_index > length(sequence)
+            stop = true;
+            next_algorithm = 'STOP';
+            next_x = -1;
+        else
+            stop = false;
+            next_algorithm = sequence{sequence_index}{2};
+            next_x = sequence{sequence_index}{1};
         end
-
-        %fprintf('%s time\n', name);
-        [hyp_opt_time, time_m, time_sd] = gp_wrapper(time_function_type, x, time);
-        fprintf('hyp_opt_time: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_time))));
-
-%         fh=figure;
-%         hold on;
-%         plot(x, time, 'bo');
-%         plot(linspace(0,1,100), time_m);
-%         plot(linspace(0,1,100), time_m + 2 * time_sd);
-%         plot(linspace(0,1,100), time_m - 2 * time_sd);
-%         waitfor(fh);
-
-        %fprintf('%s score\n', name);
-        [hyp_opt_score, score_m, score_sd] = gp_wrapper(score_function_type, x, score);
-        fprintf('hyp_opt_score: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_score))));
-        
-%         fh=figure;
-%         hold on;
-%         plot(x, score, 'bo');
-%         plot(linspace(0,1,100), score_m);
-%         plot(linspace(0,1,100), score_m + 2 * score_sd);
-%         plot(linspace(0,1,100), score_m - 2 * score_sd);
-%         waitfor(fh);
-        
-        %fprintf('%s time_by_score\n', name);
-%         min_x = 0;%max(min(time)-1, 0);
-%         max_x = time_max * 1.5; %max(time) * 2;
-%         z = linspace(min_x, max_x, 100)';
-%         [hyp_opt_time_by_score, time_by_score_m, time_by_score_sd] = gp_wrapper(time_by_score_function_type, time, score, z);
-%         fprintf('hyp_opt_time_by_score: %s\n', num2str(exp(hyps_struct_to_vec(hyp_opt_time_by_score))));
-        
-%         fh=figure;
-%         hold on;
-%         plot(time, score, 'bo');
-%         plot(linspace(min_x, max_x, 100), time_by_score_m);
-%         plot(linspace(min_x, max_x, 100), time_by_score_m + 2 * time_by_score_sd);
-%         plot(linspace(min_x, max_x, 100), time_by_score_m - 2 * time_by_score_sd);
-%         waitfor(fh);
-
-        fprintf(fout, '%s\n', name);
-        fprintf(fout, 'time_m: %s\n', num2str(time_m'));
-        fprintf(fout, 'time_sd: %s\n', num2str(time_sd'));
-        fprintf(fout, 'score_m: %s\n', num2str(score_m'));
-        fprintf(fout, 'score_sd: %s\n', num2str(score_sd'));
-        %fprintf(fout, 'time_by_score_x_lower: %f\n', min_x);
-        %fprintf(fout, 'time_by_score_x_upper: %f\n', max_x);
-%         fprintf(fout, 'time_by_score_m: %s\n', num2str(time_by_score_m'));
-%         fprintf(fout, 'time_by_score_sd: %s\n', num2str(time_by_score_sd'));
-        fprintf(fout, '\n');
-        fgetl(fin);
-    end
 end
+        
+%         next_algorithm = I.scheduler_specific.next_algorithm;
+%         
+%         for i = 1:length(I.data)
+%             D = I.data{i};
+%             if strcmp(D.algorithm, next_algorithm)
+%                 if isempty(D.x_percent_data)
+%                     next_x = 0.1;
+%                 else
+%                     next_x = max(D.x_percent_data) + 0.1;
+%                 end
+%                 
+%                 if next_x >= 1
+%                     stop = true;
+%                 else
+%                     stop = false;
+%                 end
+%             end
+%         end
+% end
 
-fclose(fin);
+O.decision = struct('stop', stop, 'next_algorithm', next_algorithm, 'next_x', next_x);
 
-next = 'STOP';
-min_x = 1;
-
-
-for i = 1:length(D)
-    d = D{i};
-    
-    if isempty((d{2}))
-        next = d{1};
-        min_x = 0.0;
-    elseif max(d{2}) < min_x
-        next = d{1};
-        min_x = max(d{2});
-    end
-end
-    
-
-fprintf(fout, 'next\n');
-if strcmp(next, 'STOP') || min_x >= 1.0
-    fprintf(fout, 'STOP\n\n');
-else
-    fprintf(fout, '%s\n%f\n', next, (min_x + 0.025));
-end
-
-fclose(fout);
-
-%catch
-    % TODO handle error
-    % exit;
-%end
+savejson('', O, strcat(VAR_DIR, OUT_FILENAME));
