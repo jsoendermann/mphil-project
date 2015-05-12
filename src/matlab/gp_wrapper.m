@@ -34,7 +34,6 @@ if nargin < 5
     % hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, x, y);
 end
 
-% TODO first or second pair of m, s2
 [~, ~, m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, x, y, z);
 
 sd = 2 .* sqrt(s2);

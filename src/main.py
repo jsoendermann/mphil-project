@@ -19,7 +19,7 @@ MATLAB_EXECUTABLE = '/Applications/MATLAB_R2014b.app/bin/matlab'
 MATLAB_SCRIPT = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/model_and_decide.m'
 
 ALGORITHMS = {
-           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 3}}, 
+           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 5}}, 
            'log_reg': {'single_letter': 'b', 'full_name': 'blue', 'params': {}}, 
            #'naive_bayes': {'single_letter': 'g', 'full_name': 'green', 'params': {}}
            }
@@ -104,6 +104,7 @@ class Scheduler:
             self.models[model_data['algorithm']] = {'time': time_model, 'score': score_model}
 
         self.decision = D['decision']
+        self.scheduler_specific = D['scheduler_specific']
         
 
     def execute_decision(self):
@@ -112,6 +113,10 @@ class Scheduler:
         else:
             next_algorithm = self.decision['next_algorithm']
             next_x = self.decision['next_x']
+
+            print self.decision
+
+            # TODO catch ValueError: The number of classes has to be greater than one.
             elapsed_time, avg_score = generate_datum(dataset, 
                                                      name_to_classifier_object(next_algorithm), 
                                                      next_x, 
@@ -156,10 +161,23 @@ class Scheduler:
                                  interpolate=True)
 
             if model_time and model_score:
-                self.ax_time_by_score.plot(model_time.mean, model_score.mean, ALGORITHMS[name]['single_letter']+'.')
+                epsilon = np.ones(100) * 0.0001
+                self.ax_time_by_score.plot(np.random.normal(model_time.mean, model_time.std_dev + epsilon), 
+                                           np.random.normal(model_score.mean, model_score.std_dev + epsilon), ALGORITHMS[name]['single_letter']+'.')
                 self.ax_time_by_score.set_xlabel('Time')
                 self.ax_time_by_score.set_ylabel('Score')
-                self.ax_time_by_score.set_xlim(max(0, min(model_score.mean)), None)
+
+
+        print self.scheduler_specific
+        if 'a' in self.scheduler_specific:
+            print len(self.scheduler_specific['a'])
+            if len(self.scheduler_specific['a']) > 10:
+                print "INSIDE IF"
+                self.ax_score.plot(np.linspace(0, 1, 100), self.scheduler_specific['a'][:100], 'k-')
+                self.ax_score.plot(np.linspace(0, 1, 100), self.scheduler_specific['a'][100:200], 'k-')
+                
+
+                
 
         time_y_lim = [10e5, 0]
         score_y_lim = [10e5, 0]
@@ -195,9 +213,13 @@ class Scheduler:
         self.ax_score.set_title(self.scheduler_name)
         self.ax_score.set_xlabel('% of data used')
         self.ax_score.set_ylabel('Score')
-        self.ax_score.set_ylim(score_y_lim)
+        self.ax_score.set_ylim(0,2)
+        #self.ax_score.set_ylim(score_y_lim)
 
-        
+        self.ax_time_by_score.set_xlim(0, None)
+        ylim = self.ax_time_by_score.get_ylim()
+        self.ax_time_by_score.set_ylim(max(0, ylim[0]), min(1, ylim[1]))
+
         #self.ax_time_by_score.set_ylim(0, 1)
 
 
@@ -206,13 +228,16 @@ class Scheduler:
 class FixedSequenceScheduler(Scheduler):
     def __init__(self, scheduler_name, sequence):
         Scheduler.__init__(self, scheduler_name, 'fixed')
-        algorithms = ALGORITHMS.keys()
 
+        algorithms = ALGORITHMS.keys()
         self.scheduler_specific = {'sequence': list(product(sequence, algorithms)), 'sequence_index': 0}
-                
-    def load_models_and_decision(self):
-        Scheduler.load_models_and_decision(self)
-        self.scheduler_specific['sequence_index'] += 1
+
+class ProbabilityOfImprovementScheduler(Scheduler):
+    def __init__(self, scheduler_name):
+        Scheduler.__init__(self, scheduler_name, 'probability_of_improvement')
+ 
+        algorithms = ALGORITHMS.keys()
+        self.scheduler_specific = {'burn_in_sequence': list(product([0.05, 0.075, 0.1, 0.2], algorithms)), 'burn_in_sequence_index': 0, 'a': None}
 
 
 def call_matlab_script():
@@ -244,8 +269,10 @@ elif args.load_arff:
 
 
 
-schedulers = [FixedSequenceScheduler('fixed_linear', [0.05 + x/20.0 for x in range(20)]), 
-        FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 20, 1.0, 1.1))]
+schedulers = [
+        ProbabilityOfImprovementScheduler('prob_of_impr'), 
+        #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
+        ]
 n_schedulers = len(schedulers)
 
 
@@ -267,7 +294,7 @@ for scheduler in schedulers:
 
     # Time by score
     ax_time_by_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
-    plt.xlim(0, 1)
+    #plt.xlim(0, 1)
     ax_counter += 1
 
 
@@ -277,6 +304,10 @@ for scheduler in schedulers:
 
 
 ax_highest_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+# TODO make this work
+ax_highest_score.set_xlabel('Cumulative time')
+ax_highest_score.set_ylabel('Highest score')
+
 #plt.xlim(0, None)
 
 
