@@ -22,7 +22,7 @@ hyp.lik = log(1);
 
 nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, xx, yy);
       
-hyp_opt = hyps_vec_to_struct(slice_optimisation_with_restarts(10, nlmlfunc, hyps_struct_to_vec(hyp), 200));
+hyp_opt = hyps_vec_to_struct(slice_optimisation_with_restarts(3, nlmlfunc, hyps_struct_to_vec(hyp), 200));
 
 %% Optimise using gradient based optimisation
 
@@ -39,6 +39,7 @@ nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, xx, yy)
 %% Plot 
 
 hold on;
+plot(xx, yy, 'ko');
 plot(zz, m);
 plot(zz, m + 2*sqrt(s2));
 plot(zz, m - 2*sqrt(s2));
