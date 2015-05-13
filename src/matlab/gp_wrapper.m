@@ -36,5 +36,5 @@ end
 
 [~, ~, m, s2] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, x, y, z);
 
-sd = 2 .* sqrt(s2);
+sd = sqrt(s2);
 end

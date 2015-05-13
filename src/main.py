@@ -7,9 +7,11 @@ from subprocess import call
 from argparse import ArgumentParser
 from data_handling.datasets import load_dataset, create_dataset
 from data_handling.utils import name_to_classifier_object, exp_incl_float_range
-import datetime
+from datetime import datetime
 from json import dumps, load
 from itertools import product
+from scipy.stats import norm
+from collections import defaultdict
 
 VAR_DIR = '/Users/jan/Dropbox/mphil_project/repo/var/'
 FIG_DIR = '/Users/jan/Dropbox/mphil_project/repo/figs/'
@@ -19,7 +21,7 @@ MATLAB_EXECUTABLE = '/Applications/MATLAB_R2014b.app/bin/matlab'
 MATLAB_SCRIPT = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/model.m'
 
 ALGORITHMS = {
-           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 5}}, 
+           #'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 15}}, 
            'log_reg': {'single_letter': 'b', 'full_name': 'blue', 'params': {}}, 
            #'naive_bayes': {'single_letter': 'g', 'full_name': 'green', 'params': {}}
            }
@@ -53,10 +55,9 @@ class Model:
     def twice_std_dev_below(self):
         return self.mean - 2 * self.std_dev
 
-class Scheduler:
-    def __init__(self, scheduler_name, type_):
+class Scheduler(object):
+    def __init__(self, scheduler_name):
         self.scheduler_name = scheduler_name
-        self.type_ = type_
 
         self.ax_time = None
         self.ax_score = None
@@ -94,7 +95,7 @@ class Scheduler:
         with open(filename) as f:
             D = load(f)
 
-        print D
+        #print D
 
         time_models = []
         for time_model_data in D['time_models']:
@@ -153,21 +154,39 @@ class Scheduler:
             score_models = models['score']
 
             for model in time_models:
-                self.ax_time.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
-                self.ax_time.fill_between(np.linspace(0, 1, 100), 
-                                 model.twice_std_dev_below(), 
+                self.ax_time.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.3)
+                self.ax_time.plot(np.linspace(0, 1, 100), 
                                  model.twice_std_dev_above(), 
-                                 facecolor=ALGORITHMS[name]['full_name'], 
-                                 alpha=0.1, 
-                                 interpolate=True)
+                                 ALGORITHMS[name]['single_letter']+':', 
+                                 alpha=0.15)
+                self.ax_time.plot(np.linspace(0, 1, 100), 
+                                 model.twice_std_dev_below(), 
+                                 ALGORITHMS[name]['single_letter']+':', 
+                                 alpha=0.15)
+
+                #self.ax_time.fill_between(np.linspace(0, 1, 100), 
+                                 #model.twice_std_dev_below(), 
+                                 #model.twice_std_dev_above(), 
+                                 #facecolor=ALGORITHMS[name]['full_name'], 
+                                 #alpha=0.05, 
+                                 #interpolate=True)
             for model in score_models:
-                self.ax_score.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.1)
-                self.ax_score.fill_between(np.linspace(0, 1, 100), 
-                                 model.twice_std_dev_below(), 
+                self.ax_score.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.3)
+                self.ax_score.plot(np.linspace(0, 1, 100), 
                                  model.twice_std_dev_above(), 
-                                 facecolor=ALGORITHMS[name]['full_name'], 
-                                 alpha=0.1, 
-                                 interpolate=True)
+                                 ALGORITHMS[name]['single_letter']+':', 
+                                 alpha=0.15)
+                self.ax_score.plot(np.linspace(0, 1, 100), 
+                                 model.twice_std_dev_below(), 
+                                 ALGORITHMS[name]['single_letter']+':', 
+                                 alpha=0.15)
+                
+                #self.ax_score.fill_between(np.linspace(0, 1, 100), 
+                                 #model.twice_std_dev_below(), 
+                                 #model.twice_std_dev_above(), 
+                                 #facecolor=ALGORITHMS[name]['full_name'], 
+                                 #alpha=0.05, 
+                                 #interpolate=True)
 
             # TODO put this back in
             #if model_time and model_score:
@@ -212,17 +231,19 @@ class Scheduler:
         self.ax_score.set_title(self.scheduler_name)
         self.ax_score.set_xlabel('% of data used')
         self.ax_score.set_ylabel('Score')
-        self.ax_score.set_ylim(score_y_lim)
+        #self.ax_score.set_ylim(score_y_lim)
+        self.ax_score.set_ylim(-0.01, 1)
 
         self.ax_time_by_score.set_xlim(0, None)
         ylim = self.ax_time_by_score.get_ylim()
         self.ax_time_by_score.set_ylim(max(0, ylim[0]), min(1, ylim[1]))
 
         plt.draw()
+
          
 class FixedSequenceScheduler(Scheduler):
     def __init__(self, scheduler_name, sequence):
-        Scheduler.__init__(self, scheduler_name, 'fixed')
+        Scheduler.__init__(self, scheduler_name)
 
         algorithms = ALGORITHMS.keys()
         self.sequence = list(product(sequence, algorithms))
@@ -236,17 +257,119 @@ class FixedSequenceScheduler(Scheduler):
             self.decision = (x, algorithm)
             self.sequence_index += 1
 
-
-
-#class ProbabilityOfImprovementScheduler(Scheduler):
-    #def __init__(self, scheduler_name):
-        #Scheduler.__init__(self, scheduler_name, 'probability_of_improvement')
+class ProbabilisticScheduler(Scheduler):
+    def __init__(self, scheduler_name, burn_in_percentages):
+        super(ProbabilisticScheduler, self).__init__(scheduler_name)
  
-        #algorithms = ALGORITHMS.keys()
-        #self.scheduler_specific = {'burn_in_sequence': list(product([0.05, 0.075, 0.1, 0.2], algorithms)), 'burn_in_sequence_index': 0, 'a': None}
+        algorithms = ALGORITHMS.keys()
+        self.burn_in_sequence = list(product(burn_in_percentages, algorithms))
+        self.burn_in_sequence_index = 0
 
-    #def decide(self):
-        #pass
+        self.acquisition_functions = defaultdict(list)
+
+    @staticmethod
+    def gamma(overall_best_score, mean, std_dev):
+        # add epsilon to avoid div by 0
+        return (mean - overall_best_score) / (std_dev + np.ones(100) * 0.0001)
+
+    def draw(self, plt):
+        super(ProbabilisticScheduler, self).draw(plt)
+
+        for algorithm, acquisition_function in self.truncated_average_acquisition_functions().items():
+            
+            xs, ys = acquisition_function
+            #print len(xs), len(ys)
+            self.ax_score.plot(xs, ys, ALGORITHMS[algorithm]['single_letter']+'--')
+
+        plt.draw()
+
+    def decide(self):
+        if self.burn_in_sequence_index < len(self.burn_in_sequence):
+            x, algorithm = self.burn_in_sequence[self.burn_in_sequence_index]
+            self.decision = (x, algorithm)
+            self.burn_in_sequence_index += 1
+        else:
+            truncated_average_acquisition_functions = self.truncated_average_acquisition_functions()
+
+            max_x = -1
+            max_a = -1
+            max_algorithm = None
+            for algorithm, acquisition_function in truncated_average_acquisition_functions.items():
+               
+                xs, ys = acquisition_function
+                if not xs:
+                    # We're already at 100% of data
+                    continue
+                m = max(ys)
+                if m > max_a:
+
+                    max_a = m
+                    max_x = xs[ys.argmax()]
+                    max_algorithm = algorithm
+            if max_algorithm:
+                self.decision = (max_x, max_algorithm)
+            else:
+                self.decision = None
+
+    def truncated_average_acquisition_functions(self):
+        res = {}
+        for algorithm, acquisition_functions in self.acquisition_functions.items():
+            c = 0
+            s = np.zeros(100)
+            for acquisition_function in acquisition_functions:
+                c += 1
+                s += acquisition_function
+            average_acquisition_function = s / c
+
+            # Truncate
+            max_x = 0
+            for datum in self.data[algorithm]:
+                max_x = max(datum.x, max_x)
+
+            #print max_x
+
+            xs = filter(lambda v: v > max_x, np.linspace(0, 1, 100))
+            #print len(xs), xs
+            if not xs:
+                truncated_average_acquisition_function = []
+            else:
+                truncated_average_acquisition_function = average_acquisition_function[-len(xs):]
+            #print len(truncated_average_acquisition_function), truncated_average_acquisition_function
+
+            res[algorithm] = (xs, truncated_average_acquisition_function)
+        return res
+
+    def model(self):
+        super(ProbabilisticScheduler, self).model()
+        
+        overall_best_score = 0
+        for _, datapoints in self.data.items():
+            for datum in datapoints:
+                overall_best_score = max(overall_best_score, datum.score)
+
+        self.acquisition_functions = defaultdict(list)
+        for algorithm, models_for_algorithm in self.models.items():
+            for score_model in models_for_algorithm['score']:
+                acquisition_function = ProbabilityOfImprovementScheduler.a(overall_best_score, score_model.mean, score_model.std_dev)
+                self.acquisition_functions[algorithm].append(acquisition_function)
+
+
+class ProbabilityOfImprovementScheduler(ProbabilisticScheduler):
+    @staticmethod
+    def a(overall_best_score, mean, std_dev):
+        return norm.cdf(ProbabilisticScheduler.gamma(overall_best_score, mean, std_dev))
+        
+class ExpectedImprovementScheduler(ProbabilisticScheduler):
+    @staticmethod
+    def a(overall_best_score, mean, std_dev):
+        pass
+                
+
+
+
+            
+            
+
 
 
 
@@ -274,8 +397,8 @@ elif args.load_arff:
 
 
 schedulers = [
-        #ProbabilityOfImprovementScheduler('prob_of_impr'), 
-        FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
+        ProbabilityOfImprovementScheduler('prob_of_impr', [0.01, 0.02, 0.04, 0.08]), 
+        #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
         ]
 n_schedulers = len(schedulers)
 
@@ -318,13 +441,23 @@ plt.draw()
 
 
 while True:
+    all_done = True
     for scheduler in schedulers:
         scheduler.decide()
-        scheduler.execute()
-        scheduler.model()
-        scheduler.draw(plt)
+        if scheduler.decision:
+            all_done = False
+            scheduler.execute()
+            scheduler.model()
+            scheduler.draw(plt)
+            plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
 
-    #update_highest_score_fig(schedulers, plt, ax_highest_score)
+    if all_done:
+        break
+
+        #scheduler.draw(plt)
+        #plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
 
     # TODO put this back in
-    #plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
+    #update_highest_score_fig(schedulers, plt, ax_highest_score)
+
+    
