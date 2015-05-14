@@ -26,7 +26,7 @@ bounds = [-inf, inf;
           -inf, inf;
           -inf, inf];
       
-fprintf('Sampling ');
+fprintf('Sampling');
 for i = 1:n_samples
     hyp_vec = slice_sample_max_bounded(1, 10, nlmlfunc_, hyp_vec, 0.25, true, 10, bounds);
     hyp_samples(:,i) = hyp_vec;
@@ -34,11 +34,19 @@ for i = 1:n_samples
 end
 fprintf('Done\n');
 
-
+hold on;
+plot(x, y, 'ko');
+    
 models = {};
 for i = 1:n_samples
     hyp_vec = hyp_samples(:,i);
     [~, ~, m, s2] = gp(hyps_vec_to_struct(hyp_vec), @infExact, meanfunc, covfunc, likfunc, x, y, z);
     models{i} = struct('m', m', 'sd', sqrt(s2)');
+    plot(z, m, 'r-');
 end
+    
+    
+%     plot(z, models{1}.m + 2 * models{1}.sd, 'r-');
+%     plot(z, models{1}.m - 2 * models{1}.sd, 'b-');
+
 end

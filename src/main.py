@@ -10,8 +10,9 @@ from data_handling.utils import name_to_classifier_object, exp_incl_float_range
 from datetime import datetime
 from json import dumps, load
 from itertools import product
-from scipy.stats import norm
+from scipy.stats import norm, truncnorm
 from collections import defaultdict
+from shutil import move
 
 VAR_DIR = '/Users/jan/Dropbox/mphil_project/repo/var/'
 FIG_DIR = '/Users/jan/Dropbox/mphil_project/repo/figs/'
@@ -21,7 +22,7 @@ MATLAB_EXECUTABLE = '/Applications/MATLAB_R2014b.app/bin/matlab'
 MATLAB_SCRIPT = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/model.m'
 
 ALGORITHMS = {
-           #'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 15}}, 
+           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 30}}, 
            'log_reg': {'single_letter': 'b', 'full_name': 'blue', 'params': {}}, 
            #'naive_bayes': {'single_letter': 'g', 'full_name': 'green', 'params': {}}
            }
@@ -64,7 +65,7 @@ class Scheduler(object):
         self.ax_time_by_score = None
 
         self.data = {}
-        self.models = {}
+        self.models = None
 
         self.cumulative_time = [0]
         self.highest_scores = [0]
@@ -73,7 +74,13 @@ class Scheduler(object):
 
         for name, _ in ALGORITHMS.items():
             self.data[name] = []
-            self.models[name] = {'time': [Model(np.ones(100), np.ones(100) * 100)], 'score': [Model(np.ones(100), np.ones(100) * 100)]}
+            #self.models[name] = {'time': [], 'score': []}
+
+    def clearModels(self):
+        self.models = {}
+        for name, _ in ALGORITHMS.items():
+            self.models[name] = {'time': [], 'score': []}
+
 
     @staticmethod
     def _write_datapoints(datapoints):
@@ -84,7 +91,8 @@ class Scheduler(object):
 
         filename = join(VAR_DIR, OUT_FILENAME)
         if isfile(filename):
-            remove(filename)
+            move(filename, join(VAR_DIR, 'scheduler_data_{}.json'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f'))))
+            #remove(filename)
         with open(filename, 'a') as f:
             f.write(dumps(res))
 
@@ -125,21 +133,29 @@ class Scheduler(object):
         self.cumulative_time.append(self.cumulative_time[len(self.cumulative_time)-1] + elapsed_time)
         self.highest_scores.append(max(self.highest_scores + [avg_score]))
 
+    def modelAlgorithm(self, algorithm):
+        Scheduler._write_datapoints(self.data[algorithm])
+        call_matlab_script()
+        self.models[algorithm] = Scheduler._read_models()
 
     def model(self):
-        if not self.decision:
-            return
-
-        _, last_algorithm = self.decision
-        Scheduler._write_datapoints(self.data[last_algorithm])
-        call_matlab_script()
-        self.models[last_algorithm] = Scheduler._read_models()
+        print 'model'
+        print self.models
+        if not self.models:
+            print 'models false'
+            self.clearModels()
+            for algorithm, _ in ALGORITHMS.items():
+                self.modelAlgorithm(algorithm)
+        elif self.decision:
+            _, last_algorithm = self.decision
+            self.modelAlgorithm(last_algorithm)
+        
 
 
     def draw(self, plt):
         self.ax_time.cla()
         self.ax_score.cla()
-        self.ax_time_by_score.cla()
+        #self.ax_time_by_score.cla()
 
         for name, datapoints in self.data.items():
             xs = [d.x for d in datapoints]
@@ -149,52 +165,55 @@ class Scheduler(object):
             self.ax_time.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
             self.ax_score.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
  
-        for name, models in self.models.items():
-            time_models = models['time']
-            score_models = models['score']
+        if self.models:
+            for name, models in self.models.items():
+                time_models = models['time']
+                score_models = models['score']
 
-            for model in time_models:
-                self.ax_time.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.3)
-                self.ax_time.plot(np.linspace(0, 1, 100), 
-                                 model.twice_std_dev_above(), 
-                                 ALGORITHMS[name]['single_letter']+':', 
-                                 alpha=0.15)
-                self.ax_time.plot(np.linspace(0, 1, 100), 
-                                 model.twice_std_dev_below(), 
-                                 ALGORITHMS[name]['single_letter']+':', 
-                                 alpha=0.15)
+                for model in time_models:
+                    self.ax_time.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.3)
 
-                #self.ax_time.fill_between(np.linspace(0, 1, 100), 
-                                 #model.twice_std_dev_below(), 
-                                 #model.twice_std_dev_above(), 
-                                 #facecolor=ALGORITHMS[name]['full_name'], 
-                                 #alpha=0.05, 
-                                 #interpolate=True)
-            for model in score_models:
-                self.ax_score.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.3)
-                self.ax_score.plot(np.linspace(0, 1, 100), 
-                                 model.twice_std_dev_above(), 
-                                 ALGORITHMS[name]['single_letter']+':', 
-                                 alpha=0.15)
-                self.ax_score.plot(np.linspace(0, 1, 100), 
-                                 model.twice_std_dev_below(), 
-                                 ALGORITHMS[name]['single_letter']+':', 
-                                 alpha=0.15)
-                
-                #self.ax_score.fill_between(np.linspace(0, 1, 100), 
-                                 #model.twice_std_dev_below(), 
-                                 #model.twice_std_dev_above(), 
-                                 #facecolor=ALGORITHMS[name]['full_name'], 
-                                 #alpha=0.05, 
-                                 #interpolate=True)
+                    #self.ax_time.plot(np.linspace(0, 1, 100), 
+                                     #model.twice_std_dev_above(), 
+                                     #ALGORITHMS[name]['single_letter']+':', 
+                                     #alpha=0.15)
+                    #self.ax_time.plot(np.linspace(0, 1, 100), 
+                                     #model.twice_std_dev_below(), 
+                                     #ALGORITHMS[name]['single_letter']+':', 
+                                     #alpha=0.15)
 
-            # TODO put this back in
-            #if model_time and model_score:
-                #epsilon = np.ones(100) * 0.0001
-                #self.ax_time_by_score.plot(np.random.normal(model_time.mean, model_time.std_dev + epsilon), 
-                                           #np.random.normal(model_score.mean, model_score.std_dev + epsilon), ALGORITHMS[name]['single_letter']+'.')
-                #self.ax_time_by_score.set_xlabel('Time')
-                #self.ax_time_by_score.set_ylabel('Score')
+                    self.ax_time.fill_between(np.linspace(0, 1, 100), 
+                                     model.twice_std_dev_below(), 
+                                     model.twice_std_dev_above(), 
+                                     facecolor=ALGORITHMS[name]['full_name'], 
+                                     alpha=0.05, 
+                                     interpolate=True)
+                for model in score_models:
+                    self.ax_score.plot(np.linspace(0, 1, 100), model.mean, ALGORITHMS[name]['single_letter']+'-', alpha=0.3)
+
+                    #self.ax_score.plot(np.linspace(0, 1, 100), 
+                                     #model.twice_std_dev_above(), 
+                                     #ALGORITHMS[name]['single_letter']+':', 
+                                     #alpha=0.15)
+                    #self.ax_score.plot(np.linspace(0, 1, 100), 
+                                     #model.twice_std_dev_below(), 
+                                     #ALGORITHMS[name]['single_letter']+':', 
+                                     #alpha=0.15)
+                    
+                    self.ax_score.fill_between(np.linspace(0, 1, 100), 
+                                     model.twice_std_dev_below(), 
+                                     model.twice_std_dev_above(), 
+                                     facecolor=ALGORITHMS[name]['full_name'], 
+                                     alpha=0.05, 
+                                     interpolate=True)
+
+                # TODO put this back in
+                #if model_time and model_score:
+                    #epsilon = np.ones(100) * 0.0001
+                    #self.ax_time_by_score.plot(np.random.normal(model_time.mean, model_time.std_dev + epsilon), 
+                                               #np.random.normal(model_score.mean, model_score.std_dev + epsilon), ALGORITHMS[name]['single_letter']+'.')
+                    #self.ax_time_by_score.set_xlabel('Time')
+                    #self.ax_time_by_score.set_ylabel('Score')
 
 
         time_y_lim = [10e5, 0]
@@ -231,12 +250,13 @@ class Scheduler(object):
         self.ax_score.set_title(self.scheduler_name)
         self.ax_score.set_xlabel('% of data used')
         self.ax_score.set_ylabel('Score')
+        self.ax_score.set_xlim(0, 1)
         #self.ax_score.set_ylim(score_y_lim)
         self.ax_score.set_ylim(-0.01, 1)
 
-        self.ax_time_by_score.set_xlim(0, None)
-        ylim = self.ax_time_by_score.get_ylim()
-        self.ax_time_by_score.set_ylim(max(0, ylim[0]), min(1, ylim[1]))
+        #self.ax_time_by_score.set_xlim(0, None)
+        #ylim = self.ax_time_by_score.get_ylim()
+        #self.ax_time_by_score.set_ylim(max(0, ylim[0]), min(1, ylim[1]))
 
         plt.draw()
 
@@ -256,6 +276,9 @@ class FixedSequenceScheduler(Scheduler):
             x, algorithm = self.sequence[self.sequence_index]
             self.decision = (x, algorithm)
             self.sequence_index += 1
+
+    def needsModel(self):
+        return False
 
 class ProbabilisticScheduler(Scheduler):
     def __init__(self, scheduler_name, burn_in_percentages):
@@ -282,6 +305,9 @@ class ProbabilisticScheduler(Scheduler):
             self.ax_score.plot(xs, ys, ALGORITHMS[algorithm]['single_letter']+'--')
 
         plt.draw()
+
+    def needsModel(self):
+        return self.burn_in_sequence_index >= len(self.burn_in_sequence)
 
     def decide(self):
         if self.burn_in_sequence_index < len(self.burn_in_sequence):
@@ -362,7 +388,16 @@ class ProbabilityOfImprovementScheduler(ProbabilisticScheduler):
 class ExpectedImprovementScheduler(ProbabilisticScheduler):
     @staticmethod
     def a(overall_best_score, mean, std_dev):
-        pass
+        res = np.zeros(len(mean))
+        
+        lower = (overall_best_score - mean) / std_dev
+        upper = np.ones(len(mean)) * float('inf')
+        
+        for i, l, u, m, sd in zip(range(len(mean)), lower, upper, mean, std_dev):
+            res[i] = truncnorm.mean(l, u, loc=m, scale=sd)
+
+        return res
+
                 
 
 
@@ -397,7 +432,8 @@ elif args.load_arff:
 
 
 schedulers = [
-        ProbabilityOfImprovementScheduler('prob_of_impr', [0.01, 0.02, 0.04, 0.08]), 
+        ExpectedImprovementScheduler('EI', [5e-05, 0.0001, 0.000153, 0.000208, 0.000266, 0.000327, 0.000391, 0.000458, 0.000529, 0.000603, 0.000681, 0.000762, 0.000848, 0.000938, 0.001033, 0.001132, 0.001236, 0.001346, 0.001461, 0.001581, 0.001708, 0.001841, 0.001981, 0.002128, 0.002282, 0.002443, 0.002613, 0.002791, 0.002979, 0.003175, 0.003382, 0.003598, 0.003826, 0.004065, 0.004316, 0.004579, 0.004856, 0.005146, 0.005451, 0.005771, 0.006107, 0.00646, 0.006831, 0.00722, 0.007629, 0.008058, 0.008509, 0.008982, 0.009478, 0.01]), 
+        #ExpectedImprovementScheduler('EI', [0.1, 0.2]), 
         #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
         ]
 n_schedulers = len(schedulers)
@@ -405,31 +441,31 @@ n_schedulers = len(schedulers)
 
 # Set up plot
 plt.ion()
-fig = plt.figure(1, figsize=(15, 12), dpi=80)
+fig = plt.figure(1, figsize=(20, 12), dpi=80)
 
 ax_counter = 1
 for scheduler in schedulers:
     # Time
-    ax_time = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    ax_time = plt.subplot(n_schedulers + 1, 2, ax_counter)
     plt.xlim(0, 1)
     ax_counter += 1
 
     # Score
-    ax_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    ax_score = plt.subplot(n_schedulers + 1, 2, ax_counter)
     plt.xlim(0, 1)
     ax_counter += 1
 
     # Time by score
-    ax_time_by_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
-    ax_counter += 1
+    #ax_time_by_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    #ax_counter += 1
 
 
     scheduler.ax_time = ax_time
     scheduler.ax_score = ax_score
-    scheduler.ax_time_by_score = ax_time_by_score
+    #scheduler.ax_time_by_score = ax_time_by_score
 
 
-ax_highest_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+ax_highest_score = plt.subplot(n_schedulers + 1, 2, ax_counter)
 # TODO make this work
 ax_highest_score.set_xlabel('Cumulative time')
 ax_highest_score.set_ylabel('Highest score')
@@ -447,7 +483,10 @@ while True:
         if scheduler.decision:
             all_done = False
             scheduler.execute()
-            scheduler.model()
+            if scheduler.needsModel():
+                scheduler.model()
+            #else:
+            #    scheduler.clearModels()
             scheduler.draw(plt)
             plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
 
