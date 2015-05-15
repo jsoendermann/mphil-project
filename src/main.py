@@ -6,13 +6,22 @@ from os import remove
 from subprocess import call
 from argparse import ArgumentParser
 from data_handling.datasets import load_dataset, create_dataset
-from data_handling.utils import name_to_classifier_object, exp_incl_float_range
+from data_handling.utils import name_to_classifier_object, exp_incl_float_range, truncate_func_at_x
 from datetime import datetime
 from json import dumps, load
 from itertools import product
 from scipy.stats import norm, truncnorm
 from collections import defaultdict
 from shutil import move
+
+HEADER = '\033[95m'
+OKBLUE = '\033[94m'
+OKGREEN = '\033[92m'
+WARNING = '\033[93m'
+FAIL = '\033[91m'
+ENDC = '\033[0m'
+BOLD = '\033[1m'
+UNDERLINE = '\033[4m'
 
 VAR_DIR = '/Users/jan/Dropbox/mphil_project/repo/var/'
 FIG_DIR = '/Users/jan/Dropbox/mphil_project/repo/figs/'
@@ -62,6 +71,7 @@ class Scheduler(object):
 
         self.ax_time = None
         self.ax_score = None
+        
         self.ax_time_by_score = None
 
         self.data = {}
@@ -155,15 +165,15 @@ class Scheduler(object):
     def draw(self, plt):
         self.ax_time.cla()
         self.ax_score.cla()
-        #self.ax_time_by_score.cla()
+        self.ax_time_by_score.cla()
 
         for name, datapoints in self.data.items():
             xs = [d.x for d in datapoints]
             times = [d.time for d in datapoints]
             scores = [d.score for d in datapoints]
 
-            self.ax_time.plot(xs, times, ALGORITHMS[name]['single_letter']+'o')
-            self.ax_score.plot(xs, scores, ALGORITHMS[name]['single_letter']+'o')
+            self.ax_time.plot(xs, times, ALGORITHMS[name]['single_letter']+'.')
+            self.ax_score.plot(xs, scores, ALGORITHMS[name]['single_letter']+'.')
  
         if self.models:
             for name, models in self.models.items():
@@ -207,13 +217,12 @@ class Scheduler(object):
                                      alpha=0.05, 
                                      interpolate=True)
 
-                # TODO put this back in
-                #if model_time and model_score:
-                    #epsilon = np.ones(100) * 0.0001
-                    #self.ax_time_by_score.plot(np.random.normal(model_time.mean, model_time.std_dev + epsilon), 
-                                               #np.random.normal(model_score.mean, model_score.std_dev + epsilon), ALGORITHMS[name]['single_letter']+'.')
-                    #self.ax_time_by_score.set_xlabel('Time')
-                    #self.ax_time_by_score.set_ylabel('Score')
+                for time_model, score_model in zip(time_models, score_models):
+                    epsilon = np.ones(100) * 0.0001
+                    self.ax_time_by_score.plot(np.random.normal(time_model.mean, time_model.std_dev + epsilon), 
+                                               np.random.normal(score_model.mean, score_model.std_dev + epsilon), ALGORITHMS[name]['single_letter']+'.')
+                    self.ax_time_by_score.set_xlabel('Time')
+                    self.ax_time_by_score.set_ylabel('Score')
 
 
         time_y_lim = [10e5, 0]
@@ -254,9 +263,9 @@ class Scheduler(object):
         #self.ax_score.set_ylim(score_y_lim)
         self.ax_score.set_ylim(-0.01, 1)
 
-        #self.ax_time_by_score.set_xlim(0, None)
-        #ylim = self.ax_time_by_score.get_ylim()
-        #self.ax_time_by_score.set_ylim(max(0, ylim[0]), min(1, ylim[1]))
+        self.ax_time_by_score.set_xlim(0, None)
+        ylim = self.ax_time_by_score.get_ylim()
+        self.ax_time_by_score.set_ylim(max(0, ylim[0]), min(1, ylim[1]))
 
         plt.draw()
 
@@ -284,6 +293,8 @@ class ProbabilisticScheduler(Scheduler):
     def __init__(self, scheduler_name, burn_in_percentages):
         super(ProbabilisticScheduler, self).__init__(scheduler_name)
  
+        self.ax_acq = None
+        
         algorithms = ALGORITHMS.keys()
         self.burn_in_sequence = list(product(burn_in_percentages, algorithms))
         self.burn_in_sequence_index = 0
@@ -298,12 +309,16 @@ class ProbabilisticScheduler(Scheduler):
     def draw(self, plt):
         super(ProbabilisticScheduler, self).draw(plt)
 
+        self.ax_acq.cla()
+        
         for algorithm, acquisition_function in self.truncated_average_acquisition_functions().items():
             
             xs, ys = acquisition_function
             #print len(xs), len(ys)
-            self.ax_score.plot(xs, ys, ALGORITHMS[algorithm]['single_letter']+'--')
+            self.ax_acq.plot(xs, ys, ALGORITHMS[algorithm]['single_letter']+'--')
 
+        self.ax_acq.set_xlim(0, 1)
+        self.ax_acq.set_ylabel('Acq. function value')
         plt.draw()
 
     def needsModel(self):
@@ -343,29 +358,14 @@ class ProbabilisticScheduler(Scheduler):
     def truncated_average_acquisition_functions(self):
         res = {}
         for algorithm, acquisition_functions in self.acquisition_functions.items():
-            c = 0
-            s = np.zeros(100)
-            for acquisition_function in acquisition_functions:
-                c += 1
-                s += acquisition_function
-            average_acquisition_function = s / c
+            average_acquisition_function = np.mean(acquisition_functions, axis=0)
 
-            # Truncate
             max_x = 0
             for datum in self.data[algorithm]:
                 max_x = max(datum.x, max_x)
+            xs, ys = truncate_func_at_x(max_x, np.linspace(0, 1, 100), average_acquisition_function)
 
-            #print max_x
-
-            xs = filter(lambda v: v > max_x, np.linspace(0, 1, 100))
-            #print len(xs), xs
-            if not xs:
-                truncated_average_acquisition_function = []
-            else:
-                truncated_average_acquisition_function = average_acquisition_function[-len(xs):]
-            #print len(truncated_average_acquisition_function), truncated_average_acquisition_function
-
-            res[algorithm] = (xs, truncated_average_acquisition_function)
+            res[algorithm] = (xs, ys)
         return res
 
     def model(self):
@@ -400,11 +400,31 @@ class ExpectedImprovementScheduler(ProbabilisticScheduler):
             lower = - m / sd
             res[i] = truncnorm.mean(lower, float('inf'), loc=loc, scale=sd)
 
-        print res
+        #print res
         return res
 
-                
+class ExpectedImprovementPerTimeScheduler(ExpectedImprovementScheduler):
+    def truncated_average_acquisition_functions(self):
+        res = {}
+        for algorithm, acquisition_functions in self.acquisition_functions.items():
+            time_means = []
+            for model in self.models[algorithm]['time']:
+                time_means.append(model.mean)
+            
+            EI_by_time_funcs = []
+            for acquisition_function, time_mean in zip(acquisition_functions, time_means):
+                EI_by_time_funcs.append(np.array(acquisition_function) / np.array(time_mean))
+            average_acquisition_function = np.mean(EI_by_time_funcs, axis=0)
 
+            max_x = 0
+            for datum in self.data[algorithm]:
+                max_x = max(datum.x, max_x)
+            xs, ys = truncate_func_at_x(max_x, np.linspace(0, 1, 100), average_acquisition_function)
+
+            res[algorithm] = (xs, ys)
+        return res
+
+#class ExpectedImprovementTimesProbOfSuccessScheduler(ExpectedImprovementScheduler):
 
 
             
@@ -415,13 +435,17 @@ class ExpectedImprovementScheduler(ProbabilisticScheduler):
 
 
 
-#def update_highest_score_fig(schedulers, plt, ax):
-    #ax.cla()
-    #for scheduler in schedulers:
-        #ax.plot(scheduler.cumulative_time, scheduler.highest_scores, '-', label=scheduler.scheduler_name)
+def update_highest_score_fig(schedulers, plt, ax):
+    ax.cla()
+    for scheduler in schedulers:
+        ax.plot(scheduler.cumulative_time, scheduler.highest_scores, '-', label=scheduler.scheduler_name)
     
-    #plt.legend(loc=4)
-    #plt.draw()
+    plt.legend(loc=4)
+    plt.draw()
+
+def save_fig(plt):
+    plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
+
 
 parser = ArgumentParser(description='Collect data')
 group = parser.add_mutually_exclusive_group(required=True)
@@ -437,8 +461,9 @@ elif args.load_arff:
 
 
 schedulers = [
-        ExpectedImprovementScheduler('EI', exp_incl_float_range(0.005, 15, 0.08, 1.3)), 
-        #ExpectedImprovementScheduler('EI', [0.1, 0.2]), 
+        #ProbabilityOfImprovementScheduler('Prob. of impr.', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
+        ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)), 
+        #ExpectedImprovementScheduler('EI', exp_incl_float_range(0.005, 15, 0.2, 1.3)), 
         #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
         ]
 n_schedulers = len(schedulers)
@@ -451,33 +476,36 @@ fig = plt.figure(1, figsize=(20, 12), dpi=80)
 ax_counter = 1
 for scheduler in schedulers:
     # Time
-    ax_time = plt.subplot(n_schedulers + 1, 2, ax_counter)
+    ax_time = plt.subplot(n_schedulers + 1, 3, ax_counter)
     plt.xlim(0, 1)
     ax_counter += 1
 
     # Score
-    ax_score = plt.subplot(n_schedulers + 1, 2, ax_counter)
+    ax_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    ax_acq = ax_score.twinx()
     plt.xlim(0, 1)
     ax_counter += 1
 
     # Time by score
-    #ax_time_by_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
-    #ax_counter += 1
+    ax_time_by_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
+    ax_counter += 1
 
 
     scheduler.ax_time = ax_time
     scheduler.ax_score = ax_score
-    #scheduler.ax_time_by_score = ax_time_by_score
+    scheduler.ax_acq = ax_acq
+    scheduler.ax_time_by_score = ax_time_by_score
 
 
-ax_highest_score = plt.subplot(n_schedulers + 1, 2, ax_counter)
+ax_highest_score = plt.subplot(n_schedulers + 1, 3, ax_counter)
 # TODO make this work
 ax_highest_score.set_xlabel('Cumulative time')
 ax_highest_score.set_ylabel('Highest score')
 
 
+SPACE = 0.3
+fig.subplots_adjust(hspace=SPACE, wspace=SPACE)
 
-fig.subplots_adjust(hspace=0.35)
 plt.draw()
 
 
@@ -490,18 +518,11 @@ while True:
             scheduler.execute()
             if scheduler.needsModel():
                 scheduler.model()
-            #else:
-            #    scheduler.clearModels()
             scheduler.draw(plt)
-            plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
+            update_highest_score_fig(schedulers, plt, ax_highest_score)
+            save_fig(plt)
 
     if all_done:
         break
-
-        #scheduler.draw(plt)
-        #plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
-
-    # TODO put this back in
-    #update_highest_score_fig(schedulers, plt, ax_highest_score)
 
     

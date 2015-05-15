@@ -4,6 +4,8 @@ JSONLAB_DIR = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/jsonlab/';
 IN_FILENAME = 'scheduler_data.json';
 OUT_FILENAME = 'models.json';
 
+OPTIMISE = true;
+
 % GPML
 run(strcat(GPML_DIR, 'startup.m'));
 
@@ -25,7 +27,7 @@ y_scores = I.y_scores';
 
 O = struct();
 
-if true
+if OPTIMISE
     % Model using optimisation
     if isempty(x_percent_data)
         error('No data');

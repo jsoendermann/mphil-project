@@ -37,5 +37,9 @@ def name_to_classifier_object(name):
         classifier = GaussianNB
     return classifier
 
-def truncate_monotonous_function_at_y_value(y, xs, ys):
-    pass
+def truncate_func_at_x(x, xs, ys):
+    xs = filter(lambda v: v > x, xs)
+    if not xs:
+        return ([], [])
+    else:
+        return (xs, ys[-len(xs):])
