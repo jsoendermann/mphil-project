@@ -25,7 +25,7 @@ y_scores = I.y_scores';
 
 O = struct();
 
-if false
+if true
     % Model using optimisation
     if isempty(x_percent_data)
         error('No data');

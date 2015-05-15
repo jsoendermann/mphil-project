@@ -22,7 +22,7 @@ MATLAB_EXECUTABLE = '/Applications/MATLAB_R2014b.app/bin/matlab'
 MATLAB_SCRIPT = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/model.m'
 
 ALGORITHMS = {
-           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 30}}, 
+           'rnd_forest': {'single_letter': 'r', 'full_name': 'red', 'params': {'n_estimators': 50}}, 
            'log_reg': {'single_letter': 'b', 'full_name': 'blue', 'params': {}}, 
            #'naive_bayes': {'single_letter': 'g', 'full_name': 'green', 'params': {}}
            }
@@ -139,10 +139,10 @@ class Scheduler(object):
         self.models[algorithm] = Scheduler._read_models()
 
     def model(self):
-        print 'model'
-        print self.models
+        #print 'model'
+        #print self.models
         if not self.models:
-            print 'models false'
+            #print 'models false'
             self.clearModels()
             for algorithm, _ in ALGORITHMS.items():
                 self.modelAlgorithm(algorithm)
@@ -328,10 +328,13 @@ class ProbabilisticScheduler(Scheduler):
                     continue
                 m = max(ys)
                 if m > max_a:
-
                     max_a = m
                     max_x = xs[ys.argmax()]
                     max_algorithm = algorithm
+                #print 'max_x', max_x
+                #print 'max_a', max_a
+                #print 'xs', xs
+                #print 'ys', ys
             if max_algorithm:
                 self.decision = (max_x, max_algorithm)
             else:
@@ -376,26 +379,28 @@ class ProbabilisticScheduler(Scheduler):
         self.acquisition_functions = defaultdict(list)
         for algorithm, models_for_algorithm in self.models.items():
             for score_model in models_for_algorithm['score']:
-                acquisition_function = ProbabilityOfImprovementScheduler.a(overall_best_score, score_model.mean, score_model.std_dev)
+                acquisition_function = self.a(overall_best_score, score_model.mean, score_model.std_dev)
                 self.acquisition_functions[algorithm].append(acquisition_function)
 
 
 class ProbabilityOfImprovementScheduler(ProbabilisticScheduler):
-    @staticmethod
-    def a(overall_best_score, mean, std_dev):
+    # TODO these should probably by static medhods
+    def a(self, overall_best_score, mean, std_dev):
         return norm.cdf(ProbabilisticScheduler.gamma(overall_best_score, mean, std_dev))
         
 class ExpectedImprovementScheduler(ProbabilisticScheduler):
-    @staticmethod
-    def a(overall_best_score, mean, std_dev):
+    def a(self, overall_best_score, mean, std_dev):
         res = np.zeros(len(mean))
         
-        lower = (overall_best_score - mean) / std_dev
-        upper = np.ones(len(mean)) * float('inf')
+        #lower = (overall_best_score - mean) / std_dev
+        #upper = np.ones(len(mean)) * float('inf')
         
-        for i, l, u, m, sd in zip(range(len(mean)), lower, upper, mean, std_dev):
-            res[i] = truncnorm.mean(l, u, loc=m, scale=sd)
+        for i, m, sd in zip(range(len(mean)), mean, std_dev):
+            loc = m - overall_best_score
+            lower = - m / sd
+            res[i] = truncnorm.mean(lower, float('inf'), loc=loc, scale=sd)
 
+        print res
         return res
 
                 
@@ -432,7 +437,7 @@ elif args.load_arff:
 
 
 schedulers = [
-        ExpectedImprovementScheduler('EI', [5e-05, 0.0001, 0.000153, 0.000208, 0.000266, 0.000327, 0.000391, 0.000458, 0.000529, 0.000603, 0.000681, 0.000762, 0.000848, 0.000938, 0.001033, 0.001132, 0.001236, 0.001346, 0.001461, 0.001581, 0.001708, 0.001841, 0.001981, 0.002128, 0.002282, 0.002443, 0.002613, 0.002791, 0.002979, 0.003175, 0.003382, 0.003598, 0.003826, 0.004065, 0.004316, 0.004579, 0.004856, 0.005146, 0.005451, 0.005771, 0.006107, 0.00646, 0.006831, 0.00722, 0.007629, 0.008058, 0.008509, 0.008982, 0.009478, 0.01]), 
+        ExpectedImprovementScheduler('EI', exp_incl_float_range(0.005, 15, 0.08, 1.3)), 
         #ExpectedImprovementScheduler('EI', [0.1, 0.2]), 
         #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
         ]

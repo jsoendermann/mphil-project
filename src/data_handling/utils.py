@@ -36,3 +36,6 @@ def name_to_classifier_object(name):
     elif name == 'naive_bayes':
         classifier = GaussianNB
     return classifier
+
+def truncate_monotonous_function_at_y_value(y, xs, ys):
+    pass
