@@ -130,7 +130,7 @@ class Scheduler(object):
 
     def execute(self):
         if not self.decision:
-            return
+            return None
 
         x, algorithm = self.decision
 
@@ -142,6 +142,8 @@ class Scheduler(object):
         self.data[algorithm].append(Datum(x, elapsed_time, avg_score))
         self.cumulative_time.append(self.cumulative_time[len(self.cumulative_time)-1] + elapsed_time)
         self.highest_scores.append(max(self.highest_scores + [avg_score]))
+
+        return (elapsed_time, avg_score)
 
     def modelAlgorithm(self, algorithm):
         Scheduler._write_datapoints(self.data[algorithm])
@@ -301,6 +303,7 @@ class ProbabilisticScheduler(Scheduler):
 
         self.acquisition_functions = defaultdict(list)
 
+    # TODO maybe remove this function
     @staticmethod
     def gamma(overall_best_score, mean, std_dev):
         # add epsilon to avoid div by 0
@@ -378,53 +381,72 @@ class ProbabilisticScheduler(Scheduler):
 
         self.acquisition_functions = defaultdict(list)
         for algorithm, models_for_algorithm in self.models.items():
-            for score_model in models_for_algorithm['score']:
-                acquisition_function = self.a(overall_best_score, score_model.mean, score_model.std_dev)
+            for score_model, time_model in zip(models_for_algorithm['score'], models_for_algorithm['time']):
+                acquisition_function = self.__class__.a(overall_best_score, score_model.mean, score_model.std_dev, time_model.mean, time_model.std_dev)
                 self.acquisition_functions[algorithm].append(acquisition_function)
 
 
 class ProbabilityOfImprovementScheduler(ProbabilisticScheduler):
-    # TODO these should probably by static medhods
-    def a(self, overall_best_score, mean, std_dev):
-        return norm.cdf(ProbabilisticScheduler.gamma(overall_best_score, mean, std_dev))
+    @classmethod
+    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+        return norm.cdf(ProbabilisticScheduler.gamma(overall_best_score, score_mean, score_std_dev))
         
 class ExpectedImprovementScheduler(ProbabilisticScheduler):
-    def a(self, overall_best_score, mean, std_dev):
-        res = np.zeros(len(mean))
+    @classmethod
+    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+        res = np.zeros(len(score_mean))
         
-        #lower = (overall_best_score - mean) / std_dev
-        #upper = np.ones(len(mean)) * float('inf')
-        
-        for i, m, sd in zip(range(len(mean)), mean, std_dev):
+        for i, m, sd in zip(range(len(score_mean)), score_mean, score_std_dev):
             loc = m - overall_best_score
-            lower = - m / sd
+            lower = - loc / sd
             res[i] = truncnorm.mean(lower, float('inf'), loc=loc, scale=sd)
 
-        #print res
         return res
 
 class ExpectedImprovementPerTimeScheduler(ExpectedImprovementScheduler):
-    def truncated_average_acquisition_functions(self):
-        res = {}
-        for algorithm, acquisition_functions in self.acquisition_functions.items():
-            time_means = []
-            for model in self.models[algorithm]['time']:
-                time_means.append(model.mean)
-            
-            EI_by_time_funcs = []
-            for acquisition_function, time_mean in zip(acquisition_functions, time_means):
-                EI_by_time_funcs.append(np.array(acquisition_function) / np.array(time_mean))
-            average_acquisition_function = np.mean(EI_by_time_funcs, axis=0)
+    @classmethod
+    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+        res = ExpectedImprovementScheduler.a(overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev)
+        return res / time_mean
 
-            max_x = 0
-            for datum in self.data[algorithm]:
-                max_x = max(datum.x, max_x)
-            xs, ys = truncate_func_at_x(max_x, np.linspace(0, 1, 100), average_acquisition_function)
+class TimedScheduler(ProbabilisticScheduler):
+    def __init__(self, scheduler_name, burn_in_percentages, available_time):
+        super(TimedScheduler, self).__init__(scheduler_name, burn_in_percentages)
+        self.remaining_time = available_time
 
-            res[algorithm] = (xs, ys)
-        return res
+    def add_time(t):
+        self.remaining_time += t
 
-#class ExpectedImprovementTimesProbOfSuccessScheduler(ExpectedImprovementScheduler):
+    def execute(self):
+        res = super(TimedScheduler, self).execute()
+        if not res:
+            return None
+
+        time, _ = res
+
+        self.remaining_time -= time
+        
+
+
+class ExpectedImprovementTimesProbOfSuccessScheduler(TimedScheduler, ExpectedImprovementScheduler):
+    @classmethod
+    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+        remaining_time = self.remaining_time
+
+        prob_of_success = np.zeros(len(time_mean))
+        for i, tm, tsd in zip(range(len(time_mean)), time_mean, time_std_dev):
+            upper = (remaining_time - tm) / tsd
+            prob_of_success[i] = truncnorm.cdf(float('-inf'), upper, loc=tm, scale=tsd)
+
+        ei = ExpectedImprovementScheduler.a(overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev)
+
+        return ei * prob_of_success
+
+
+
+
+    
+
 
 
             
@@ -461,8 +483,9 @@ elif args.load_arff:
 
 
 schedulers = [
+        #ExpectedImprovementTimesProbOfSuccessScheduler('ei*prob of success'
         #ProbabilityOfImprovementScheduler('Prob. of impr.', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
-        ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)), 
+        #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)), 
         #ExpectedImprovementScheduler('EI', exp_incl_float_range(0.005, 15, 0.2, 1.3)), 
         #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
         ]
@@ -504,7 +527,7 @@ ax_highest_score.set_ylabel('Highest score')
 
 
 SPACE = 0.3
-fig.subplots_adjust(hspace=SPACE, wspace=SPACE)
+fig.subplots_adjust(wspace=SPACE, hspace=SPACE)
 
 plt.draw()
 

@@ -5,7 +5,7 @@ from generate_data_for_config import generate_datum
 import matplotlib.pyplot as plt
 
 
-dataset = create_dataset({'n_samples': 5000, 'n_features': 80, 'n_classes': 5, 'n_informative': 40})
+dataset = create_dataset({'n_samples': 5000, 'n_features': 120, 'n_classes': 6, 'n_informative': 40})
 
 algorithms = [
         {'name': 'rnd_forest', 'parameters': {'n_estimators': 50}, 'time': [], 'score': []},
@@ -14,6 +14,14 @@ algorithms = [
 
 data_range = exp_incl_float_range(0.1, 10, 1, 1.5)
 
+def draw(ax, plt):
+    ax.cla()
+    ax.plot(data_range[:len(algorithms[0]['score'])], algorithms[0]['score'], 'r-')
+    ax.plot(data_range[:len(algorithms[1]['score'])], algorithms[1]['score'], 'b-')
+    plt.draw()
+
+plt.ion()
+fig, ax = plt.subplots(1,1)
 for percentage_data in data_range:
     for algorithm_data in algorithms:
         print '{}; {}'.format(algorithm_data['name'], str(percentage_data))
@@ -22,9 +30,6 @@ for percentage_data in data_range:
         time, score = generate_datum(dataset, cl, percentage_data, algorithm_data['parameters'])
         algorithm_data['time'].append(time)
         algorithm_data['score'].append(score)
+        draw(ax, plt)
 
-
-fig, ax = plt.subplots(1,1)
-ax.plot(data_range, algorithms[0]['score'], 'r-')
-ax.plot(data_range, algorithms[1]['score'], 'b-')
 plt.show()
