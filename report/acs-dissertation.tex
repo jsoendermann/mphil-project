@@ -21,10 +21,14 @@
 % TODO look at spearmint
 % TODO Nearest Neighbors Classification
 % TODO describe ranges
-% TODO TODO start saving graphs!!
+
 % TODO UML diagram for schedulers
 % TODO If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
+% TODO describe kernel problems
+% TODO establish the words scheduler and hyperparameters early on
 
+% TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
+% TODO explain datasets w/ images if they are interesting
 % TODO Appendices should be avoided where possible, but may be appropriate in some cases
 % TODO mention ec2
 
@@ -92,12 +96,23 @@
 
 % TODO It's often useful to bring forward some ``highlights'' into  this chapter (e.g.\ some particularly compelling results, or  a particularly interesting finding). 
 
-% TODO It's also traditional to give an outline of the rest of the document, although without care this can appear formulaic  and tedious. Your call. 
+% TODO It's also traditional to give an outline of the rest of the document, although without care this can appear formulaic and tedious. Your call. 
 
 
-\chapter{Background} 
+\chapter{Background}
+\section{Machine Learning}
+\section{Algorithms}
+\subsection{Gaussian Processes}
+\subsection{Random Forests and Logistic Regression}
+
+as this is meta machine learning, i have to introduce @normal machine learning at a high level@
+algos + their imple (rf, lr, gps)
+
 - ML + algos
-- GPs/GPML
+- GPs/GPML (marginal likelihood)
+- mcmc/sampling
+
+% describe scheduling
 
 % TODO A more extensive coverage of what's required to understand your work. In general you should assume the reader has a good undergraduate degree in computer science, but is not necessarily an expert in the particular area you've been working on. Hence this chapter may need to summarise some ``text book'' material. 
 
@@ -115,35 +130,60 @@
 
 
 
+
+
+
+
+
 \chapter{Design and Implementation} 
 
-\section{Modelling}
-1. modelling
-to model, two things are necessary: 1. appropriate kernel function, 2. inference
-for inference, we use optimisation
-- optimisation
-- 1d/2d
 
-to achieve what we want to achieve (@which is what? read proposal and michael jordan paper again@) the first ingredient is to be able to model param->score and param->time.
 
-- describe data collection
--- iface
+\textit{This chapter gives a detailed description of the theoretical and practical aspects system we developed. It comprises two major sections. The first section on modelling describes the model we use to predict the time and accuracy of running an algorithm with a particular set of approximation parameters. The second section describes the process of using these @models@ to develop schedulers that can find good @models@ in the given time constraints.}
 
-show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
+\
 
-time easy: linear (mention kernel)
+\section{Modelling Model Performance}
+To make decisions about where to 
 
-% TODO different names for these two subsections
-\subsection{Implementing an appropriate kernel to model @relationship between param & score@}
-\subsection{Adapting hyperparameters}
 
+\subsection{Data Collection}
+
+
+\subsection{Kernel}
+\subsection{Selecting Kernel Hyperparameters}
+% TODO maybe call this model selection
+To fit a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance function. There two main methods to achieve this are sampling and optimisation. We use both of these methods as described @@. An evaluation of their advantages and disadvantages can be found in the Evaluation chapter.
+
+\subsubsection{Sampling}
+The Bayesian way to handle hyperparameters is to integrate them out. 
+% TODO add maths on integrating out hyperparams
+
+To approximate this integral, MCMC methods are
+% TODO maths on MCMC
+
+To sample from @ we use slice sampling. adv/disadv: \cite{neal2003}
+% TODO why slice sampling and not another method
+
+
+
+\subsubsection{Optimisation}
+Another approach to find appropriate hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters.
+
+GPML comes with an optimisation function that is meant to be used to optimise hyperparameters. It relies on gradient information which we implemented for the exponential mixture kernel. We were, however, not able to use this function with our kernel as it would terminate after a very small number of steps having barely moved from the initial values @not being close to minimum@. We suspect the reason for this to be numerical instability problems that make the function @wiggly@ and creates @.
+
+Figure @ shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}. @looks easy to optimise and 
 % TODO for this subsection: show plots of likelihood function
+
+
+
 % TODO maybe include pseudocode for every step?
 
-first we tried using the minimisation function that comes with gpml. that, however, only worked occasionally and most of the time stopped optimising after a very small number of steps when the minimum clearly hadn't been reached yet.
+% TODO optimisation is faster and produces only one mean/sd, easier to use
+
 % TODO mention numerical instability
 % TODO this algorithm is "too clever"
-
+% TODO show figs where optimisation fails
 
 we then tried slice sampling, a sampling method that does not optimise the parameter but instead integrates them out and @draws samples from the posteriour?@. this worked quite well in the limited number of cases we tested.
 
@@ -157,11 +197,45 @@ After observing that restarting this algorithm with data for which it failed wit
 
 this produced satisfying results but took a long time to optimise. to cut down the run time, we added a final improvement by making the algorithm terminate early if y doesn't get updated in 5 successive iterations. this happens often and makes the algorithm fast. figure X shows pseudocode for this final version of the algorithm
 
-\section{Decider} % TODO different name
+
+
+
+%\section{Approximation parameters and performance}
+
+
+
+section overview
+1. modelling
+to model, two things are necessary: 1. appropriate kernel function, 2. inference
+for inference, we use optimisation
+- optimisation
+- 1d/2d
+
+to achieve what we want to achieve (@which is what? read proposal and michael jordan paper again@) the first ingredient is to be able to model param->score and param->time.
+
+- describe data collection
+-- iface
+
+%show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
+
+time easy: linear (mention kernel)
+
+% TODO different names for these two subsections
+%\subsection{Implementing an appropriate kernel}
+% TODO describe problems with kernel (maybe in evaluation)
+%\subsection{GP hyperparameters}
+
+
+
+\section{Scheduling} 
 
 
 
 \chapter{Evaluation} 
+% using the \texttt{checkgrad.m}
+% compare optimisation/sampling adv/disadv
+% TODO rasmussen: local maxima correspond to a particular interpretation of the data
+
 \section{Data sources}
 - explain where the data came from and how it was preprocessed
 
@@ -182,6 +256,7 @@ this produced satisfying results but took a long time to optimise. to cut down t
 \singlespacing
 
 \bibliographystyle{unsrt} 
-%\bibliography{dissertation} 
+\bibliography{references}
+
 
 \end{document}
