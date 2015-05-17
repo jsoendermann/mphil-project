@@ -13,3 +13,4 @@ report/acs-dissertation.ps
 report/acs-dissertation.tex
 var/
 figs/
+report/figures/*.pdf
