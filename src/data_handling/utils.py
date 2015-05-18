@@ -2,6 +2,21 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
+from scipy.stats import norm
+
+def trunc_norm_mean_upper_tail(a, mean, std):
+    alpha = (a - mean) / std
+    num = norm.pdf(alpha)
+    den = (1 - norm.cdf(alpha))
+    if num == 0 or den == 0:
+        # Numerical nasties
+        if a < mean:
+            return mean
+        else:
+            return a
+    else:
+        lambd = norm.pdf(alpha) / (1 - norm.cdf(alpha))
+        return mean + std * lambd
 
 def percentages_with_total_number_of_steps(n_steps):
     return [round(x * 1.0/n_steps, 3) for x in range(1, n_steps + 1)]
