@@ -25,7 +25,7 @@
 % TODO UML diagram for schedulers
 % TODO If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 % TODO describe kernel problems
-% TODO establish the words scheduler and hyperparameters early on
+% TODO establish the words scheduler and approx params early on
 
 % TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
 % TODO explain datasets w/ images if they are interesting
@@ -44,10 +44,8 @@
 
 \documentclass[a4paper,12pt,twoside,openright]{report}
 
-
-%%
-%% EDIT THE BELOW TO CUSTOMIZE
-%%
+% Diagrams
+\usepackage{graphicx}
 
 \def\authorname{Jan S\"ondermann\xspace}
 \def\authorcollege{Selwyn College\xspace}
@@ -57,7 +55,8 @@
 % TODO word count
 \def\wordcount{0}
 
-
+\usepackage{chngpage}
+\usepackage{calc}
 \usepackage{epsfig,graphicx,parskip,setspace,tabularx,xspace} 
 
 %% START OF DOCUMENT
@@ -139,9 +138,33 @@ algos + their imple (rf, lr, gps)
 
 
 
-\textit{This chapter gives a detailed description of the theoretical and practical aspects system we developed. It comprises two major sections. The first section on modelling describes the model we use to predict the time and accuracy of running an algorithm with a particular set of approximation parameters. The second section describes the process of using these @models@ to develop schedulers that can find good @models@ in the given time constraints.}
+\textit{This chapter describes the theoretical and practical aspects system we developed. It firsts gives a high level overview of the system architecture before describing in detail the two main parts of the program: modelling performance and scheduling.}
 
-\
+\section{Architecture} % TODO maybe something like "overview"
+\subsection{Key concepts}
+\subsubsection{Approximation parameters}
+\subsubsection{Scheduling}
+\subsection{High level architecture}
+Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates a meta-model of the model performances of the models in tier 1. This meta-model is then used by the scheduling part of the program to select the algorithm and approximation parameters for the next iteration.
+
+Figure \ref{architecture} shows the system architecture diagrammatically. 
+
+@alternate back and forth
+
+@tier 1 is standard ml stuff (using sklearn), our contribution is tier 2, has two parts: modelling and scheduling, now describe in detail
+
+\begin{figure}[!ht]
+  \begin{adjustwidth}{-\oddsidemargin-2in}{-\rightmargin-1.5in}
+    \centering
+    \includegraphics[trim=0 0 0 0,clip,width=0.9\paperwidth]{figures/architecture.pdf}
+    
+  \end{adjustwidth}
+  \caption{High level architecture, shown after three iterations. Data is coloured red, machine learning algorithms are coloured blue}
+    \label{architecture}
+\end{figure}
+
+
+
 
 \section{Modelling Model Performance}
 To make decisions about where to 
@@ -238,15 +261,18 @@ time easy: linear (mention kernel)
 
 \section{Data sources}
 - explain where the data came from and how it was preprocessed
-
+\section{Testing}
+\section{Limitations}
+\section{Challenges} % TODO most of this was prob mentioned in design&impl
 
 - model evidence
 - testing
 - how well it performs
 
 
-\chapter{Summary and Conclusions} 
-
+\chapter{Conclusion and future work} 
+\section{Conclusions}
+\section{Future work}
 % TODO Depending on the length of your work, and  how well you write, you may not need a summary here. You will generally want to draw some conclusions, and point to potential future work. 
 
 

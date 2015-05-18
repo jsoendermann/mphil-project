@@ -1,25 +1,34 @@
+// TODO add "modelling", "scheduling"
+
 import flowchart;
 
-void drawIteration(int nr) {
-block data1=roundrectangle("Dataset",(nr*9cm,0));
-block algo1=rectangle(pack(Label("Learning"), Label("algorithm")), (nr*9cm, 3cm));
-block appr1=rectangle(pack(Label("Approximation"), Label("parameters")), (nr*9cm-4cm,3cm), drawpen=white);
-block out1=rectangle("Performance", (nr*9cm,6cm), drawpen=white);
-label("Iteration " + (string)(nr+1), (nr*9cm,-2cm));
+real u = 0.9*cm;
 
-draw(data1);
-draw(appr1);
-draw(algo1);
-if (nr != 1)
-    draw(out1);
+real ITER_DIST = 7.5*u;
+int N_SPACES = 55;
+real PERF_Y = 7.5u;
 
-add(new void(picture pic, transform t) {
-    blockconnector operator --=blockconnector(pic,t);
-    
-    data1--Arrow--algo1;
-    appr1--Arrow--algo1;
-    algo1--Arrow--out1;
-});
+
+void drawIteration(int iter) {
+    block data1=roundrectangle("Dataset",(iter*ITER_DIST,0),fillpen=red+white+white);
+    block algo1=rectangle(pack(Label("Learning"), Label("algorithm")), (iter*ITER_DIST, 3*u),fillpen=blue+white+white);
+    block appr1=rectangle(pack(Label("Approximation"), Label("parameters")), (iter*ITER_DIST-4*u,3*u), drawpen=white);
+    block out1=rectangle("Performance", (iter*ITER_DIST,PERF_Y), drawpen=white);
+    label("Iteration " + (string)(iter+1), (iter*ITER_DIST,-2*u));
+
+    draw(data1);
+    draw(appr1);
+    draw(algo1);
+    if (iter != 1)
+        draw(out1);
+
+    add(new void(picture pic, transform t) {
+        blockconnector operator --=blockconnector(pic,t);
+        
+        data1--Arrow--algo1;
+        appr1--Arrow--algo1;
+        algo1--Arrow--out1;
+    });
 }
 
 drawIteration(0);
@@ -34,21 +43,21 @@ string repstring(string s, int c) {
     return out;
 }
 
-block perfData=roundrectangle(Label(repstring("\ ", 65) + "Performance" + repstring("\ ", 65)), (9cm,6cm));
-block gp=rectangle("Gaussian Process", (9cm, 9cm));
-block hyps=rectangle(pack(Label("Sampled/optimised"), Label("hyperparameters")), (4cm, 9cm), drawpen=white);
+block perfData=roundrectangle(Label(repstring("\ ", N_SPACES) + "Performance" + repstring("\ ", N_SPACES)), (ITER_DIST,PERF_Y), fillpen=red+white+white);
+block gp=rectangle("Gaussian Process", (ITER_DIST, 10*u),fillpen=blue+white+white);
+block hyps=rectangle(pack(Label("Sampled/optimised"), Label("hyperparameters")), (2*u, 10*u), drawpen=white);
 
-block scheduler=rectangle("Scheduler", (22.5cm, 9cm));
+block scheduler=rectangle("Scheduler", (2.5*ITER_DIST, 10*u),minwidth=3u,minheight=1.5u);
 
-block data1=roundrectangle("Dataset",(3*9cm,0));
-block algo1=rectangle(pack(Label("Learning"), Label("algorithm")), (3*9cm, 3cm));
-label("Next iteration", (3*9cm,-2cm));
+block data1=roundrectangle(Label("Dataset", gray),(3*ITER_DIST,0), drawpen=gray);
+block algo1=rectangle(pack(Label("Learning", gray), Label("algorithm", gray)), (3*ITER_DIST, 3*u), drawpen=gray);
+label("Next iteration", (3*ITER_DIST,-2*u), gray);
 
-//block nextappr=rectangle(pack(align=W,Label("Select"), Label("approximation"), Label("parameters")), (24cm,2.5cm), drawpen=white);
+//block nextappr=rectangle(pack(align=W,Label("Select"), Label("approximation"), Label("parameters")), (24*u,2.5*u), drawpen=white);
 
-label("Select", (22.45cm, 6.5cm), E);
-label("approximation", (22.45cm, 6cm), E);
-label("parameters", (22.45cm, 5.5cm), E);
+label("Select", (2.5*ITER_DIST, PERF_Y+0.5u), E);
+label("approximation", (2.5*ITER_DIST, PERF_Y), E);
+label("parameters", (2.5*ITER_DIST, PERF_Y-0.5u), E);
 
 
 draw(perfData);
@@ -66,8 +75,20 @@ add(new void(picture pic, transform t) {
     perfData--Arrow--gp;
     hyps--Arrow--gp;
     gp--Label("Performance predictions",0.5,N)--Arrow--scheduler;
-    data1--Arrow--algo1;
+    
     scheduler--Down--Right--Arrow--algo1;
+
 });
 
+add(new void(picture pic, transform t) {
+    blockconnector operator --=blockconnector(pic,t,gray);
+    
 
+    data1--Arrow--algo1;
+});
+
+draw((-6u,-1.25u)--(24u,-1.25u), gray);
+draw((-6u,5.5u)--(24u,5.5u), gray);
+
+label(scale(1.75)*Label("Tier 1"), (-6u,5.25u), SE);
+label(scale(1.75)*Label("Tier 2"), (-6u,10.75u), SE);
