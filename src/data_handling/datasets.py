@@ -7,9 +7,9 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.datasets import make_classification
 from random import randint, shuffle
 
-DATASETS_DIR = '/Users/jan/Dropbox/mphil_project/repo/data/raw_arffs/'
+DATASETS_DIR = '../data/raw_arffs/'
 
-with open('/Users/jan/Dropbox/mphil_project/repo/src/data_handling/datasets_data.json') as datasets_data_file:  
+with open('datasets_data.json') as datasets_data_file:  
     datasets_data = loads(datasets_data_file.read())
 
 
