@@ -1,4 +1,9 @@
-%TODO maybe rename slice optimisation
+% TODO JAMES where to write more? bg/theory, diagrams/examples
+% TODO JAMES is "classification accuracy" correct?
+% TODO JAMES good idea to explain repo structure?
+
+
+%TODO NOW rename slice optimisation
 
 
 % TODO compare with other approaches (matern kernel)
@@ -23,12 +28,11 @@
 % TODO no emotional language
 % TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
 % TODO explain datasets w/ images if they are interesting
-% TODO Appendices should be avoided where possible, but may be appropriate in some cases
-% TODO mention ec2
+% TODO explain repo directory structure
 % TODO stress that the gradients are correct
 
 % TODO Where a project has as its main aim the production of a piece of software, the project report should state clearly what test procedures were adopted and should include test output
-% TODO The report should explicitly describe the starting point for the project, making clear what existing software or other resources were used
+
 
 % TODO Datasets
 %- Autoweka data taken from their website (how were those datasets selected?)
@@ -49,12 +53,13 @@
 % TODO word count
 \def\wordcount{@}
 
+\usepackage{subcaption}
 \usepackage{chngpage}
 \usepackage{calc}
 \usepackage{epsfig,graphicx,parskip,setspace,tabularx,xspace} 
-
+\usepackage{enumitem}
 \usepackage{mathtools}
-\usepackage{amsmath}
+\usepackage{amsmath,amssymb}
 \usepackage{algorithmicx}
 \usepackage{algorithm}% http://ctan.org/pkg/algorithms
 \usepackage{algpseudocode}
@@ -110,6 +115,10 @@
 
 
 \chapter{Background}
+% TODO The report should explicitly describe the starting point for the project, making clear what existing software or other resources were used
+\section{Data sources}
+%- explain where the data came from and how it was preprocessed
+
 % TODO mention: sklearn, gpml, jsonlab
 
 \textit{This chapter describes the background assumed in the remainder of the document. Specifically, it }
@@ -160,7 +169,9 @@
 \subsubsection{Approximation parameters}
 Approximation parameters are parameters to the machine learning algorithms that influence the trade-off between statistical and computational efficiency. They let us vary the degree of approximateness at which the algorithm runs. Changing an approximation parameters should either decrease the run time at the cost of classification accuracy or improve accuracy while making training slower. 
 
-The approximation parameter that we put most of our focus on in this project is the proportion of the available data. Other approximation parameters are hyperparameters to the machine learning algorithms such as the number of decision trees in a random forest. @not all hyps are appr.(length scale). always distinguish between two@
+The approximation parameter that we put most of our focus on in this project is the proportion of the available data. Other approximation parameters are hyperparameters to the machine learning algorithms such as the number of decision trees in a random forest. No all hyperparameters, however, are approximation parameters. Examples of hyperparameters that have no influence on performance are the lengthscale of a kernel and the 
+% TODO mention parameters like #thread that influence time but not performance
+@not all hyps are appr.(length scale). always distinguish between two@
 
 \subsubsection{Scheduling}
 
@@ -200,8 +211,8 @@ while True:
 
 \section{Tier 1}
 This section will @explain details@ of tier 1 before @moving on@ to tier 2 where out main contributions lie in the rest of this chapter.
-mention k fold
-roc
+% TODO mention k fold
+% TODO roc (only used for binary, is valid as no comparison between binary and non binary
 
 \section{Modelling Model Performance}
 To make good decisions, the scheduler needs an accurate model of the dependance of approximation parameters and performance. Creating such models is therefore a fundamental piece in our system.
@@ -209,9 +220,74 @@ To make good decisions, the scheduler needs an accurate model of the dependance 
 \subsection{Data Collection}
 The first step towards modelling performance was to collect sample data. This data was used to first investigate the function and formulate a hypothesis on the character of the function from approximation parameters to performance. After the kernel was implemented, we tested it by comparing its predictions based on the sample data with possible alternative kernels. The details of this are described in the Evaluation chapter below.
 
+% TODO MAYBE don't call this a script
+\subsubsection{Data collection script}
+As data collection was resource and time intensive, we implemented a command line script that accepts a range of configuration flags and collects data based on the parameters it receives. This script was then executed on an Amazon EC2 instance. This script can be configured with the following list of command line flags:
+
+\begin{itemize}
+\item \texttt{-a/--algorithm} The machine learning algorithm to be run. This can be one of \texttt{rnd\_forest}, \texttt{log\_reg} or \texttt{svm}
+\item Exactly one out of the following ways to load data:
+\begin{itemize}[label=$\star$]
+        \item \texttt{-s/--synthetic} Create synthetic data using scikit-learn's \texttt{make\_classification}. The parameters to \texttt{make\_classification} should be specified in string containing a python dictionary (e.g. \texttt{"{'n\_samples': 5000}"})
+        \item \texttt{-l/--load-arff} Load one of the \texttt{arff} files in the \texttt{data} directory
+        \item \texttt{-z/--datasets-of-size} This loads all the datasets of the given size. Can be one of \texttt{small}, \texttt{medium} or \texttt{large}
+        \item Vector Space Models
+     \end{itemize}
+\item \texttt{-d/--percentage-data-values} An array of data percentages specified in the syntax explained below
+\item Any additional parameters in the form \texttt{parameter\_name:[int|float]-<array of values as explained below>}
+\item \texttt{-p/--parallel} This flag was originally included to parallelise data collection by using multiple threads. Testing it revealed that running multiple instances of the algorithms in parallel led to distorted running times. This flag was not used for data collection
+\end{itemize}
+
+% TODO are these really sequences?
+The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}.
+
+Avoiding hard coded values for data generation made it possible to quickly collect fresh data.
+	
+
+
+
+
+\texttt{Collected sample data}
+
+% TODO JAMES maybe use different figures
+\begin{figure}
+\centering
+  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/lr_mnist.pdf}
+  \caption{Running logistic regression on the MNIST dataset}
+  \label{sampledata1}
+\end{figure}
+
+\begin{figure}
+\centering
+  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/rf_mnist.pdf}
+  \caption{Running random forest on the MNIST dataset}
+  \label{sampledata2}
+\end{figure}
+
+\begin{figure}
+\centering
+  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/lr_synth.pdf}
+  \caption{Running logistic regression on a synthetic dataset}
+  \label{sampledata3}
+\end{figure}
+
+\begin{figure}
+\centering
+  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/rf_synth.pdf}
+  \caption{Running random forest on a synthetic dataset}
+  \label{sampledata4}
+\end{figure}
+
+
+
+% TODO why suddenly misclassification instead of accuracy, explain that one is 1-the other
+Figures \ref{sampledata1}, \ref{sampledata2}, \ref{sampledata3} and \ref{sampledata4} show the results of collecting performance data, varying the percentage of data used. The four plots were generated by using random forest with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
+
+%how time (shown in @@) and misclassification rate (shown in @@) vary as different proportions of the available data are used in different combinations of algorithms and datasets. 
+
 
 % TODO why did you select the appr params you selected, later you only use data. data is enough to be interesting but we want to show that approach can in principle be extended
-
+% TODO look of O runtime of algos, should confirm empirical findings
 
 
 
@@ -219,11 +295,49 @@ The first step towards modelling performance was to collect sample data. This da
 
 
 \subsection{Exponential mixture kernel}
+Based on the results shown in the previous section, we implemented a kernel to model the exponential behaviour of classification accuracy. Following \cite{2014arXiv1406.3896S}, we define the kernel as
+% TODO JAMES can this be written as \psi(\lambda)d\lambda ?
+\begin{align}
+k(t,t') &= \int_{0}^{\infty} e^{-\lambda t}e^{-\lambda t'}\mu(d\lambda)\\
+&= \int_{0}^{\infty} e^{-\lambda(t+t')}\mu(d\lambda)
+\end{align}
+
+% TODO kernel assumptions: decay starts at zero, maybe add limes
+with $\mu$ being a mixing measure\footnote{We use $\mu$ instead of $\psi$ to denote the mixing measure to avoid confusion with the $\psi$ parameter to the gamma function explained below.}that weighs the $e^{-\lambda(t+t')}$ term. Note that this is not a stationary kernel as $k(t, t') \neq k(a + t, a + t')$. This conforms to our prior that moving further away from the origin, the value of $k$ should decrease.
+
+Again following \cite{2014arXiv1406.3896S}, we choose a gamma distribution as $\mu$ which leads to an analytic solution to the integral:
+\begin{align}
+k(t, t') &= \int_0^{\infty} e^{-\lambda(t+t')}\frac{\beta^\alpha}{\Gamma(\alpha)}\lambda^{\alpha -1}e^{-\lambda\beta} d\lambda\\
+&=\frac{\beta^\alpha}{\Gamma(\alpha)}\int_0^\infty e^{-\lambda(t+t'+\beta)}\lambda^{\alpha-1}d\lambda\\
+&=\frac{\beta^\alpha}{(t+t'+\beta)^\alpha}
+\end{align}
+
+Diverging from \cite{2014arXiv1406.3896S}, we reparameterise the gamma distribution with
+\begin{equation}
+\psi = \mathbb{E}(x) = \frac{\alpha}{\beta}
+\end{equation}
+and
+\begin{align}
+\xi &= \frac{Var(x)}{\mathbb{E}^2 (x)} = \frac{\alpha}{\beta^2} \cdot \frac{\beta^2}{\alpha^2}\\
+&= \frac{1}{\alpha}
+\end{align}
+
+% TODO show plots of reparameterised gamma function
+% TODO show plots drawn from priors
 
 
-\subsection{Selecting Kernel Hyperparameters}
-% TODO maybe call this model selection
-To fit a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance function. There two main methods to achieve this are sampling and optimisation. We use both of these methods as described @@. An evaluation of their advantages and disadvantages can be found in the Evaluation chapter.
+
+\subsection{Selecting Kernel Hyperparameters} 
+% TODO JAMES is it correct to call this model selection?
+
+To fit a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance and likelihood function. There two main methods to achieve this are marginalisation and optimisation. For reasons explained in the evaluation chapter, we implement both of these methods in our project.
+
+% TODO this algorithm is "too clever"
+% TODO show figs where optimisation fails
+GPML comes with an optimisation function that is meant to be used to optimise hyperparameters. It relies on gradient information which we implemented for the exponential mixture kernel. We were, however, not able to use this function with our kernel as it would terminate after a very small number of steps having barely moved from the initial values without having found a minimum. We suspect the reason for this to be numerical instability that creates very small local minima that the optimiser is unable to escape from. Figure @ shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}.
+
+After failing to optimise the hyperparameters to our kernel using the optimisation function included with GPML, we decided to implement sampling which does not suffer from the same problems as optimisation. For reasons of speed and ease of use, we then decided to implement our own optimisation routine which is described in detail below. An evaluation of the two methods applied to our data can be found in the Evaluation chapter.
+
 
 \subsubsection{Sampling}
 The first approach to hyperparameter selection we use in our project is the Bayesian approach of integrating out the hyperparameters $\theta$:
@@ -232,6 +346,7 @@ p(y|X) = \int p(y|X,\theta)p(\theta)d\theta
 \end{equation}
 
 
+We decided to implement slice sampling
 
 decided to implement this when gpml minimise didn't work
 
@@ -247,14 +362,13 @@ decided to implement this when gpml minimise didn't work
 %- mcmc/sampling
 
 
+
 \subsubsection{Optimisation}
-Another approach to find suitable hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters. Due to advantages of optimisation that we explain in detail in the evaluation of the two different methods in the next chapter, we decided to implement an optimisation routine to use as an alternative to sampling.
+Another approach to find suitable hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters. This has the advantage of being substantially faster than sampling. It is also easier to implement, as it returns one set of hyperparameters that can be used to make predictions instead of multiple samples that have to be correctly averaged over. The great disadvantage of optimisation is that it is prone to overfitting by choosing one optimum in cases where multiple viable optima exist. We describe situations in which we encountered this problem in the Evaluation chapter, comparing it with the results of slice sampling.
 
-% TODO this algorithm is "too clever"
-% TODO show figs where optimisation fails
-GPML comes with an optimisation function that is meant to be used to optimise hyperparameters. It relies on gradient information which we implemented for the exponential mixture kernel. We were, however, not able to use this function with our kernel as it would terminate after a very small number of steps having barely moved from the initial values without having found a minimum. We suspect the reason for this to be numerical instability that creates very small local minima that the optimiser is unable to escape from. Figure @ shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}. 
 
-After inspecting the marginal likelihood function in Matlab, we concluded that it is not a function that is inherently difficult to optimise and decided to implement our own optimisation routine. As we had already successfully sampled hyperparameters using slice sampling as described above, we implemented an optimisation method that works similarly to how slice sampling draws samples. The first version of this algorithm is shown below as Algorithm \ref{opti1}.
+
+After inspecting the marginal likelihood function @of sample data@ in Matlab, we concluded that it is not a function that is inherently difficult to optimise and decided to implement our own optimisation routine. As we had already successfully sampled hyperparameters using slice sampling as described above, we implemented an optimisation method that works similarly to how slice sampling draws samples. The first version of this algorithm is shown below as Algorithm \ref{opti1}.
 
 
 \begin{algorithm}
@@ -318,6 +432,9 @@ While this updated algorithm produces adequate results, it takes a substantial a
 One shortcoming of this optimisation routine is that all its steps have to be axis aligned. If the gradient of the function being optimised at $x$ is not aligned with any axis, this causes the optimiser to make very small steps along multiple axes. A superior approach would be to directly move along the gradients, which are available to us. As our current algorithm already performs to a high standard, we did not investigate this potential improvement further.
 
 
+% TODO mention that the result of optimisation is handled as one sample, averaged over one
+
+
 %show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
 
 
@@ -330,14 +447,20 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 
 \chapter{Evaluation}
 % TODO evaluate kernel (model evidence etc)
+% TODO for 2d: plot variance
  
 % TODO optimisation is faster and produces only one mean/sd, easier to use
 % using the \texttt{checkgrad.m}
 % compare optimisation/sampling adv/disadv
 % TODO rasmussen: local maxima correspond to a particular interpretation of the data
 
-\section{Data sources}
-%- explain where the data came from and how it was preprocessed
+
+\section{Results}
+
+\subsection{Hyperparameter selection}
+
+
+% TODO show case where one function is better initially but then gets overtaken
 \section{Testing}
 \section{Limitations}
 \section{Challenges} % TODO most of this was prob mentioned in design&impl
@@ -345,7 +468,9 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 %- model evidence
 %- testing
 %- how well it performs
-
+% TODO "hinge" on my computer
+% TODO kernel "cliffs"
+% TODO optimisation gets overfits, too much confidence in one interpretation
 
 \chapter{Conclusion and future work} 
 \section{Conclusions}

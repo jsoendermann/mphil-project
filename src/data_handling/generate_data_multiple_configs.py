@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 import sys
 
 
-def generate_data(name, classifier, datasets, all_percentage_data_values, parameters, n_folds=10):
+def generate_data(name, classifier, datasets, percentage_data_values, parameters, n_folds=10):
     params_tuples = parameters.items()
     param_names = [t[0] for t in params_tuples]
     param_generators = [t[1] for t in params_tuples]
@@ -25,7 +25,7 @@ def generate_data(name, classifier, datasets, all_percentage_data_values, parame
         datawriter.writerow(header)
 
         all_parameter_values = product(*param_generators)
-        all_configs = product(all_parameter_values, all_percentage_data_values)
+        all_configs = product(all_parameter_values, percentage_data_values)
         
         for param_values, percentage_data in all_configs:
             param_values, percentage_data, elapsed_time, avg_score = generate_data_for_config(dataset, classifier, param_names, param_values, percentage_data, kf)
@@ -48,7 +48,7 @@ group.add_argument('-s', '--synthetic', type=str, help='Create a synthetic datas
 group.add_argument('-l', '--load-arff', type=str, help='Load dataset from arff file with the given name')
 group.add_argument('-z', '--datasets-of-size', type=str, help='Load datasets of the given size')
 
-parser.add_argument('-d', '--all-percentage-data-values', type=str, required=True, help='A range for the percentage of data used. a:0.1:10:10 creates ten evenly spaced steps between 0 percent and 100 percent, g:0.01:10:1:1.1 creates a geometric series from 1 percent to 100 percent with 10 steps and a growth parameter of 1.1')
+parser.add_argument('-d', '--percentage-data-values', type=str, required=True, help='A range for the percentage of data used. a:0.1:10:1 creates ten evenly spaced steps between 0 percent and 100 percent, g:0.01:10:1:1.1 creates a geometric series from 1 percent to 100 percent with 10 steps and a growth parameter of 1.1')
 parser.add_argument('parameter', metavar='parameter', nargs='*', help='Parameters to the algorithm in the form <param_name>:<int|float>-<a|g>:start:steps:end[:growth_param]')
 
 args = parser.parse_args()
@@ -62,7 +62,7 @@ elif args.load_arff:
 elif args.datasets_of_size:
     datasets = load_datasets(args.datasets_of_size)
 
-all_percentage_data_values = convert_range_string(args.all_percentage_data_values)
+percentage_data_values = convert_range_string(args.percentage_data_values)
 
 parameters = {}
 for param_str in args.parameter:
@@ -73,5 +73,5 @@ for param_str in args.parameter:
         r = [int(round(v)) for v in r]
     parameters[t2[0]] = r
 
-generate_data(args.algorithm, classifier, datasets, all_percentage_data_values, parameters)
+generate_data(args.algorithm, classifier, datasets, percentage_data_values, parameters)
 
