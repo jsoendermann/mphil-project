@@ -561,8 +561,8 @@ elif args.load_arff:
 
 
 schedulers = [
-    ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.1, 1.3), exp_incl_float_range(1, 8, 20, 1.3) ),
-    FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.1, 1.3) + exp_incl_float_range(0.125, 10, 1.0, 1.3))
+    ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
+    FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3))
     #ProbabilityOfImprovementScheduler('Prob. of impr.', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
@@ -606,12 +606,12 @@ fig.subplots_adjust(wspace=SPACE, hspace=SPACE)
 plt.draw()
 
 while True:
-    all_done = True
+    terminate = True
 
     for scheduler in schedulers:
         scheduler.decide()
         if scheduler.decision:
-            all_done = False
+            terminate = False
             scheduler.execute()
             if scheduler.needs_model():
                 scheduler.model()
@@ -619,5 +619,5 @@ while True:
             update_highest_score_fig(schedulers, plt, ax_highest_score)
             save_fig(plt)
 
-    if all_done:
+    if terminate:
         break

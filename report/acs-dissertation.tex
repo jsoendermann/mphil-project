@@ -1,12 +1,5 @@
-%% 
-%% ACS project dissertation template. 
-%% 
-%% Currently designed for printing two-sided, but if you prefer to 
-%% print single-sided just remove ",twoside,openright" from the 
-%% \documentclass[] line below. 
-%%
-%%
-%%   SMH, May 2010. 
+%TODO maybe rename slice optimisation
+
 
 % TODO compare with other approaches (matern kernel)
 % TODO don't stop time spent scoring
@@ -21,16 +14,18 @@
 % TODO look at spearmint
 % TODO Nearest Neighbors Classification
 % TODO describe ranges
-
+% TODO figure/Figure capitalisation
+% TODO present/past
 % TODO UML diagram for schedulers
 % TODO If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 % TODO describe kernel problems
 % TODO establish the words scheduler and approx params early on
-
+% TODO no emotional language
 % TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
 % TODO explain datasets w/ images if they are interesting
 % TODO Appendices should be avoided where possible, but may be appropriate in some cases
 % TODO mention ec2
+% TODO stress that the gradients are correct
 
 % TODO Where a project has as its main aim the production of a piece of software, the project report should state clearly what test procedures were adopted and should include test output
 % TODO The report should explicitly describe the starting point for the project, making clear what existing software or other resources were used
@@ -50,14 +45,30 @@
 \def\authorname{Jan S\"ondermann\xspace}
 \def\authorcollege{Selwyn College\xspace}
 \def\authoremail{jjes2@cam.ac.uk}
-% TODO Title
-\def\dissertationtitle{@@@Title@@@}
+\def\dissertationtitle{Bayesian optimisation of approximateness in the trade-off between statistical and computational efficiency}
 % TODO word count
-\def\wordcount{0}
+\def\wordcount{@}
 
 \usepackage{chngpage}
 \usepackage{calc}
 \usepackage{epsfig,graphicx,parskip,setspace,tabularx,xspace} 
+
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{algorithmicx}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algpseudocode}
+\newcommand{\Break}{\State \textbf{break} }
+
+% Source code listings
+\usepackage{listings}
+\lstset{breaklines=true, frame=single, numbers=left, basicstyle=\small\ttfamily}
+
+% TODO make this work
+%\lstset{ %
+%  commentstyle=\color{grey}    % comment style
+%}
+
 
 %% START OF DOCUMENT
 \begin{document}
@@ -99,17 +110,21 @@
 
 
 \chapter{Background}
+% TODO mention: sklearn, gpml, jsonlab
+
+\textit{This chapter describes the background assumed in the remainder of the document. Specifically, it }
 \section{Machine Learning}
 \section{Algorithms}
 \subsection{Gaussian Processes}
 \subsection{Random Forests and Logistic Regression}
 
-as this is meta machine learning, i have to introduce @normal machine learning at a high level@
-algos + their imple (rf, lr, gps)
 
-- ML + algos
-- GPs/GPML (marginal likelihood)
-- mcmc/sampling
+%as this is meta machine learning, i have to introduce @normal machine learning at a high level@
+%algos + their imple (rf, lr, gps)
+
+
+%- GPs/GPML (marginal likelihood)
+
 
 % describe scheduling
 
@@ -119,8 +134,8 @@ algos + their imple (rf, lr, gps)
 
 \chapter{Related Work} 
 
-- hyper param optim
-- multi armed bandits
+%- hyper param optim
+%- multi armed bandits
 
 % TODO This chapter covers relevant (and typically, recent) research which you build upon (or improve upon). There are two complementary goals for this chapter: - to show that you know and understand the state of the art; and to put your work in context
 
@@ -132,8 +147,8 @@ algos + their imple (rf, lr, gps)
 
 
 
-
-
+% TODO "classification accuracy" maybe isn't correct if we also use roc
+% TODO mention somewhere that "performance" means time + score
 \chapter{Design and Implementation} 
 
 
@@ -143,16 +158,15 @@ algos + their imple (rf, lr, gps)
 \section{Architecture} % TODO maybe something like "overview"
 \subsection{Key concepts}
 \subsubsection{Approximation parameters}
+Approximation parameters are parameters to the machine learning algorithms that influence the trade-off between statistical and computational efficiency. They let us vary the degree of approximateness at which the algorithm runs. Changing an approximation parameters should either decrease the run time at the cost of classification accuracy or improve accuracy while making training slower. 
+
+The approximation parameter that we put most of our focus on in this project is the proportion of the available data. Other approximation parameters are hyperparameters to the machine learning algorithms such as the number of decision trees in a random forest. @not all hyps are appr.(length scale). always distinguish between two@
+
 \subsubsection{Scheduling}
+
+
 \subsection{High level architecture}
-Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates a meta-model of the model performances of the models in tier 1. This meta-model is then used by the scheduling part of the program to select the algorithm and approximation parameters for the next iteration.
-
-Figure \ref{architecture} shows the system architecture diagrammatically. 
-
-@alternate back and forth
-
-@tier 1 is standard ml stuff (using sklearn), our contribution is tier 2, has two parts: modelling and scheduling, now describe in detail
-
+% TODO END make sure this is properly centered
 \begin{figure}[!ht]
   \begin{adjustwidth}{-\oddsidemargin-2in}{-\rightmargin-1.5in}
     \centering
@@ -163,90 +177,149 @@ Figure \ref{architecture} shows the system architecture diagrammatically.
     \label{architecture}
 \end{figure}
 
+Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates a meta-model of the model performances of the models in tier 1. This meta-model is then used by the scheduling part of the program to select the algorithm and approximation parameters for the next iteration. 
+
+Figure \ref{architecture} shows this architecture diagrammatically after three iterations. Note how both tiers execute machine learning algorithms (coloured in blue) on a set of data (coloured in red) and how the result of the algorithms in the first tier form the data set for the Gaussian Process at the top of the diagram. The main loop of our program is shown, slightly simplified, in Figure \ref{mainloop}. When executing, the program switches back and forth between the two tiers: it executes an algorithm with a given set of approximation parameters, builds a new model that includes the performance during this execution. The scheduler then decides which algorithm/approximation parameter combination to run next and the system returns to the first step.
+
+\begin{figure}[ht]
+\begin{lstlisting}[language=Python]
+while True:
+   scheduler.decide() # Tier 2 (scheduling)
+   if scheduler.decision:
+      scheduler.execute() # Tier 1
+      scheduler.model() # Tier 2 (modelling)
+\end{lstlisting}
+\caption{The main loop}
+\label{mainloop}
+\end{figure}
+
+% TODO tier 1 is standard ml stuff (using sklearn), our contribution is tier 2, has two parts: modelling and scheduling, now describe in detail
 
 
+
+
+\section{Tier 1}
+This section will @explain details@ of tier 1 before @moving on@ to tier 2 where out main contributions lie in the rest of this chapter.
+mention k fold
+roc
 
 \section{Modelling Model Performance}
-To make decisions about where to 
-
+To make good decisions, the scheduler needs an accurate model of the dependance of approximation parameters and performance. Creating such models is therefore a fundamental piece in our system.
 
 \subsection{Data Collection}
+The first step towards modelling performance was to collect sample data. This data was used to first investigate the function and formulate a hypothesis on the character of the function from approximation parameters to performance. After the kernel was implemented, we tested it by comparing its predictions based on the sample data with possible alternative kernels. The details of this are described in the Evaluation chapter below.
 
 
-\subsection{Kernel}
+
+
+
+
+
+
+
+\subsection{Exponential mixture kernel}
+
+
 \subsection{Selecting Kernel Hyperparameters}
 % TODO maybe call this model selection
 To fit a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance function. There two main methods to achieve this are sampling and optimisation. We use both of these methods as described @@. An evaluation of their advantages and disadvantages can be found in the Evaluation chapter.
 
 \subsubsection{Sampling}
-The Bayesian way to handle hyperparameters is to integrate them out. 
+The first approach to hyperparameter selection we use in our project is the Bayesian approach of integrating out the hyperparameters $\theta$:
+\begin{equation}
+p(y|X) = \int p(y|X,\theta)p(\theta)d\theta
+\end{equation}
+
+
+
+decided to implement this when gpml minimise didn't work
+
+
+%The Bayesian way to handle hyperparameters is to integrate them out. 
 % TODO add maths on integrating out hyperparams
 
-To approximate this integral, MCMC methods are
+%To approximate this integral, MCMC methods are
 % TODO maths on MCMC
 
-To sample from @ we use slice sampling. adv/disadv: \cite{neal2003}
+%To sample from @ we use slice sampling. adv/disadv: \cite{neal2003}
 % TODO why slice sampling and not another method
-
+%- mcmc/sampling
 
 
 \subsubsection{Optimisation}
-Another approach to find appropriate hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters.
+Another approach to find suitable hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters. Due to advantages of optimisation that we explain in detail in the evaluation of the two different methods in the next chapter, we decided to implement an optimisation routine to use as an alternative to sampling.
 
-GPML comes with an optimisation function that is meant to be used to optimise hyperparameters. It relies on gradient information which we implemented for the exponential mixture kernel. We were, however, not able to use this function with our kernel as it would terminate after a very small number of steps having barely moved from the initial values @not being close to minimum@. We suspect the reason for this to be numerical instability problems that make the function @wiggly@ and creates @.
-
-Figure @ shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}. @looks easy to optimise and 
-% TODO for this subsection: show plots of likelihood function
-
-
-
-% TODO maybe include pseudocode for every step?
-
-% TODO optimisation is faster and produces only one mean/sd, easier to use
-
-% TODO mention numerical instability
 % TODO this algorithm is "too clever"
 % TODO show figs where optimisation fails
+GPML comes with an optimisation function that is meant to be used to optimise hyperparameters. It relies on gradient information which we implemented for the exponential mixture kernel. We were, however, not able to use this function with our kernel as it would terminate after a very small number of steps having barely moved from the initial values without having found a minimum. We suspect the reason for this to be numerical instability that creates very small local minima that the optimiser is unable to escape from. Figure @ shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}. 
 
-we then tried slice sampling, a sampling method that does not optimise the parameter but instead integrates them out and @draws samples from the posteriour?@. this worked quite well in the limited number of cases we tested.
-
-because we wanted an optimisation technique @why? fast. ease of use@, we decided to implement an optimisation method that works similarly to slice sampling @is there any literature on this?@ this algorithm works by considering a window around the current value, updating if a smaller y was found and narrowing the window size otherwise. pseudo code for this is shown in X.
-
-we also implemented a gradient based approach (b/c otherwise moving in a direction that's not axis aligned is slow) but that never really worked (describe nonetheless, also describe attempts to make it work
-
-this worked fairly well but not in @more complex? noisier@ examples. describe problem with cholesky decomposition. noise param was optimised to very low value, overfitting? show diagram
-
-After observing that restarting this algorithm with data for which it failed with a different random seed sometimes successfully optimised the parameters, we implemented a wrapper around our algorithm that reruns it multiple times, ignoring the result for cholesky errors.
-
-this produced satisfying results but took a long time to optimise. to cut down the run time, we added a final improvement by making the algorithm terminate early if y doesn't get updated in 5 successive iterations. this happens often and makes the algorithm fast. figure X shows pseudocode for this final version of the algorithm
+After inspecting the marginal likelihood function in Matlab, we concluded that it is not a function that is inherently difficult to optimise and decided to implement our own optimisation routine. As we had already successfully sampled hyperparameters using slice sampling as described above, we implemented an optimisation method that works similarly to how slice sampling draws samples. The first version of this algorithm is shown below as Algorithm \ref{opti1}.
 
 
+\begin{algorithm}
+\begin{algorithmic}[1]
+\Procedure{Slice\_optimisation}{$f,x,iterations=100,width=1$}
+\State $y\gets f(x),\ D\gets \Call{get\_dimensions}{x}$
+\For{$i\gets 1, iterations$}
+\For{$dim\gets \Call{permute}{D}$}\Comment{Iterate over all dimensions}
+\State $x_l, x_r, x'\gets x$\Comment{$x_l,\ x_r$ span interval, $x'$ falls inside}
+\State $r\gets \Call{Uniform}{0, 1}$
+\State $x_l(dim)\gets x(dim) - r * width$
+\State $x_r(dim)\gets x(dim) + (1 - r) * width$
+\For{$j\gets 1, 15$}
+\State $x'(dim)\gets \Call{Uniform}{x_r(dim), x_l(dim)}$
+\State $y' = f(x')$
+\If{$y' < y$}
+\State $y\gets y',\ x(dim) = x'(dim)$\Comment{New optimum}
+\Break
+\EndIf
+\If{$x'(dim) > x(dim)$}
+\State $x_r(dim) = x'(dim)$\Comment{Narrow interval from the right}
+\ElsIf{$x'(dim < x(dim)$}
+\State $x_l(dim) = x'(dim)$\Comment{Narrow interval from the left}
+\EndIf
+\EndFor
+\EndFor
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\caption{First version of slice optimisation}
+\label{opti1}
+\end{algorithm}
 
+This optimisation algorithm starts at a given $x$ and optimises by iterating over the input dimensions, spanning up an interval around $x$ for every iteration. Inside of these iterations, it selects points $x'$ at random from the interval. If $f(x')$ is smaller than the current minimum, it continues to the next loop iteration, otherwise it narrows the interval either from the left or the right, depending on the side of $x$ on which $x'$ falls.
 
-%\section{Approximation parameters and performance}
+Given enough data, this algorithm is able to find suitable hyperparameters to the exponential mixture kernel reliably. If it is used to fit a GP to a small number of points (five or less), it often selects hyperparameters such that the covariance matrix is not positive semidefinite and Cholesky decomposition fails. We catch these errors by wrapping every evaluation of $f$ in a \texttt{try ... catch} block. 
 
+While testing this algorithm, we found an effective method to handle these errors to be rerunning the algorithm multiple times and selecting the result with the highest marginal likelihood. This also alleviates the issue of local optima which we discuss in detail in the Evaluation chapter. The code to achieve this is shown as Algorithm \ref{optiwrap}.
 
+\begin{algorithm}
+\begin{algorithmic}[1]
+\Procedure{Optimise\_with\_restarts}{$f,x,restarts=5$}
+\State $X = [\ ],\ Y = [\ ]$
+\For{$i\gets 1, restarts$}
+\State $x'\gets \Call{Slice\_optimisation}{f, x}$
+\State $y'\gets f(x')$
+\State $\Call{append}{X, x'}$
+\State $\Call{append}{Y, y'}$
+\EndFor
+\State $i\gets \Call{MinIndex}{Y}$
+\State \textbf{return} $X(i)$
+\EndProcedure
+\end{algorithmic}
+\caption{Rerunning the optimiser}
+\label{optiwrap}
+\end{algorithm}
 
-section overview
-1. modelling
-to model, two things are necessary: 1. appropriate kernel function, 2. inference
-for inference, we use optimisation
-- optimisation
-- 1d/2d
+While this updated algorithm produces adequate results, it takes a substantial amount of time to optimise. A final change we therefore added was to terminate the optimisation routine early if the value of $y$ only changes minimally between five optimisations. This condition is met during almost all iterations and often drastically cuts short the time that our algorithm needs.
 
-to achieve what we want to achieve (@which is what? read proposal and michael jordan paper again@) the first ingredient is to be able to model param->score and param->time.
+% TODO MAYBE mention that there is an implementation of it, what did you try to make it work?
+One shortcoming of this optimisation routine is that all its steps have to be axis aligned. If the gradient of the function being optimised at $x$ is not aligned with any axis, this causes the optimiser to make very small steps along multiple axes. A superior approach would be to directly move along the gradients, which are available to us. As our current algorithm already performs to a high standard, we did not investigate this potential improvement further.
 
-- describe data collection
--- iface
 
 %show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
 
-time easy: linear (mention kernel)
 
-% TODO different names for these two subsections
-%\subsection{Implementing an appropriate kernel}
-% TODO describe problems with kernel (maybe in evaluation)
-%\subsection{GP hyperparameters}
 
 
 
@@ -254,25 +327,30 @@ time easy: linear (mention kernel)
 
 % TODO figures to explain different acquisition strategies
 
-\chapter{Evaluation} 
+\chapter{Evaluation}
+% TODO evaluate kernel (model evidence etc)
+ 
+% TODO optimisation is faster and produces only one mean/sd, easier to use
 % using the \texttt{checkgrad.m}
 % compare optimisation/sampling adv/disadv
 % TODO rasmussen: local maxima correspond to a particular interpretation of the data
 
 \section{Data sources}
-- explain where the data came from and how it was preprocessed
+%- explain where the data came from and how it was preprocessed
 \section{Testing}
 \section{Limitations}
 \section{Challenges} % TODO most of this was prob mentioned in design&impl
 % TODO numerical accuracy for EI when sd is very small and peak is under lower bound, i.e. prob of impr is very small, get infs and nans
-- model evidence
-- testing
-- how well it performs
+%- model evidence
+%- testing
+%- how well it performs
 
 
 \chapter{Conclusion and future work} 
 \section{Conclusions}
 \section{Future work}
+% TODO additional appr params. the kernel is already implemented
+
 % TODO Depending on the length of your work, and  how well you write, you may not need a summary here. You will generally want to draw some conclusions, and point to potential future work. 
 
 
