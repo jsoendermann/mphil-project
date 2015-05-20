@@ -198,6 +198,8 @@ meta machine learning
 \subsubsection{Gaussian Processes}
 
 \section{Bayesian optimisation and expected improvement}
+% TODO consistent naming for "prob of impr" and EI
+
 Bayesian optimisation is a method to solve the optimisation problem of having to find an $x$ that maximises\footnote{We will consider maximisation only in this section as minimising $f$ is equivalent to maximising $-f$} $f(x)$ for a given function $f$, commonly written 
 \begin{equation}
 \argmax_x f(x)
@@ -213,7 +215,7 @@ This means that Bayesian optimisation is especially well suited in cases like ou
 
 Besides the function prior, one also needs to choose an acquisition function when using Bayesian optimisation. These function take the posterior over $f$ as input and return a function $a$. This function is used to choose the next input value to $f$ with a proxy optimisation, which means that the optimum of $a$ is also the point where we next evaluate $f$. This naturally requires $a$ to be quick to evaluate.
 
-Out of the possible acquisition functions, we consider two that we use in the implementation of our schedulers: Probability of improvement and Expected improvement. Figure \ref{bayesianopti} shows an example of 
+Out of the possible acquisition functions, we consider two that we use in the implementation of our schedulers: Probability of improvement and Expected improvement. Figure \ref{bayesianopti} shows an example of an optimisation in progress. The topmost plot shows the function $f$ as a dashed, blue line. This is the true, underlying function to which we only have access through individual evaluations. It function has been evaluated seven times and the Gaussian process has created a model with the mean shown as a read line and twice the standard deviation shown in grey. This is the information that is available to us when we construct the acquisition function.
 
 \begin{figure}
 \centering
@@ -222,12 +224,32 @@ Out of the possible acquisition functions, we consider two that we use in the im
   \label{bayesianopti}
 \end{figure}
 
+The second graph shows the probability of improvement acquisition function. This acquisition function is based on the strategy of finding the point most likely to yield an improvement over the current maximum $y_{max}$. It is calculated with
+\begin{align}
+a_{PI}(x) &= P(z \geq y_{max}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\label{eq:pi_equation}\\
+&=\Phi(\frac{\mu(x) - y_{max}}{\sigma(x)})
+\end{align}
+
+% TODO cite kushner 1964
+Equation \ref{eq:pi_equation} is visualised in figure @. Due to the fact that the Gaussian process tends to be most certain about points that are close to a known data point and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x$ and the current maximum, thir tends to be very conservative acquisition function. In figure \ref{bayesianopti}, we can see the acquisition function for the probability of improvement in the second plot. Note how $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have evaluated the function, and quickly drops off as $x$ increases. This is the phenomenon just described: this acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
+
+% TODO cite mockus 1978, better place to cite
+Another, superior, strategy to decide which point to evaluate next is Expected improvement. The acquisition function for Expected improvement is defined \cite{eipaper} as
+\begin{align}
+a_{EI}(x) &= \mathbb{E}(\text{max}\{z - y_{max}, 0\}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\\
+&= (\mu(x) - f_{max})\Phi(\frac{\mu(x) - y_{max}}{\sigma(x)}) + \sigma(x)(\frac{\mu(x) - y_{max}}{\sigma(x)})
+\end{align}
+
+% TODO give an intuition for what this means
+% TODO look up what max does to an expectation
+
+% TODO bad style (we)
+If we look at the third plot in figure \ref{bayesianopti}, we can see the difference between probability and improvement and Expected improvement in the range between x values four and five. In contrast to probability of improvement, the acquisition function for expected improvement has its maximum further to the right, as it also considers the difference between the current maximum and the y value it expects. 
 
 
-% successful for hyperparameter tuning
 
-\section{Data sources}
-%- explain where the data came from and how it was preprocessed
+
+
 
 \section{Third-party libraries used}
 Besides the standard libraries of Python 2.7 and Matlab 2014b, our project uses a number of third-party libraries which are described in this section. The first and most important library that we make extensive us of is scikit-learn, a Python implementation of many common machine learning algorithms. Scikit-learn is built on NumPy and SciPy, two very widespread Python frameworks for scientific computing. Besides its implementation of random forest and logistic regression, we also use it to generate datasets with its \texttt{make\_classification} function as explained in the previous section.
@@ -447,10 +469,10 @@ The first approach to hyperparameter selection we use in our project is the Baye
 p(y|X) = \int p(y|X,\theta)p(\theta)d\theta
 \end{equation}
 
-
 We decided to implement slice sampling
-
 decided to implement this when gpml minimise didn't work
+
+The main advantage of sampling the hyperparameters is that it does not suffer from overfitting the same way optimisation does, given that the samples are successfully drawn from the posterior distribution. Its major drawback is that it is computationally more expensive than optimisation methods. Implementation wise, sampling also takes more effort than optimisation, as the result of the computations the program executes have to be correctly averaged over.
 
 
 %The Bayesian way to handle hyperparameters is to integrate them out. 
@@ -466,7 +488,9 @@ decided to implement this when gpml minimise didn't work
 
 
 \subsubsection{Optimisation}
-Another approach to find suitable hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters. This has the advantage of being substantially faster than sampling. It is also easier to implement, as it returns one set of hyperparameters that can be used to make predictions instead of multiple samples that have to be correctly averaged over. The great disadvantage of optimisation is that it is prone to overfitting by choosing one optimum in cases where multiple viable optima exist. We describe situations in which we encountered this problem in the Evaluation chapter, comparing it with the results of slice sampling.
+Another approach to find suitable hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters. This has the advantage of being substantially faster than sampling. It is also easier to implement, as it returns one set of hyperparameters that can be used to make predictions instead of multiple samples that have to be correctly averaged over.
+
+The great disadvantage of optimisation is that it is prone to overfitting by choosing one optimum in cases where multiple viable optima exist. We describe situations in which we encountered this problem in the Evaluation chapter, comparing it with the results of slice sampling.
 
 
 
@@ -540,9 +564,9 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 
 %show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
 
+\subsubsection{Using both methods} % TODO different name
 
-
-
+As our program has to be able to handle both samples and single results returned by optimisation, we decided to treat the result of our optimisation routine as a single sample in the routines that make use of our model. This makes it completely transparent to these routines which of the two hyperparameter selection methods were used and enables us to switch between them according to the requirements of the schedulers.
 
 \section{Scheduling} 
 
@@ -551,6 +575,9 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 % TODO figures to explain different acquisition strategies
 
 \chapter{Evaluation}
+% TODO PROGRAM skewed datasets with lots of pos, few neg
+
+
 % TODO evaluate kernel (model evidence etc)
 % TODO for 2d: plot variance
  
@@ -559,6 +586,10 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 % compare optimisation/sampling adv/disadv
 % TODO rasmussen: local maxima correspond to a particular interpretation of the data
 
+\section{Data sources}
+% TODO explain where the data came from and how it was preprocessed
+
+The second source of datasets we used was created synthetically using scikit-learn's \texttt{make\_classification} function. This function takes a number of parameters that define the dataset, such as the number of samples, the number of features and the number of classes and creates data according to these parameters.
 
 \section{Results}
 
@@ -568,7 +599,8 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 % TODO show case where one function is better initially but then gets overtaken
 \section{Testing}
 \section{Limitations}
-\section{Challenges} % TODO most of this was prob mentioned in design&impl
+\section{Challenges} 
+
 % TODO numerical accuracy for EI when sd is very small and peak is under lower bound, i.e. prob of impr is very small, get infs and nans
 %- model evidence
 %- testing
