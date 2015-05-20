@@ -301,8 +301,6 @@ class ProbabilisticScheduler(Scheduler):
             self.decision = (x, algorithm)
             
         else:
-            #truncated_average_acquisition_functions = self.truncated_average_acquisition_functions()
-
             max_x = -1
             max_a = -1
             max_algorithm = None
@@ -334,7 +332,7 @@ class ProbabilisticScheduler(Scheduler):
         for algorithm, models_for_algorithm in self.models.items():
             acquisition_functions = []
             for score_model, time_model in zip(models_for_algorithm['score'], models_for_algorithm['time']):
-                acquisition_function = self.__class__.a(overall_best_score, score_model.mean, score_model.std_dev, time_model.mean, time_model.std_dev, **additional_parameters)
+                acquisition_function = self.__class__.a(self, overall_best_score, score_model.mean, score_model.std_dev, time_model.mean, time_model.std_dev, **additional_parameters)
                 acquisition_functions.append(acquisition_function)
             avg_acquisition_function = (np.linspace(0,1,100), np.mean(acquisition_functions, axis=0))
 
@@ -368,21 +366,6 @@ class ProbabilisticScheduler(Scheduler):
 
     def needs_model(self):
         return self.burn_in_sequence_index >= len(self.burn_in_sequence)
-
-
-    #def truncated_average_acquisition_functions(self):
-        #res = {}
-        #for algorithm, acquisition_function in self.acquisition_functions.items():
-            #max_x = 0
-            #for datum in self.data[algorithm]:
-                #max_x = max(datum.x, max_x)
-
-            #xs_org, ys_org = acquisition_function
-            #xs, ys = truncate_func_at_x(max_x, xs_org, ys_org)
-
-            #res[algorithm] = (xs, ys)
-        #return res
-
 
     def _clear_axes(self):
         super(ProbabilisticScheduler, self)._clear_axes()
@@ -419,7 +402,7 @@ class ProbabilisticScheduler(Scheduler):
 
 class ProbabilityOfImprovementScheduler(ProbabilisticScheduler):
     @classmethod
-    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+    def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
         return ProbabilisticScheduler._gamma(score_mean, overall_best_score, score_std_dev)
         #return norm.cdf((score_mean - overall_best_score) / (score_std_dev + np.ones(100) * 0.0001))
       
@@ -427,16 +410,16 @@ class ProbabilityOfImprovementScheduler(ProbabilisticScheduler):
 
 class ExpectedImprovementScheduler(ProbabilisticScheduler):
     @classmethod
-    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+    def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
         g = ProbabilisticScheduler._gamma(score_mean, overall_best_score, score_std_dev)
         return score_std_dev * (g * norm.cdf(g) + norm.pdf(g))
 
 
 class ExpectedImprovementPerTimeScheduler(ExpectedImprovementScheduler):
     @classmethod
-    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+    def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
         # TODO Find out if there's a way to refer to this class indirectly
-        ei = ExpectedImprovementScheduler.a(overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev)
+        ei = ExpectedImprovementScheduler.a(self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev)
         return ei / time_mean
 
 
@@ -503,24 +486,67 @@ class ExpectedImprovementTimesProbOfSuccessScheduler(TimedScheduler, ExpectedImp
             else:
                 return None
 
-
     @classmethod
-    def a(cls, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev, remaining_time):
+    def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev, remaining_time):
         # TODO Change this to a list comprehension
         prob_of_success = np.zeros(len(time_mean))
         for i, (tm, tsd) in enumerate(zip(time_mean, time_std_dev)):
             prob_of_success[i] = norm.cdf(remaining_time, loc=tm, scale=tsd)
 
         # TODO Find out if there's a way to refer to this class indirectly
-        ei = ExpectedImprovementScheduler.a(overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev)
+        ei = ExpectedImprovementScheduler.a(self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev)
 
         #print ei
         #print prob_of_success
         
         return ei * prob_of_success
 
-class ExploreThenExploitScheduler(TimedScheduler):
-    pass
+class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
+    def __init__(self, scheduler_name, burn_in_percentages, explore_time, exploit_time):
+        super(MinimiseUncertaintyAndExploitScheduler, self).__init__(scheduler_name, burn_in_percentages, explore_time)
+        self.burn_in_end = burn_in_percentages[-1]
+        
+        self.exploit_time = exploit_time
+        self.exploring = True
+
+    def decide(self):
+        super(MinimiseUncertaintyAndExploitScheduler, self).decide()
+        
+        if self.remaining_time < 0:
+            if self.exploring:
+                print colored('Exploiting!', 'red')
+                self.exploring = False
+                self.remaining_time += self.exploit_time
+            else:
+                self.decision = None
+
+
+
+    def execute(self):
+        super(MinimiseUncertaintyAndExploitScheduler, self).execute()
+
+
+    def model(self):
+        super(MinimiseUncertaintyAndExploitScheduler, self).model()
+
+        for algorithm, acquisition_function in self.acquisition_functions.items():
+            xs_org, ys_org = acquisition_function
+            xs, ys = truncate_func_at_x(self.burn_in_end, xs_org, ys_org)
+            acquisition_function = (xs, ys)
+                
+            self.acquisition_functions[algorithm] = acquisition_function
+
+
+    @classmethod
+    def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev, remaining_time):
+        prob_of_success = np.zeros(len(time_mean))
+        for i, (tm, tsd) in enumerate(zip(time_mean, time_std_dev)):
+            prob_of_success[i] = norm.cdf(remaining_time, loc=tm, scale=tsd)
+        if self.exploring:
+            return score_std_dev / time_mean * prob_of_success
+        else:
+            return score_mean * prob_of_success
+            
 
 
 
@@ -561,6 +587,7 @@ elif args.load_arff:
 
 
 schedulers = [
+    MinimiseUncertaintyAndExploitScheduler('explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 5, 20),
     ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
     FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3))
     #ProbabilityOfImprovementScheduler('Prob. of impr.', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
@@ -573,7 +600,7 @@ n_schedulers = len(schedulers)
 
 # Set up plot
 plt.ion()
-fig = plt.figure(1, figsize=(20, 12), dpi=80)
+fig = plt.figure(1, figsize=(20, 14), dpi=80)
 
 ax_counter = 1
 for scheduler in schedulers:

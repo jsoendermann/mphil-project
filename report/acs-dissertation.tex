@@ -1,38 +1,33 @@
 % TODO JAMES where to write more? bg/theory, diagrams/examples
 % TODO JAMES is "classification accuracy" correct?
 % TODO JAMES good idea to explain repo structure?
+% TODO JAMES "meta machine learning" a good term?
 
+% TODO NOW rename slice optimisation
 
-%TODO NOW rename slice optimisation
-
-
+% TODO END remove todos from code
 % TODO compare with other approaches (matern kernel)
 % TODO don't stop time spent scoring
 % TODO roc_auc_score to score
 % TODO convert sparse arff files to non sparse
 % TODO rnd forest is bad at data thats heavily pos or neg
-% TODO describe gradent problems
+% TODO describe gradient problems (stress that the gradients are correct)
 % TODO describe classifier scoring mechanism
-% TODO optimisation: gpml's didn't work, rolled my own based on slice optimisation; explain grad based optimi, show nlml func to justify that it's simple
 % TODO implement better optimiser based on gradients
 % TODO comparing model evidence
 % TODO look at spearmint
 % TODO Nearest Neighbors Classification
-% TODO describe ranges
 % TODO figure/Figure capitalisation
 % TODO present/past
 % TODO UML diagram for schedulers
 % TODO If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 % TODO describe kernel problems
-% TODO establish the words scheduler and approx params early on
-% TODO no emotional language
+% TODO END check for emotional language
 % TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
 % TODO explain datasets w/ images if they are interesting
 % TODO explain repo directory structure
-% TODO stress that the gradients are correct
-
-% TODO Where a project has as its main aim the production of a piece of software, the project report should state clearly what test procedures were adopted and should include test output
-
+% TODO contract algorithm
+% TODO explain how exponential growth is at most 2x as bad as 100%
 
 % TODO Datasets
 %- Autoweka data taken from their website (how were those datasets selected?)
@@ -61,11 +56,9 @@
 \usepackage{mathtools}
 \usepackage{amsmath,amssymb}
 \usepackage{algorithmicx}
-\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algorithm}
 \usepackage{algpseudocode}
 \newcommand{\Break}{\State \textbf{break} }
-
-% Source code listings
 \usepackage{listings}
 \lstset{breaklines=true, frame=single, numbers=left, basicstyle=\small\ttfamily}
 
@@ -100,12 +93,40 @@
 %% START OF MAIN TEXT 
 
 \chapter{Introduction}
-\pagenumbering{arabic} 
-\setcounter{page}{1} 
+% TODO add citations
 
-- context
-- motivation
-- general overview
+\pagenumbering{arabic}
+\setcounter{page}{1}
+Before the advent of computers, statistical methods had to be simple enough to be calculable by hand which greatly limited the degree of complexity that these methods could reach. As computing power available to statisticians increased, many new methods were devised to make use of these new resources. In some cases, these new methods even exceed the computational possibilities and are computationally intractable. 
+
+Although machine learning is a very diverse subject that combines influences from many different fields such as engineering, computer science, computational biology and physics, many of the recent advances have come from statistics or made use of statistical methods. As is true for mathematics more generally, considerations of run time and complexity are usually not in the focus of attention of statistical research. Public perception of machine learning has concentrated on the rapid growth of data to be analysed, a phenomenon often called "Big Data". This development has made issues of run time become increasingly acute. 
+
+The current states of the field of machine learning requires skilled humans to make high level decisions on trade-offs between computational and statistical efficiency such as when to use approximate inference methods or when to use a simple method with lots of data rather than a complex method with a small amount of data. The knowledge necessary to make adequate decisions in these cases is often acquired through experience and an intuitive familiarity with the learning algorithms that can be hard to formalise and teach.
+
+% cite auto. stat./auto weka
+As part of the current trend to automise all aspects of machine learning, automating the process of finding a balance in these trade-offs would make an important contribution to the field. Finding this balance can be seen as an optimisation problem that optimises the function from a number of "approximation parameters" to the time and prediction performance of the learning algorithms. 
+
+Classical optimisation methods may be ineffective as solutions to this problem as evaluating the function to be optimised can be very expensive to compute. Further complicating this problem is the fact that the time required to evaluate the function can vary drastically depending on where it is evaluated: consider the case where the approximation parameter is the number of layers in a deep neural network. Clearly, more layers will cause the inference to take more time. The optimisation routine has to take this into account when exploring the function. A natural solution to this problem is Bayesian optimisation as Bayesian optimisation methods make very efficient use of data when optimising a function.
+
+% TODO MAYBE cite http://rbr.cs.umass.edu/papers/ZCCijcai99.pdf
+Adding run time considerations to statistical learning methods can lead to a number of different outcomes. One possible goal are anytime algorithms that can be interrupted while running, returning a solution optimal for the amount of time they were allowed to run for. Another goal is to develop contract algorithms that receive data and a time budget as input and infer an optimal model within the time budget.
+
+% what have we developed?
+
+
+% highlights
+
+
+
+
+% TODO JAMES We will demonstrate these ideas by building a system that can choose between different machine learning methods, doing so efficiently by running approximate versions of the algorithms to estimate which methods are most promising to run with less approximation
+
+
+
+
+%- context
+%- motivation
+%- general overview
 % TODO context (why did you do it (motivation), what was the hoped-for outcome (aims) --- as well as trying to give a brief overview of what you actually did)
 
 
@@ -114,18 +135,41 @@
 % TODO It's also traditional to give an outline of the rest of the document, although without care this can appear formulaic and tedious. Your call. 
 
 
+
 \chapter{Background}
+\textit{This chapter describes the background assumed in the remainder of the document. We give a brief explanation of general machine learning principles together with a brief summary of the algorithms used. We then describe the datasets we used during the course of the project.}
+
 % TODO The report should explicitly describe the starting point for the project, making clear what existing software or other resources were used
+
+
+% TOOD the field of "sequential analysis"
+% TODO bounds as alternative to EI
+
+
+\section{Machine Learning}
+\begin{figure}
+\centering
+% TODO JAMES maybe add reference to cs229 lecture notes
+  \includegraphics[width=.8\textwidth]{figures/ml.pdf}
+  \caption{The general process of learning from data}
+  \label{mlstructure}
+\end{figure}
+
+% meta machine learning
+% parametric and non-parametric
+
+\subsection{Algorithms}
+
+\subsubsection{Random Forests and Logistic Regression}
+
+\subsubsection{Gaussian Processes}
+
+
 \section{Data sources}
 %- explain where the data came from and how it was preprocessed
 
+\section{Third-party libraries used}
 % TODO mention: sklearn, gpml, jsonlab
-
-\textit{This chapter describes the background assumed in the remainder of the document. Specifically, it }
-\section{Machine Learning}
-\section{Algorithms}
-\subsection{Gaussian Processes}
-\subsection{Random Forests and Logistic Regression}
 
 % TODO explain hyperparameters
 %as this is meta machine learning, i have to introduce @normal machine learning at a high level@
@@ -303,6 +347,7 @@ k(t,t') &= \int_{0}^{\infty} e^{-\lambda t}e^{-\lambda t'}\mu(d\lambda)\\
 \end{align}
 
 % TODO kernel assumptions: decay starts at zero, maybe add limes
+% TODO does this kernel always go to 0?
 with $\mu$ being a mixing measure\footnote{We use $\mu$ instead of $\psi$ to denote the mixing measure to avoid confusion with the $\psi$ parameter to the gamma function explained below.}that weighs the $e^{-\lambda(t+t')}$ term. Note that this is not a stationary kernel as $k(t, t') \neq k(a + t, a + t')$. This conforms to our prior that moving further away from the origin, the value of $k$ should decrease.
 
 Again following \cite{2014arXiv1406.3896S}, we choose a gamma distribution as $\mu$ which leads to an analytic solution to the integral:
