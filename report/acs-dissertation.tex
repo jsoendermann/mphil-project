@@ -1,7 +1,6 @@
 % TODO JAMES where to write more? bg/theory, diagrams/examples
 % TODO JAMES is "classification accuracy" correct?
-% TODO JAMES good idea to explain repo structure?
-% TODO JAMES "meta machine learning" a good term?
+
 
 % TODO NOW rename slice optimisation
 
@@ -16,8 +15,11 @@
 % TODO implement better optimiser based on gradients
 % TODO comparing model evidence
 % TODO look at spearmint
-% TODO Nearest Neighbors Classification
+% TODO "n't" -> "not"
+% TODO use "equation" instead of equation* (also align)
 % TODO figure/Figure capitalisation
+% TODO capitalisation of chapters/sections
+% TODO no arxiv references
 % TODO present/past
 % TODO UML diagram for schedulers
 % TODO If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
@@ -28,7 +30,10 @@
 % TODO explain repo directory structure
 % TODO contract algorithm
 % TODO explain how exponential growth is at most 2x as bad as 100%
-
+% TOOD the field of "sequential analysis"
+% TODO bounds as alternative to EI
+% TODO JAMES We will demonstrate these ideas by building a system that can choose between different machine learning methods, doing so efficiently by running approximate versions of the algorithms to estimate which methods are most promising to run with less approximation
+% TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
 % TODO Datasets
 %- Autoweka data taken from their website (how were those datasets selected?)
 %- merge training and test arffs using weka cmd line
@@ -48,6 +53,7 @@
 % TODO word count
 \def\wordcount{@}
 
+\usepackage[export]{adjustbox}
 \usepackage{subcaption}
 \usepackage{chngpage}
 \usepackage{calc}
@@ -66,6 +72,9 @@
 %\lstset{ %
 %  commentstyle=\color{grey}    % comment style
 %}
+
+
+\DeclareMathOperator*{\argmax}{arg\,max}
 
 
 %% START OF DOCUMENT
@@ -111,39 +120,62 @@ Classical optimisation methods may be ineffective as solutions to this problem a
 % TODO MAYBE cite http://rbr.cs.umass.edu/papers/ZCCijcai99.pdf
 Adding run time considerations to statistical learning methods can lead to a number of different outcomes. One possible goal are anytime algorithms that can be interrupted while running, returning a solution optimal for the amount of time they were allowed to run for. Another goal is to develop contract algorithms that receive data and a time budget as input and infer an optimal model within the time budget.
 
-% what have we developed?
+% TODO is this true?
+%In this project, we develop a system that @. As neither of these two problems has an analytic solutions, we wrote a number of heuristics that use Bayesian optimisation methods to decide @.
+
+Our first major contribution in this project is a model of the function from approximation parameters to learning algorithm performance. This is the foundation for the second major part of our system which consists of a number of heuristics that use the model as a basis for Bayesian optimisation. Because these heuristics try to find an optimal evaluation sequence for the function to be optimised, we call them "schedulers".
+
+\begin{figure}
+\centering
+  \includegraphics[trim=130 40 910 560,clip,width=\textwidth]{figures/anytime1.pdf}
+  \caption{Comparing two schedulers}
+  \label{anytime1}
+\end{figure}
+
+% TODO add . to prob
+Figure \ref{anytime1} shows a plot that compares the performance of two such schedulers. The x-axis shows the time in seconds that the scheduler has been allowed to spend searching for the best model while the y-axis shows the classification accuracy of the best model the scheduler has found. The "\texttt{fixed\_exponential}" scheduler is a naive implementation that simply tries a fixed sequence of values for the approximation parameter. The "\texttt{EI * prob of success}" scheduler is a heuristic we developed to approximate an anytime algorithm. Both schedulers spend about 10 seconds in a burn-in phase. After this burn in ends, the blue scheduler immediately starts dominating the green scheduler and plateaus out at the maximum value about 50 seconds after learning starts. To reach the same classification accuracy, the naive scheduler needs about 80 seconds.
+
+Although eventually both schedulers reach the same final accuracy, if we terminate both schedulers after 30 seconds, the best model found by the "\texttt{EI * prob of success}" is substantially better than that found by the naive scheduler at this point. It is therefore a heuristic for an anytime algorithm.
+
+% TODO mention that you focus on rnd-forest/log-reg and data only
+
+
+%- general overview
+% TODO context (why did you do it (motivation), what was the hoped-for outcome (aims) --- as well as trying to give a brief overview of what you actually did)
 
 
 % highlights
 
 
-
-
-% TODO JAMES We will demonstrate these ideas by building a system that can choose between different machine learning methods, doing so efficiently by running approximate versions of the algorithms to estimate which methods are most promising to run with less approximation
-
-
-
-
-%- context
-%- motivation
-%- general overview
-% TODO context (why did you do it (motivation), what was the hoped-for outcome (aims) --- as well as trying to give a brief overview of what you actually did)
-
-
 % TODO It's often useful to bring forward some ``highlights'' into  this chapter (e.g.\ some particularly compelling results, or  a particularly interesting finding). 
 
-% TODO It's also traditional to give an outline of the rest of the document, although without care this can appear formulaic and tedious. Your call. 
+
+The rest of this dissertation is structured as follows:
+\begin{itemize}
+	\item The \textbf{Background} chapter introduces the theoretical ideas that this project is built on. It also lists the third-party technologies that were used during development
+	\item The \textbf{Related Work} summarises the current state of research regarding the problems we are trying to solve
+	\item The \textbf{Design and Implementation} chapter explains the features of our system, starting with a high level overview and continuing to a detailed description
+	\item The \textbf{Evaluation} section critically examines what we have built by testing the system and evaluating results. It also lists challenges we faced and limitations of our current implementation
+	\item The \textbf{Conclusion and future work} recapitulates our results by returning to the broader context lined out in this introduction and lists possible ways of extending the existing system
+\end{itemize}
+
+
+
+
+
+
+
+
+
 
 
 
 \chapter{Background}
-\textit{This chapter describes the background assumed in the remainder of the document. We give a brief explanation of general machine learning principles together with a brief summary of the algorithms used. We then describe the datasets we used during the course of the project.}
+% TODO A more extensive coverage of what's required to understand your work. In general you should assume the reader has a good undergraduate degree in computer science, but is not necessarily an expert in the particular area you've been working on. Hence this chapter may need to summarise some ``text book'' material. 
+\textit{This chapter describes the background assumed in the remainder of the document. We give a brief explanation of general machine learning principles together with a summary of the algorithms used. We then describe the datasets we used during the course of the project.}
 
-% TODO The report should explicitly describe the starting point for the project, making clear what existing software or other resources were used
 
 
-% TOOD the field of "sequential analysis"
-% TODO bounds as alternative to EI
 
 
 \section{Machine Learning}
@@ -155,8 +187,9 @@ Adding run time considerations to statistical learning methods can lead to a num
   \label{mlstructure}
 \end{figure}
 
+meta machine learning
 % meta machine learning
-% parametric and non-parametric
+% TODO explain hyperparameters
 
 \subsection{Algorithms}
 
@@ -164,35 +197,58 @@ Adding run time considerations to statistical learning methods can lead to a num
 
 \subsubsection{Gaussian Processes}
 
+\section{Bayesian optimisation and expected improvement}
+Bayesian optimisation is a method to solve the optimisation problem of having to find an $x$ that maximises\footnote{We will consider maximisation only in this section as minimising $f$ is equivalent to maximising $-f$} $f(x)$ for a given function $f$, commonly written 
+\begin{equation}
+\argmax_x f(x)
+\end{equation}
+
+What distinguishes Bayesian optimisation from other optimisation methods is that it places a prior over the function $f$. After evaluating $f$ and obtaining a new data point, if updates this prior and uses the new posterior to decide where to evaluate the function next.
+
+As Gaussian processes are precisely such priors over functions, they are very well suited to be used with Bayesian optimisation. By selecting an appropriate kernel, one can express existing prior knowledge over the function to be optimised which is crucial in ensuring that the Bayesian optimiser makes good choices in deciding the sequence of function evaluations.
+
+Unlike other optimisation methods like gradient descent that only use information local to the function at the last evaluation, Bayesian optimisation considers all the available data when deciding where to evaluate the function next. This means that Bayesian optimisation often finds an optimum in fewer steps than other methods. This, however, comes at the cost of requiring more computational resources when making these decisions \cite{PracticalBayesianOptimization}.
+
+This means that Bayesian optimisation is especially well suited in cases like ours where evaluating $f$ is (potentially) very costly and the number of function evaluation should be minimised. In Addition, Bayesian optimisation has shown to be very successful at optimising hyperparameters of machine learning algorithms \cite{PracticalBayesianOptimization}. This is a problem that shares many similarities with the one our project addresses. We will return to Bayesian optimisation in the Evaluation chapter when we consider whether it was the right choice for our project.
+
+Besides the function prior, one also needs to choose an acquisition function when using Bayesian optimisation. These function take the posterior over $f$ as input and return a function $a$. This function is used to choose the next input value to $f$ with a proxy optimisation, which means that the optimum of $a$ is also the point where we next evaluate $f$. This naturally requires $a$ to be quick to evaluate.
+
+Out of the possible acquisition functions, we consider two that we use in the implementation of our schedulers: Probability of improvement and Expected improvement. Figure \ref{bayesianopti} shows an example of 
+
+\begin{figure}
+\centering
+  \includegraphics[trim=60 120 60 120,clip,width=\textwidth]{figures/bayesian_opti.pdf}
+  \caption{Two different acquisition functions for Bayesian optimisation}
+  \label{bayesianopti}
+\end{figure}
+
+
+
+% successful for hyperparameter tuning
 
 \section{Data sources}
 %- explain where the data came from and how it was preprocessed
 
 \section{Third-party libraries used}
-% TODO mention: sklearn, gpml, jsonlab
+Besides the standard libraries of Python 2.7 and Matlab 2014b, our project uses a number of third-party libraries which are described in this section. The first and most important library that we make extensive us of is scikit-learn, a Python implementation of many common machine learning algorithms. Scikit-learn is built on NumPy and SciPy, two very widespread Python frameworks for scientific computing. Besides its implementation of random forest and logistic regression, we also use it to generate datasets with its \texttt{make\_classification} function as explained in the previous section.
 
-% TODO explain hyperparameters
-%as this is meta machine learning, i have to introduce @normal machine learning at a high level@
-%algos + their imple (rf, lr, gps)
+We further use the "Gaussian Processes for Machine Learning" (GPML) Matlab library by Rasmussen and Williams, a Gaussian Process framework. Although there are Gaussian process implementations in Python such as GPy, the maturity of GPML and our experience in using it made us choose GPML over its alternatives. One compelling advantage of GPML is that it is very straightforward to implement new kernels which we had to do for this project.
 
-
-%- GPs/GPML (marginal likelihood)
-
-
-% describe scheduling
-
-% TODO A more extensive coverage of what's required to understand your work. In general you should assume the reader has a good undergraduate degree in computer science, but is not necessarily an expert in the particular area you've been working on. Hence this chapter may need to summarise some ``text book'' material. 
+Finally, we use jsonlab, a json implementation for Matlab and matplotlib, a Python clone of Matlab's plotting functions.
 
 
 
 \chapter{Related Work} 
+Much work has been published on automatically selecting hyperparameters, a problem related to the one we attempt to solve in our project.
+% TODO Auto weka
+
 
 %- hyper param optim
 %- multi armed bandits
 
-% TODO This chapter covers relevant (and typically, recent) research which you build upon (or improve upon). There are two complementary goals for this chapter: - to show that you know and understand the state of the art; and to put your work in context
 
-% TODO Ideally you can tackle both together by providing a critique of related work, and describing what is insufficient (and how you do better!)
+
+% TODO This chapter covers relevant (and typically, recent) research which you build upon (or improve upon). There are two complementary goals for this chapter: - to show that you know and understand the state of the art; and to put your work in context. Ideally you can tackle both together by providing a critique of related work, and describing what is insufficient (and how you do better!)
 
 
 
@@ -248,9 +304,10 @@ while True:
 \label{mainloop}
 \end{figure}
 
-% TODO tier 1 is standard ml stuff (using sklearn), our contribution is tier 2, has two parts: modelling and scheduling, now describe in detail
+% TODO how do tier 1 and tier 2 talk to each other?
+% TODO DELETE tier 1 is standard ml stuff (using sklearn), our contribution is tier 2, has two parts: modelling and scheduling, now describe in detail
 
-
+\subsection{Directory structure}
 
 
 \section{Tier 1}
@@ -370,7 +427,7 @@ and
 % TODO show plots of reparameterised gamma function
 % TODO show plots drawn from priors
 
-
+% TODO show derivatives
 
 \subsection{Selecting Kernel Hyperparameters} 
 % TODO JAMES is it correct to call this model selection?
@@ -471,6 +528,7 @@ While testing this algorithm, we found an effective method to handle these error
 \label{optiwrap}
 \end{algorithm}
 
+% TODO stress that this is only important for development and that when using actual data, this would get dominated (in the evaluation chapter)
 While this updated algorithm produces adequate results, it takes a substantial amount of time to optimise. A final change we therefore added was to terminate the optimisation routine early if the value of $y$ only changes minimally between five optimisations. This condition is met during almost all iterations and often drastically cuts short the time that our algorithm needs.
 
 % TODO MAYBE mention that there is an implementation of it, what did you try to make it work?
@@ -488,6 +546,8 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 
 \section{Scheduling} 
 
+% TODO "Recall that..." bayesian optimisation
+% TODO talk about averaging over samples
 % TODO figures to explain different acquisition strategies
 
 \chapter{Evaluation}
@@ -516,7 +576,7 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 % TODO "hinge" on my computer
 % TODO kernel "cliffs"
 % TODO optimisation gets overfits, too much confidence in one interpretation
-
+% TODO gradients. difficult b/c of log space (and long term)
 \chapter{Conclusion and future work} 
 \section{Conclusions}
 \section{Future work}
