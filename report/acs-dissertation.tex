@@ -1,9 +1,14 @@
-% TODO JAMES where to write more? bg/theory, diagrams/examples
-% TODO JAMES is "classification accuracy" correct?
+% TODO JAMES where to write more? which sections are weakest?
+ TODO JAMES We will demonstrate these ideas by building a system that can choose between different machine learning methods, doing so efficiently by running approximate versions of the algorithms to estimate which methods are most promising to run with less approximation
+
+
+
+% TODO CHECK is "classification accuracy" correct?
 
 
 % TODO NOW rename slice optimisation
 
+% TODO CITE http://mlg.eng.cam.ac.uk/hoffmanm/papers/hoffman:2014.pdf
 % TODO END remove todos from code
 % TODO compare with other approaches (matern kernel)
 % TODO don't stop time spent scoring
@@ -14,8 +19,10 @@
 % TODO describe classifier scoring mechanism
 % TODO implement better optimiser based on gradients
 % TODO comparing model evidence
-% TODO look at spearmint
+% TODO http://www.springer.com/gp/book/9783540653677
 % TODO "n't" -> "not"
+% TODO don't talk about "subsection", subsub...
+% TODO emph new definitions
 % TODO use "equation" instead of equation* (also align)
 % TODO figure/Figure capitalisation
 % TODO capitalisation of chapters/sections
@@ -32,14 +39,16 @@
 % TODO explain how exponential growth is at most 2x as bad as 100%
 % TOOD the field of "sequential analysis"
 % TODO bounds as alternative to EI
-% TODO JAMES We will demonstrate these ideas by building a system that can choose between different machine learning methods, doing so efficiently by running approximate versions of the algorithms to estimate which methods are most promising to run with less approximation
-% TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
+%% TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
 % TODO Datasets
 %- Autoweka data taken from their website (how were those datasets selected?)
 %- merge training and test arffs using weka cmd line
 %python:
 %- load using scipy.io.arff.loadarff
 %- vectorise (one-of-K) using sklearn.feature_extraction.DictVectorizer
+
+% TODO no footnotes or cites after formulas
+% TODO random forest(s) consistent plural/capitalisatino (also logreg)
 
 \documentclass[a4paper,12pt,twoside,openright]{report}
 
@@ -53,6 +62,7 @@
 % TODO word count
 \def\wordcount{@}
 
+\usepackage{euscript}
 \usepackage[export]{adjustbox}
 \usepackage{subcaption}
 \usepackage{chngpage}
@@ -90,6 +100,8 @@
 \singlespacing
 \input{abstract}
 
+Our project falls into the field of meta-machine learning that tries to use machine learning methods to improve the result of using these methods.
+
 \pagenumbering{roman}
 \setcounter{page}{0}
 \pagestyle{plain}
@@ -102,6 +114,7 @@
 %% START OF MAIN TEXT 
 
 \chapter{Introduction}
+% TODO talk more abt the statistics/compsci divide
 % TODO add citations
 
 \pagenumbering{arabic}
@@ -137,19 +150,6 @@ Figure \ref{anytime1} shows a plot that compares the performance of two such sch
 
 Although eventually both schedulers reach the same final accuracy, if we terminate both schedulers after 30 seconds, the best model found by the "\texttt{EI * prob of success}" is substantially better than that found by the naive scheduler at this point. It is therefore a heuristic for an anytime algorithm.
 
-% TODO mention that you focus on rnd-forest/log-reg and data only
-
-
-%- general overview
-% TODO context (why did you do it (motivation), what was the hoped-for outcome (aims) --- as well as trying to give a brief overview of what you actually did)
-
-
-% highlights
-
-
-% TODO It's often useful to bring forward some ``highlights'' into  this chapter (e.g.\ some particularly compelling results, or  a particularly interesting finding). 
-
-
 The rest of this dissertation is structured as follows:
 \begin{itemize}
 	\item The \textbf{Background} chapter introduces the theoretical ideas that this project is built on. It also lists the third-party technologies that were used during development
@@ -178,24 +178,100 @@ The rest of this dissertation is structured as follows:
 
 
 
-\section{Machine Learning}
+%\section{General machine Learning concepts}
+%\begin{figure}
+%\centering
+%  \includegraphics[width=.8\textwidth]{figures/ml.pdf}
+%  \caption{The general process of learning from data}
+%  \label{mlstructure}
+%\end{figure}
+
+
+
+
+\section{Machine learning algorithms}
+\subsection{Logistic regression and random forest}
+% TODO mention that you focus on rnd-forest/log-reg and data only
+This subsection introduces the two machine learning algorithms that we focus on in the evaluation of our system, random forest and logistic regression. Both of these algorithms are very widespread and commonly used in real world applications. % cite
+
+% TODO talk about what each algorithm is good/weak at
+
+\subsubsection{Logistic regression}
+
+
+
+\subsection{Gaussian Processes}
+Gaussian processes are a machine learning method commonly used for regression problems. Unlike methods such as logistic regression or random forest that learn by updating a set of model parameters, Gaussian processes place a prior directly over the function $f$ \cite{Murphy:2012:MLP:2380985}. For this reason, they belong to the nonparametric family of learning algorithms. This prior then gets updated to a posterior based on the training data.
+
+If we think of functions as infinitely sized vector indexed by the domain of the function, Gaussian processes can be understood as a generalisation of the multivariate Gaussian distribution to a distribution over infinitely many variables. Formally, a multivariate Gaussian distribution $\mathcal{N}(\mu, \Sigma)$ is specified by a mean vector $\mu$ and a covariance matrix $\Sigma$. Equivalently, a Gaussian process $\EuScript{G}\EuScript{P}(m, \kappa)$ is specified by a mean function $m(x)$ and a covariance function $\kappa(x, x')$ (if we think of single valued functions as infinite vectors then infinitely large matrices can be seen as functions with two arguments). It is common for the mean function to be a constant function with $\mu(x) = 0$ as the mean can be included in the covariance function. Covariance functions are also commonly called kernels. We will use the two terms interchangeably.
+
+If we draw a function $f \thicksim \EuScript{G}\EuScript{P}(m, \kappa)$ from a Gaussian process, every finite set of inputs to the function $\mathbf{x} = (x_1, \cdots, x_n)$ span a multivariate Gaussian distributed vector $\mathbf{f} = (f(x_1), \cdots, f(x_n)) \thicksim \mathcal{N}(\mu,K)$ with $\mu = (m(x_1), \cdots, m(x_n))$ and $K_{ij} = \kappa(x_i, x_j)$ \cite{Rasmussen:2005:GPM:1162254}.
+
+To express prior assumptions about the nature of the functions to be modelled, one has to choose a covariance function that expresses these assumptions by assigning appropriate covariances. There is a set of common covariance functions that Gaussian process libraries usually implement. In the remainder of this section, we explain how prior information is reflected in the kernels using the squared exponential covariance function as an example, following \cite{duvenaudthesis} in our explanation. We will return to this topic in the Design \& Implementation chapter when we describe the implementation of a custom covariance function. 
+
+\subsubsection{The squared exponential kernel}
+Probably the most widespread kernel in use is the squared exponential kernel. This kernel defines $\kappa(x, x') = \sigma_f^2 \text{exp}(-\frac{(x-x')^2}{2\ell^2})$ with $\sigma_f^2$ being the variance of the function and $\ell$ being the characteristic length-scale of the kernel. Figure \ref{sekernel} shows how the value of the squared exponential kernel changes as $x'$ moves away from $x$. 
+
+The value of $\kappa(x, x')$ can be interpreted as the degree of similarity between $f(x)$ and $f(x')$ with larger values of $\kappa$ meaning higher similarity. This means that the squared exponential kernel expresses the prior that the functions the Gaussian process will model will be smooth. Precisely how smooth they will be is expressed by the length-scale $\ell$. This is a hyperparameter to the squared exponential kernel which allows us to separate general assumptions, such as "the functions will be smooth", from specific models. Figure \ref{sekernel_ls} shows how changing the value of $\ell$ influences the shape of the kernel function.
+
 \begin{figure}
 \centering
-% TODO JAMES maybe add reference to cs229 lecture notes
-  \includegraphics[width=.8\textwidth]{figures/ml.pdf}
-  \caption{The general process of learning from data}
-  \label{mlstructure}
+  \includegraphics[trim=120 240 100 230,clip,width=.4\textwidth]{figures/se_kernel.pdf}
+  \caption{The squared exponential kernel}
+  \label{sekernel}
 \end{figure}
 
-meta machine learning
-% meta machine learning
-% TODO explain hyperparameters
+\begin{figure}
+\centering
+  \includegraphics[trim=120 240 100 230,clip,width=.4\textwidth]{figures/se_kernel_different_ls.pdf}
+  \caption{Three different values for $\ell$ in the squared exponential kernel}
+  \label{sekernel_ls}
+\end{figure}
 
-\subsection{Algorithms}
+Figure \ref{sekernel_draws} shows five functions drawn from a Gaussian process with a squared exponential kernel with $\sigma_f^2 = \ell = 1$. Note how although the functions take different value, they share the same degree of smoothness and range. Figure \ref{sekernel_draws_different_ls} shows the effect that varying $\ell$ has on the functions: for small values, the functions become rugged.
 
-\subsubsection{Random Forests and Logistic Regression}
 
-\subsubsection{Gaussian Processes}
+\begin{figure}
+\centering
+  \includegraphics[trim=120 240 100 230,clip,width=.4\textwidth]{figures/se_kernel_draws.pdf}
+  \caption{Five draws from a Gaussian process with a squared exponential kernel}
+  \label{sekernel_draws}
+\end{figure}
+
+\begin{figure}
+\centering
+  \includegraphics[trim=120 240 100 230,clip,width=.4\textwidth]{figures/se_kernel_draws_different_ls.pdf}
+  \caption{Functions drawn from Gaussian processes with squared exponential kernels that have different length-scales}
+  \label{sekernel_draws_different_ls}
+\end{figure}
+
+The squared exponential kernel is an example of a class of kernels called \emph{stationary} that have the property that their value does not change if $x$ and $x'$ are shifted by the same amount. Formally, for stationary kernels, $\kappa(x, x') = \kappa(\tau + x, \tau + x')$. 
+
+
+\subsubsection{The linear kernel}
+The linear kernel is defined as $\kappa(x, x') = \sigma_f^2(x-c)(x'-c)$ with $c$ determining the $x$-coordinate of the point that all the functions in the posterior pass through \cite{duvenaudthesis}. The linear kernel is an example of a kernel that is not stationary as it models global, linear change in the functions.
+
+
+\subsubsection{Combining kernels}
+Although there is a substantial number of such common kernels, their number is still finite. To express more complex priors, it is therefore necessary to combine existing kernels to form new ones. One way to do so is to add them together. Figure \ref{sum_of_lin_and_se} shows functions drawn from a Gaussian process that has as its kernel the sum of a squared exponential and a linear kernel. It combines a linear component with the noisiness of the squared exponential kernel.
+
+\begin{figure}
+\centering
+  \includegraphics[trim=80 210 70 195,clip,width=.4\textwidth]{figures/sum_of_lin_and_se.pdf}
+  \caption{Adding a linear kernel to a squared exponential kernel}
+  \label{sum_of_lin_and_se}
+\end{figure}
+
+Another way to combine kernels is multiplication. Figure \ref{prod_of_lin_and_lin} shows the result of multiplying to linear kernels together, which results in quadratic functions.
+
+\begin{figure}
+\centering
+  \includegraphics[trim=80 210 70 195,clip,width=.4\textwidth]{figures/prod_of_lin_and_lin.pdf}
+  \caption{Multiplying two linear kernels}
+  \label{prod_of_lin_and_lin}
+\end{figure}
+
+
 
 \section{Bayesian optimisation and expected improvement}
 % TODO consistent naming for "prob of impr" and EI
@@ -231,6 +307,7 @@ a_{PI}(x) &= P(z \geq y_{max}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\s
 \end{align}
 
 % TODO cite kushner 1964
+% TODO http://mlss2014.com/files/defreitas_slides1.pdf
 Equation \ref{eq:pi_equation} is visualised in figure @. Due to the fact that the Gaussian process tends to be most certain about points that are close to a known data point and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x$ and the current maximum, thir tends to be very conservative acquisition function. In figure \ref{bayesianopti}, we can see the acquisition function for the probability of improvement in the second plot. Note how $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have evaluated the function, and quickly drops off as $x$ increases. This is the phenomenon just described: this acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
 
 % TODO cite mockus 1978, better place to cite
@@ -260,10 +337,18 @@ Finally, we use jsonlab, a json implementation for Matlab and matplotlib, a Pyth
 
 
 
-\chapter{Related Work} 
-Much work has been published on automatically selecting hyperparameters, a problem related to the one we attempt to solve in our project.
-% TODO Auto weka
+\chapter{Related Work}
+Jordan \cite{jordan2013}
 
+While little work has been published on the precise problem that we are considering in this report, there has been a strong interest in the automatic selection of hyperparameters.
+
+In \cite{ThoHutHooLey13-AutoWEKA}, the authors build on the popular WEKA framework, an implementation of many machine learning algorithms in Java, to create a system that automatically chooses and algorithm together with appropriate hyperparameters. % TODO bayesian opt
+
+
+
+
+% TODO Auto weka
+% TODO look at spearmint
 
 %- hyper param optim
 %- multi armed bandits
@@ -326,7 +411,6 @@ while True:
 \label{mainloop}
 \end{figure}
 
-% TODO how do tier 1 and tier 2 talk to each other?
 % TODO DELETE tier 1 is standard ml stuff (using sklearn), our contribution is tier 2, has two parts: modelling and scheduling, now describe in detail
 
 \subsection{Directory structure}
@@ -336,6 +420,8 @@ while True:
 This section will @explain details@ of tier 1 before @moving on@ to tier 2 where out main contributions lie in the rest of this chapter.
 % TODO mention k fold
 % TODO roc (only used for binary, is valid as no comparison between binary and non binary
+% TODO how do tier 1 and tier 2 talk to each other?
+% TODO http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.93.112
 
 \section{Modelling Model Performance}
 To make good decisions, the scheduler needs an accurate model of the dependance of approximation parameters and performance. Creating such models is therefore a fundamental piece in our system.
@@ -362,15 +448,13 @@ As data collection was resource and time intensive, we implemented a command lin
 \end{itemize}
 
 % TODO are these really sequences?
-The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}.
-
-Avoiding hard coded values for data generation made it possible to quickly collect fresh data.
+The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}. Avoiding hard coded values for data generation in this fashion made it possible to quickly collect fresh data.
 	
+When collecting data, the program takes the cartesian product of these arrays and runs the learning algorithm once for every element in the product. This number grows exponentially with every parameter which made access to the EC2 instance, which could be run overnight, crucial.
 
+Once it has finished all the computations, the program outputs the data to a comma-separated value \texttt{csv} file with a column containing a unique id for the dataset, one column for each parameter and one column each for the percentage of data used, the time spent on learning and the classification accuracy. All the values in these files are numbers which makes it easy to import them into Matlab as matrices. 
 
-
-
-\texttt{Collected sample data}
+\subsubsection{Collected sample data}
 
 % TODO JAMES maybe use different figures
 \begin{figure}
@@ -465,8 +549,10 @@ After failing to optimise the hyperparameters to our kernel using the optimisati
 
 \subsubsection{Sampling}
 The first approach to hyperparameter selection we use in our project is the Bayesian approach of integrating out the hyperparameters $\theta$:
+
+% TODO maybe murphy equation 15.1
 \begin{equation}
-p(y|X) = \int p(y|X,\theta)p(\theta)d\theta
+p(y|X) = \int p(y|X,\theta)p(\theta)d\theta\\
 \end{equation}
 
 We decided to implement slice sampling
@@ -575,6 +661,9 @@ As our program has to be able to handle both samples and single results returned
 % TODO figures to explain different acquisition strategies
 
 \chapter{Evaluation}
+\textit{This chapter describes the results that our system achieved. It also lists challenges that we faced during its development and limitations it currently has.}
+
+% TODO mention how common logreg/rndforest are
 % TODO PROGRAM skewed datasets with lots of pos, few neg
 
 
@@ -587,9 +676,29 @@ As our program has to be able to handle both samples and single results returned
 % TODO rasmussen: local maxima correspond to a particular interpretation of the data
 
 \section{Data sources}
-% TODO explain where the data came from and how it was preprocessed
+The second source of datasets we used was created synthetically using scikit-learn's \texttt{make\_classification} function. This function takes a number of parameters that define the dataset, such as the number of samples, the number of features and the number of classes and creates data according to these parameters. 
 
-The second source of datasets we used was created synthetically using scikit-learn's \texttt{make\_classification} function. This function takes a number of parameters that define the dataset, such as the number of samples, the number of features and the number of classes and creates data according to these parameters.
+The fine grained control over the datasets that this function allows was very valuable to us, as it allowed us to see how our system handles datasets of different nature. We wrote a small script to enable us to quickly create datasets and see how logistic regression and random forest perform on subsets of these datasets.
+
+% TODO actually mention this
+A second source of datasets were drawn from the list of datasets that were used in the development of Auto-WEKA as mentioned in the Related Work chapter. The authors of Auto-WEKA made the datasets used to test Auto-WEKA available on their website\footnote{They can be downloaded at http://www.cs.ubc.ca/labs/beta/Projects/autoweka/datasets/}.
+
+These datasets originally came from other sources \cite{Lichman:2013, Larochelle:2007:EED:1273496.1273556, Krizhevsky09learningmultiple} and were converted by the Auto-WEKA creators to WEKA's own dataformat, the Attribute-Relation File Format (\texttt{arff}). This made it very convenient for us to use these datasets as they are originally in a wide range of differing data formats and would have had to have individual import routines written for them. 
+
+Besides converting them to the \texttt{arff} format, the authors of the Auto-WEKA paper also split them up in a training and a test set. As we described in the Implementation chapter, we immplement k-fold-cross-validation and therefore needed all the data in a single set. To achieve this, a small ruby script was written to merge the \texttt{train.arff} and \texttt{test.arff} files for each dataset.
+
+% TODO show table with size (MB), #features, #samples, #classes
+
+While some of the datasets in this collection are entirely numerical, some have textual features while still others have a mixture of strings and numbers as features. An example of this is the \texttt{germancredit} dataset which has a feature \texttt{credit\_history} with possible values such as \texttt{"all paid"} and \texttt{"critical/other existing credit"} and a feature,  \texttt{age}, which is a number.
+
+When using these datasets, we load the \texttt{arff} files using SciPy's \texttt{scipy.io.arff.loadarff} function. As scikit-learn expects the features to all be numerical, we convert the data using a one-of-k encoding.
+
+% TODO kein konjunktiv
+This encoding expands every feature of type string with $n$ possible values into $n$ boolean typed features. This means that a feature such as \texttt{other\_payment\_plans}, also taken from the \texttt{germancredit} dataset, with possible values \texttt{bank}, \texttt{stores} and \texttt{none} would be converted to three separate features, \texttt{other\_payment\_plans=bank}, \texttt{other\_payment\_plans=stores} and \texttt{other\_payment\_plans=none}. For every sample in the dataset, one of these features would be set to $1$ and all others to $0$
+
+Another issue we faced when using the Auto-WEKA datasets is that the \texttt{arff} file format allows are sparse encoding for datasets that mostly contain zeros. Other datasets contain samples with missing values. SciPy's \texttt{loadarff} routine is not currently able to open either of these two types of \texttt{arff} files these files.
+
+% TODO explain why this is not a problem: we select datasets already b/c the small ones are too small to further increase data; the interesting ones work?
 
 \section{Results}
 
@@ -599,7 +708,11 @@ The second source of datasets we used was created synthetically using scikit-lea
 % TODO show case where one function is better initially but then gets overtaken
 \section{Testing}
 \section{Limitations}
-\section{Challenges} 
+\section{Challenges}
+
+Implementing the gradients of the hyperparameters to our kernel proved a challenge. Even though we are not currently using them, we originally assumed we would use GPML's optimisation function which relies on them.
+
+
 
 % TODO numerical accuracy for EI when sd is very small and peak is under lower bound, i.e. prob of impr is very small, get infs and nans
 %- model evidence
