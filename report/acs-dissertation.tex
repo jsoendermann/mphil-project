@@ -26,12 +26,12 @@
 % TODO comparing model evidence
 % TODO http://www.springer.com/gp/book/9783540653677
 % TODO END "n't" -> "not"
-% TODO don't talk about "subsection", subsub...
-% TODO emph new definitions
-% TODO use "equation" instead of equation* (also align)
-% TODO figure/Figure capitalisation
-% TODO capitalisation of chapters/sections
-% TODO no arxiv references
+% TODO END don't talk about "subsection", subsub...
+% TODO END emph new definitions
+% TODO END use "equation" instead of equation* (also align)
+% TODO END figure/Figure capitalisation
+% TODO END capitalisation of chapters/sections
+% TODO END no arxiv references
 % TODO END present/past
 % TODO UML diagram for schedulers
 % TODO describe kernel problems
@@ -639,8 +639,13 @@ As our program has to be able to handle both samples and single results returned
 
 \section{System Architecture} % TODO maybe something like "overview"
 
+% TODO explain how every scheduler optimises over multiple algorithms, each algorithm has its own acquisition function
+% TODO explain burn in better
 % TODO mention drawing
 % TODO mention how multiple schedulers can be executed simultaneously
+% TODO include and explain figure  of two schedulers running at the same time
+% TODO go more into details of what schedulers do
+
 
 \subsection{High level architecture}
 % TODO END make sure this is properly centered
@@ -657,6 +662,8 @@ As our program has to be able to handle both samples and single results returned
 Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates a meta-model of the model performances of the models in tier 1. This meta-model is then used by the scheduling part of the program to select the algorithm and approximation parameters for the next iteration. 
 
 Figure \ref{architecture} shows this architecture diagrammatically after three iterations. Note how both tiers execute machine learning algorithms (coloured in blue) on a set of data (coloured in red) and how the result of the algorithms in the first tier form the data set for the Gaussian Process at the top of the diagram. The main loop of our program is shown, slightly simplified, in Figure \ref{mainloop}. When executing, the program switches back and forth between the two tiers: it executes an algorithm with a given set of approximation parameters, builds a new model that includes the performance during this execution. The scheduler then decides which algorithm/approximation parameter combination to run next and the system returns to the first step.
+
+% TODO mention that all the performances are recorded and new datapoints are appended
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=Python]
@@ -682,6 +689,15 @@ The directory of the project contains the following subdirectories:
 \item \textbf{var/}: This folder is used to store temporary files that are used to exchange data between Python and Matlab code
 \end{itemize}
 
+\subsection{Interoperability between Python and Matlab}
+Choosing Matlab to implement the performance modelling code and Python to implement the other parts of our system made it necessary to devise a method of transferring data between these two parts of the program. During the initial planning stage, we intended to write all parts of the system in Python but the advantages of GPML such as level of documentation and ease of use later turned out to outweigh the disadvantages of dealing with process interoperability.
+
+To start the program, the \texttt{main.py} file is executed. This file then periodically calls a Matlab script whenever it has collected new data and needs to update one of its performance models. Data is transferred between the Python and the Matlab scripts by writing it to \texttt{json} files\footnote{JSON is a widespread data format similar to XML.}. Before this script is executed, \texttt{main.py} writes the recorded performances of the algorithm for which it has just updated its data to \texttt{var/scheduler\_data.json}. This file contains a JSON object with the fields \texttt{x\_percent\_data}, \texttt{y\_times} and \texttt{y\_scores} which hold the data collected so far.
+
+Once it has finished modelling, the Matlab script writes the models to \texttt{var/models.json} and terminates. This file contains an array of model objects. These models are represented as 100 equally spaced data points between 0 and 100 \%. They each have an \texttt{m} and an \texttt{sd} field set for mean and standard deviation respectively. This file is then read by \texttt{main.py} and the old models are overwritten with the updated values.
+
+
+% TODO move this up to the prev chapter
 \section{Measuring performance}
 % TODO END Cross-Validation spelling
 As shown in figure \ref{architecture}, the output of tier 1 is the performance of the model that the learning algorithm creates of the dataset given the particular approximation parameters that are selected by the scheduler. This section explains how the performance of the models is measured. Specifically, we describe how we measure predictive accuracy and training time of our models.
@@ -694,10 +710,10 @@ A superior method, that we slightly adjust to the requirements of this project i
 
 To implement the percentage of data approximation parameter, we need to restrict the data that is used for training our models while still keeping the advantages of k-fold cross-validation. We achieve this by further splitting the folds used for training. For each fold, a subset of samples is selected according to the percentage of data to be used. The fold used for validation, however, does not change. This approach ensures that all available data is used for validation.
 
-When calculating the score that a model achieves on a given validation set, two different methods are used. For binary classification tasks\footnote{Those in which each sample belongs to one of two classes such as \texttt{true} and \texttt{false}.}, we use the receiver operating characteristic (ROC) metric to asses model accuracy. This metric... % TODO explain ROC, its advantages (more robust?)
+The classification accuracy in cases where the samples belong to more than one class is calculated as the percentage of samples whose class was correctly predicted. Using two different scoring algorithms is valid because we never compare performance across datasets.
 
-Calculating an ROC curve is only possible for binary classification tasks because % TODO why?
-The classification accuracy in cases where the samples belong to more than one class is calculated as the percentage of samples whose class was correctly predicted.
+% TODO add diagram, give better intuition
+When calculating the score that a model achieves on a given validation set, two different methods are used. For binary classification tasks\footnote{Those in which each sample belongs to one of two classes such as \texttt{true} and \texttt{false}.}, we use the receiver operating characteristic (ROC) metric to asses model accuracy. This metric calculates the percentage of the area under the curve that plots the false positive rate of the classifier against its true positive rate. This metric has been shown to be more robust than the simpler accuracy metric we use in the multiclass case \cite{Bradley97theuse}. Calculating an ROC curve is only possible for binary classification tasks because true and false positive rates are not defined in this case.
 
 \subsection{Time}
 Measuring the time spent learning is more straightforward than measuring classification accuracy. We use Python's \texttt{time.time()} function to stop the time that elapses while training. As we don't want to include validation time spent in the iterations of Cross-Validation, we keep the current time spent in a variable that gets updated after training in each iteration finishes.
@@ -709,8 +725,12 @@ Another factor to be considered is that other tasks running in parallel can poll
 
 Before we split the dataset into the ten folds, we shuffle the samples to ensure proper randomisation across the folds. 
 
-% TODO roc (only used for binary, is valid as no comparison between binary and non binary
-% TODO http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.93.112
+
+
+
+
+
+% TODO END don't just use "algorithms", use learning algorithms. also "performance model", not just "model"
 
 
 
@@ -718,13 +738,56 @@ Before we split the dataset into the ten folds, we shuffle the samples to ensure
 
 
 
-\section{Interop} %TODO different name
+\section{Implemented Schedulers}
+Every scheduler is implemented in a separate class of which there are nine in total. There are three abstract scheduler classes that implement functionality shared between two or more schedulers while the other six implement scheduling strategies that can be used to schedule data collection. In this section, we describe each scheduler's functionality before comparing and evaluating them in the Evaluation chapter.
 
-\section{Heuristics} 
+\subsection{\texttt{\textit{Scheduler}}}
+This is the base class that all schedulers inherit from. It defines a framework general enough that all schedulers implement it. Besides drawing routines, which are mostly shared among schedulers, and code to write performance data and read model data, this class contains the following methods:
+
+\begin{itemize}
+\item \texttt{\_\_init\_\_}: the class constructer initialises a number of properties, including the \texttt{self.data} property which holds an array of learning performances for each algorithm
+\item \texttt{decide}: this is a virtual method that is called to decide on the next algorithm/approximation parameter combination to be evaluated. It sets the \texttt{self.decision} property of the scheduler object. If the scheduler is done, either due to having finished optimising or because its time budget has been used up, this property is set to \texttt{None}
+\item \texttt{execute}: this method executes the decision made by the \texttt{decide} method and adds the new time and score to the \texttt{self.data} property
+\item \texttt{model}: this function updates the model for the algorithm for which data was collected during the last execution of the \texttt{execute} method. It reads the value of the \texttt{self.decision} property to determine the algorithm and is to be called after \texttt{execute} finishes
+\end{itemize}
+
+% TODO MAYBE explain how drawing is spread over several methods
+
+\subsection{\texttt{FixedSequenceScheduler}}
+\texttt{FixedSequenceScheduler} is the simplest of all the scheduling strategies implemented. Its constructor takes a sequence of data percentage values and computes the cartesian product of the learning algorithms and this sequence and saves this list. When its \texttt{decide} method is called, it writes the next element of the list into \texttt{self.decision}, cycling through algorithms and executing the fixed sequence of data percentage values.
+
+% TODO figure
+% TODO END percentage of data values, consistent term
+
+\subsection{\texttt{\textit{ProbablisticScheduler}}}
+This is a base class of all schedulers that make probabilistic decisions using an acquisition function as described in the Bayesian optimisation section in the Background chapter. It has a virtual class method \texttt{a} that takes a time and score model (expressed as arrays of mean and standard deviation) and calculates the acquisition function as array.
+
+If slice sampling was used to integrate out the hyperparameters to the exponential mixture kernel, \texttt{\textit{ProbablisticScheduler}} is responsible for calling \texttt{a} as many times as there are samples and averaging over these acquisition functions. Time and score model samples are taking independently which allows us to randomly pair one time and one score model per iteration.
+
+\subsection{\texttt{ProbabilityOfImprovementScheduler}}
+This is the simplest concrete probabilistic scheduler. It implements the probability of improvement heuristic for Bayesian optimisation. As mentioned in the background chapter, this is not a competitive scheduling strategy but is still included for purposes of comparison.
+
+This scheduler truncates its acquisition function at the maximum x value for each algorithm and only considers percentage of data values that are strictly greater than its current maximum. This encodes the assumption that using more data can never be worse than the current best result.
+
+Figure @ shows the \texttt{ProbabilityOfImprovementScheduler} after a few iterations. Note how its acquisition function quickly drops off as uncertainty grows.
+
+\subsection{\texttt{ExpectedImprovementScheduler}}
+\texttt{ExpectedImprovementScheduler} implements the Expected improvement heuristics for Bayesian optimisation. Like the \texttt{ProbabilityOfImprovementScheduler}, it truncates its acquisition function and only considers using more data than before for subsequent execution of the learning algorithms.
+
+\subsection{\texttt{ExpectedImprovementPerTimeScheduler}}
+This scheduler inherits from the \texttt{ExpectedImprovementScheduler} and differs from it only by dividing the expected improvement by the mean of the time model. This biases it towards faster executions of the learning algorithms, even if the improvement over the current best is not as large as slower executions.
+
+\subsection{\texttt{\textit{TimedScheduler}}}
+\subsection{\texttt{ExpectedImprovementTimesProbOfSuccessScheduler}}
+\subsection{\texttt{MinimeseUncertaintyThenExploitScheduler}}
 
 % TODO "Recall that..." bayesian optimisation
 % TODO talk about averaging over samples
 % TODO figures to explain different acquisition strategies
+
+
+
+
 
 \chapter{Evaluation}
 % TODO point cloud/graph that shows that one is better at first, then the other (for data vs score and time vs score)
@@ -787,6 +850,8 @@ Although this addressed the issue of overfitting on too little data, sampling hy
 \section{Limitations}
 \section{Challenges}
 
+% TODO matlab, json, for single element lists, an empty [] is added
+
 Implementing the gradients of the hyperparameters to our kernel proved to be challenging. Even though we are not currently using them, we originally assumed we would use GPML's optimisation function which relies on gradient information. The difficulty of implementing them was compounded by the fact that kernels receive parameters in log space and that we reparameterised our kernel which made the terms more complex.
 
 To test our gradient implementation, we used a script provided by the creators of GPML that checks kernel gradients\footnote{This script can be downloaded at http://learning.eng.cam.ac.uk/carl/code/minimize/checkgrad.m}.
@@ -820,7 +885,7 @@ Similarly, the program could be extended to consider additional hyperparameters 
 % TODO additional appr params. the kernel is already implemented
 
 % TODO Depending on the length of your work, and  how well you write, you may not need a summary here. You will generally want to draw some conclusions, and point to potential future work. 
-
+% TODO transfer learning? to avoid burn in
 
 
 

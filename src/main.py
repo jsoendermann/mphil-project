@@ -81,6 +81,7 @@ class Scheduler(object):
     def decide(self):
         raise NotImplementedError()
 
+    # TODO this should be a class method
     def needs_model(self):
         raise NotImplementedError()
         
@@ -397,6 +398,10 @@ class ProbabilisticScheduler(Scheduler):
     def _gamma(mean, overall_best, sd):
         return (mean - overall_best) / (sd + np.ones(100) * 0.0001)
 
+    @classmethod
+    def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev):
+        raise NotImplementedError()
+    
 
 
 
