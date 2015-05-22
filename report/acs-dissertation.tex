@@ -1,7 +1,7 @@
 % TODO JAMES where to write more? which sections are weakest?
 % TODO JAMES We will demonstrate these ideas by building a system that can choose between different machine learning methods, doing so efficiently by running approximate versions of the algorithms to estimate which methods are most promising to run with less approximation
-
-
+% TODO JAMES O runtime online is different to empirical findings
+% TODO JAMES only time training or also testing?
 
 % TODO CHECK is "classification accuracy" correct?
 
@@ -11,44 +11,39 @@
 % TODO CITE http://mlg.eng.cam.ac.uk/hoffmanm/papers/hoffman:2014.pdf
 % TODO END remove todos from code
 % TODO compare with other approaches (matern kernel)
-% TODO don't stop time spent scoring
+
 % TODO roc_auc_score to score
+% TODO END citations: switch to different format, make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 % TODO convert sparse arff files to non sparse
-% TODO rnd forest is bad at data thats heavily pos or neg
+% TODO rnd forest is bad at data thats heavily pos or neg, run tests
 % TODO describe gradient problems (stress that the gradients are correct)
-% TODO describe classifier scoring mechanism
+% TODO END random forest(s) spelling
+% TOOD END dataset /data set spelling
+% TODO END performance/time/accuracy, be clear
+% TODO END run time spelling
+% TODO END trade-off spelling
 % TODO implement better optimiser based on gradients
 % TODO comparing model evidence
 % TODO http://www.springer.com/gp/book/9783540653677
-% TODO "n't" -> "not"
+% TODO END "n't" -> "not"
 % TODO don't talk about "subsection", subsub...
 % TODO emph new definitions
 % TODO use "equation" instead of equation* (also align)
 % TODO figure/Figure capitalisation
 % TODO capitalisation of chapters/sections
 % TODO no arxiv references
-% TODO present/past
+% TODO END present/past
 % TODO UML diagram for schedulers
-% TODO If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 % TODO describe kernel problems
 % TODO END check for emotional language
 % TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
 % TODO explain datasets w/ images if they are interesting
-% TODO explain repo directory structure
-% TODO contract algorithm
 % TODO explain how exponential growth is at most 2x as bad as 100%
 % TOOD the field of "sequential analysis"
-% TODO bounds as alternative to EI
-%% TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
-% TODO Datasets
-%- Autoweka data taken from their website (how were those datasets selected?)
-%- merge training and test arffs using weka cmd line
-%python:
-%- load using scipy.io.arff.loadarff
-%- vectorise (one-of-K) using sklearn.feature_extraction.DictVectorizer
-
-% TODO no footnotes or cites after formulas
-% TODO random forest(s) consistent plural/capitalisatino (also logreg)
+% TODO metion bounds as alternative to EI
+% TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
+% TODO END no footnotes or cites after formulas
+% TODO END random forest(s) consistent plural/capitalisatino (also logreg)
 
 \documentclass[a4paper,12pt,twoside,openright]{report}
 
@@ -128,10 +123,10 @@ The current states of the field of machine learning requires skilled humans to m
 % cite auto. stat./auto weka
 As part of the current trend to automise all aspects of machine learning, automating the process of finding a balance in these trade-offs would make an important contribution to the field. Finding this balance can be seen as an optimisation problem that optimises the function from a number of "approximation parameters" to the time and prediction performance of the learning algorithms. 
 
-Classical optimisation methods may be ineffective as solutions to this problem as evaluating the function to be optimised can be very expensive to compute. Further complicating this problem is the fact that the time required to evaluate the function can vary drastically depending on where it is evaluated: consider the case where the approximation parameter is the number of layers in a deep neural network. Clearly, more layers will cause the inference to take more time. The optimisation routine has to take this into account when exploring the function. A natural solution to this problem is Bayesian optimisation as Bayesian optimisation methods make very efficient use of data when optimising a function.
+Classical optimisation methods may be ineffective as solutions to this problem as evaluating the function to be optimised can be very expensive to compute. Further complicating this problem is the fact that the time required to evaluate the function can vary drastically depending on where it is evaluated: consider the case where the approximation parameter is the number of layers in a deep neural network. Increasing the number of layers will cause the inference to take more time. The optimisation routine has to take this into account when exploring the function. A natural solution to this problem is Bayesian optimisation as Bayesian optimisation methods make very efficient use of data when optimising a function.
 
 % TODO MAYBE cite http://rbr.cs.umass.edu/papers/ZCCijcai99.pdf
-Adding run time considerations to statistical learning methods can lead to a number of different outcomes. One possible goal are anytime algorithms that can be interrupted while running, returning a solution optimal for the amount of time they were allowed to run for. Another goal is to develop contract algorithms that receive data and a time budget as input and infer an optimal model within the time budget.
+Adding run time considerations to statistical learning methods can lead to a number of different goals. One possible goal are anytime algorithms that can be interrupted while running, returning a solution optimal for the amount of time they were allowed to run for. Another goal is to develop contract algorithms that receive a data set and a time budget as input and infer an optimal model within the time budget.
 
 % TODO is this true?
 %In this project, we develop a system that @. As neither of these two problems has an analytic solutions, we wrote a number of heuristics that use Bayesian optimisation methods to decide @.
@@ -186,19 +181,48 @@ The rest of this dissertation is structured as follows:
 %  \label{mlstructure}
 %\end{figure}
 
+\section{Key concepts}
+Our project falls into the field of meta machine learning. We use machine learning algorithms to learn and predict the performance of other machine learning algorithms. This makes it necessary to describe the 
 
+% needs to understand ML. also a few concepts that we introduce in this project
 
+% TODO ML overview
+\subsection{Approximation parameters}
+Approximation parameters are parameters to machine learning algorithms that influence the trade-off between statistical and computational efficiency. They let us vary the degree of approximateness at which the algorithm runs. Changing an approximation parameters should either decrease the run time at the cost of classification accuracy or improve accuracy while making training slower. 
+
+The approximation parameter that we put most of our focus on in this project is the proportion of the available data. Other approximation parameters are hyperparameters to the machine learning algorithms such as the number of decision trees in a random forest. These parameters are considered in the modelling chapter to analyse how multiple interaction parameters interact.
+
+Note that not all hyperparameters are approximation parameters. Some hyperparameters influence performance without changing the run time such as the length-scales of Gaussian process kernels, explained in depth in the Gaussian process section of this chapter.\footnote{Many machine learning packages include parameters such as the number of threads used for learning in their API. These are parameters that influence run time but not performance. They are, however, particular to the implementation and not part of the algorithm.}
+
+% TODO why did you select the appr params you selected, later you only use data. data is enough to be interesting but we want to show that approach can in principle be extended
+
+% TODO make a table that lists approx prarms and approx params that are 
+
+\subsection{Scheduling}
+As mentioned in the introduction, the problem we try to solve in this project is an optimisation problem with the additional component of running time constraints. A solution to this problem consists in devising strategies to decide on a sequence of evaluations of the function to be optimised such that we find an optimum within these constraints. 
+
+We use the term "scheduler" to denote heuristics that decide on such a sequence. Schedulers allocate the time available for optimisation to the possible algorithm and hyperparameter combinations.
 
 \section{Machine learning algorithms}
 \subsection{Logistic regression and random forest}
 % TODO mention that you focus on rnd-forest/log-reg and data only
-This subsection introduces the two machine learning algorithms that we focus on in the evaluation of our system, random forest and logistic regression. Both of these algorithms are very widespread and commonly used in real world applications. % cite
+This subsection introduces the two machine learning algorithms that we focus on in the evaluation of our system, random forest and logistic regression. Both of these algorithms are among the most common machine learning algorithm and are frequently used in real world applications. % cite
 
+% TODO important to introduce algos to understand appr params
 % TODO talk about what each algorithm is good/weak at
 
 \subsubsection{Logistic regression}
 
+\subsubsection{Random forests}
+Random forests, introduced in \cite{rndforests}, is an algorithm that extends the idea of decision trees. Growing decision trees involves repeatedly splitting the feature space into rectangular regions using one feature, such that a the proportion of samples of the same class in the region is maximised \cite{james2014introduction}. 
 
+% TODO what does high variance mean? applying multiple times to same data yields different results.
+Individual decision trees alone can not compete with the predictive performance other algorithms, in particular they suffer from high variance. An initial solution to this, proposed in \cite{bagging}, is Bagging, a technique that creates a number of new training sets by drawing samples from the original dataset. The trees are then fitted to these new training sets. To make a prediction, the predictions of all trees are averaged over.
+
+% TODO explain why this is done
+Random forests improve the results obtained by bagging through decorrelating the trees. This is achieved by selecting a random subset of features from the full set of features at each training step. By combining and averaging over a set of decision trees as described, random forest achieves a performance that makes it a popular choice in machine learning.
+
+The number of trees is a possible approximation parameter to random forests. Another hyperparameter that is also an approximation parameter is the minimum number of samples that must be contained in each region of the feature space.
 
 \subsection{Gaussian Processes}
 Gaussian processes are a machine learning method commonly used for regression problems. Unlike methods such as logistic regression or random forest that learn by updating a set of model parameters, Gaussian processes place a prior directly over the function $f$ \cite{Murphy:2012:MLP:2380985}. For this reason, they belong to the nonparametric family of learning algorithms. This prior then gets updated to a posterior based on the training data.
@@ -360,88 +384,15 @@ In \cite{ThoHutHooLey13-AutoWEKA}, the authors build on the popular WEKA framewo
 
 
 
-
-
-
-% TODO "classification accuracy" maybe isn't correct if we also use roc
-% TODO mention somewhere that "performance" means time + score
-\chapter{Design and Implementation} 
-
-% TODO explain burn in and how you don't model during burn in
-
-\textit{This chapter describes the theoretical and practical aspects system we developed. It firsts gives a high level overview of the system architecture before describing in detail the two main parts of the program: modelling performance and scheduling.}
-
-\section{Architecture} % TODO maybe something like "overview"
-\subsection{Key concepts}
-\subsubsection{Approximation parameters}
-Approximation parameters are parameters to the machine learning algorithms that influence the trade-off between statistical and computational efficiency. They let us vary the degree of approximateness at which the algorithm runs. Changing an approximation parameters should either decrease the run time at the cost of classification accuracy or improve accuracy while making training slower. 
-
-The approximation parameter that we put most of our focus on in this project is the proportion of the available data. Other approximation parameters are hyperparameters to the machine learning algorithms such as the number of decision trees in a random forest. No all hyperparameters, however, are approximation parameters. Examples of hyperparameters that have no influence on performance are the lengthscale of a kernel and the 
-% TODO mention parameters like #thread that influence time but not performance
-@not all hyps are appr.(length scale). always distinguish between two@
-
-\subsubsection{Scheduling}
-
-
-\subsection{High level architecture}
-% TODO END make sure this is properly centered
-\begin{figure}[!ht]
-  \begin{adjustwidth}{-\oddsidemargin-2in}{-\rightmargin-1.5in}
-    \centering
-    \includegraphics[trim=0 0 0 0,clip,width=0.9\paperwidth]{figures/architecture.pdf}
-    
-  \end{adjustwidth}
-  \caption{High level architecture, shown after three iterations. Data is coloured red, machine learning algorithms are coloured blue}
-    \label{architecture}
-\end{figure}
-
-Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates a meta-model of the model performances of the models in tier 1. This meta-model is then used by the scheduling part of the program to select the algorithm and approximation parameters for the next iteration. 
-
-Figure \ref{architecture} shows this architecture diagrammatically after three iterations. Note how both tiers execute machine learning algorithms (coloured in blue) on a set of data (coloured in red) and how the result of the algorithms in the first tier form the data set for the Gaussian Process at the top of the diagram. The main loop of our program is shown, slightly simplified, in Figure \ref{mainloop}. When executing, the program switches back and forth between the two tiers: it executes an algorithm with a given set of approximation parameters, builds a new model that includes the performance during this execution. The scheduler then decides which algorithm/approximation parameter combination to run next and the system returns to the first step.
-
-\begin{figure}[ht]
-\begin{lstlisting}[language=Python]
-while True:
-   scheduler.decide() # Tier 2 (scheduling)
-   if scheduler.decision:
-      scheduler.execute() # Tier 1
-      scheduler.model() # Tier 2 (modelling)
-\end{lstlisting}
-\caption{The main loop}
-\label{mainloop}
-\end{figure}
-
-% TODO DELETE tier 1 is standard ml stuff (using sklearn), our contribution is tier 2, has two parts: modelling and scheduling, now describe in detail
-
-\subsection{Directory structure of the code}
-
-The directory of the project contains the following subdirectories:
-\begin{itemize}
-\item \textbf{data/}: This directory contains datasets in \texttt{data/raw\_arffs/}. It is also where data generated by the data generation scripts are stored. When creating plots based on this data, the results are written into this folder
-\item \textbf{figs/}: Every diagram that our system generates is automatically also saved to this directory
-\item \textbf{report}/: This folder is where the source file and diagrams for this document are stored
-\item \textbf{src/}: This directory holds all the source code for our project. It contains \texttt{main.py}, the main code file and two subdirectories, \texttt{src/data\_handling/} and \texttt{src/matlab/} which contain Python and Matlab code repectively
-\item \textbf{var/}: This folder is used to store temporary files that are used to exchange data between Python and Matlab code
-\end{itemize}
-
-\section{Tier 1}
-This section will @explain details@ of tier 1 before @moving on@ to tier 2 where out main contributions lie in the rest of this chapter.
-% TODO mention k fold
-% TODO roc (only used for binary, is valid as no comparison between binary and non binary
-% TODO how do tier 1 and tier 2 talk to each other?
-% TODO http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.93.112
-
-\section{Interop} %TODO different name
-
-
-\section{Modelling Model Performance}
+% TODO not "score"
+\chapter{Modelling Learning Time and Score}
 To make good decisions, the scheduler needs an accurate model of the dependance of approximation parameters and performance. Creating such models is therefore a fundamental piece in our system.
 
-\subsection{Data Collection}
+\section{Collecting Sample Data}
 The first step towards modelling performance was to collect sample data. This data was used to first investigate the function and formulate a hypothesis on the character of the function from approximation parameters to performance. After the kernel was implemented, we tested it by comparing its predictions based on the sample data with possible alternative kernels. The details of this are described in the Evaluation chapter below.
 
 % TODO MAYBE don't call this a script
-\subsubsection{Data collection script}
+\subsection{Data collection script}
 As data collection was resource and time intensive, we implemented a command line script that accepts a range of configuration flags and collects data based on the parameters it receives. This script was then executed on an Amazon EC2 instance. This script can be configured with the following list of command line flags:
 
 \begin{itemize}
@@ -465,7 +416,7 @@ When collecting data, the program takes the cartesian product of these arrays an
 
 Once it has finished all the computations, the program outputs the data to a comma-separated value \texttt{csv} file with a column containing a unique id for the dataset, one column for each parameter and one column each for the percentage of data used, the time spent on learning and the classification accuracy. All the values in these files are numbers which makes it easy to import them into Matlab as matrices. 
 
-\subsubsection{Collected sample data}
+\subsection{Collected sample data}
 
 % TODO JAMES maybe use different figures
 \begin{figure}
@@ -499,20 +450,25 @@ Once it has finished all the computations, the program outputs the data to a com
 
 
 % TODO why suddenly misclassification instead of accuracy, explain that one is 1-the other
-Figures \ref{sampledata1}, \ref{sampledata2}, \ref{sampledata3} and \ref{sampledata4} show the results of collecting performance data, varying the percentage of data used. The four plots were generated by using random forest with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
+Figures \ref{sampledata1}, \ref{sampledata2}, \ref{sampledata3} and \ref{sampledata4} show the results of collecting performance data, varying the percentage of data used. The four plots show the result of running random forest with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
 
-%how time (shown in @@) and misclassification rate (shown in @@) vary as different proportions of the available data are used in different combinations of algorithms and datasets. 
+In all four figures, the run time shown in blue shows linear growth as the amount of data increases. As run time values shown in figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected. The run time shown in figure \ref{sampledata2} shows a change in growth at around 75\%. This is an effect which sometimes occurred during data collection and which we analyse in detail in the Challenges section of the Evaluation chapter.
 
+The error rates for all four combinations of algorithms and datasets shown in red exhibits exponentially decaying behaviour, falling very rapidly initially before levelling off.
 
-% TODO why did you select the appr params you selected, later you only use data. data is enough to be interesting but we want to show that approach can in principle be extended
-% TODO look of O runtime of algos, should confirm empirical findings
-
-
+% TODO also show plot for # trees (or another appr param)
 
 
 
 
-\subsection{Exponential mixture kernel}
+
+
+
+
+\section{The Exponential Mixture Kernel}
+% TODO change k to \kappa
+% TODO use x, x' and t, t' consistently 
+
 Based on the results shown in the previous section, we implemented a kernel to model the exponential behaviour of classification accuracy. Following \cite{2014arXiv1406.3896S}, we define the kernel as
 % TODO JAMES can this be written as \psi(\lambda)d\lambda ?
 \begin{align}
@@ -541,12 +497,17 @@ and
 &= \frac{1}{\alpha}
 \end{align}
 
+such that the term for our kernel becomes
+\begin{equation}
+\kappa(x, x') = \frac{\frac{1}{\psi\xi}^{\frac{1}{\xi}}}{(x+x'+\frac{1}{\psi\xi})^{\frac{1}{\xi}}}
+\end{equation}
+
 % TODO show plots of reparameterised gamma function
 % TODO show plots drawn from priors
 
 % TODO show derivatives
 
-\subsection{Selecting Kernel Hyperparameters} 
+\section{Selecting Kernel Hyperparameters} 
 % TODO JAMES is it correct to call this model selection?
 
 To fit a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance and likelihood function. There two main methods to achieve this are marginalisation and optimisation. For reasons explained in the evaluation chapter, we implement both of these methods in our project.
@@ -558,7 +519,7 @@ GPML comes with an optimisation function that is meant to be used to optimise hy
 After failing to optimise the hyperparameters to our kernel using the optimisation function included with GPML, we decided to implement sampling which does not suffer from the same problems as optimisation. For reasons of speed and ease of use, we then decided to implement our own optimisation routine which is described in detail below. An evaluation of the two methods applied to our data can be found in the Evaluation chapter.
 
 
-\subsubsection{Sampling}
+\subsection{Sampling}
 The first approach to hyperparameter selection we use in our project is the Bayesian approach of integrating out the hyperparameters $\theta$:
 
 % TODO maybe murphy equation 15.1
@@ -584,7 +545,7 @@ The main advantage of sampling the hyperparameters is that it does not suffer fr
 
 
 
-\subsubsection{Optimisation}
+\subsection{Optimisation}
 Another approach to find suitable hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters. This has the advantage of being substantially faster than sampling. It is also easier to implement, as it returns one set of hyperparameters that can be used to make predictions instead of multiple samples that have to be correctly averaged over.
 
 The great disadvantage of optimisation is that it is prone to overfitting by choosing one optimum in cases where multiple viable optima exist. We describe situations in which we encountered this problem in the Evaluation chapter, comparing it with the results of slice sampling.
@@ -661,17 +622,112 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 
 %show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
 
-\subsubsection{Using both methods} % TODO different name
+\subsection{Using both methods} % TODO different name
 
 As our program has to be able to handle both samples and single results returned by optimisation, we decided to treat the result of our optimisation routine as a single sample in the routines that make use of our model. This makes it completely transparent to these routines which of the two hyperparameter selection methods were used and enables us to switch between them according to the requirements of the schedulers.
 
-\section{Scheduling} 
+% TODO END hyperparameter spelling
+
+
+% TODO "classification accuracy" maybe isn't correct if we also use roc
+% TODO mention somewhere that "performance" means time + score
+\chapter{Scheduling} 
+
+% TODO explain burn in and how you don't model during burn in
+
+\textit{This chapter describes the theoretical and practical aspects system we developed. It firsts gives a high level overview of the system architecture before describing in detail how the scheduling heuristics try to find optima within the time constraints.}
+
+\section{System Architecture} % TODO maybe something like "overview"
+
+% TODO mention drawing
+% TODO mention how multiple schedulers can be executed simultaneously
+
+\subsection{High level architecture}
+% TODO END make sure this is properly centered
+\begin{figure}[!ht]
+  \begin{adjustwidth}{-\oddsidemargin-2in}{-\rightmargin-1.5in}
+    \centering
+    \includegraphics[trim=0 0 0 0,clip,width=0.9\paperwidth]{figures/architecture.pdf}
+    
+  \end{adjustwidth}
+  \caption{High level architecture, shown after three iterations. Data is coloured red, machine learning algorithms are coloured blue}
+    \label{architecture}
+\end{figure}
+
+Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates a meta-model of the model performances of the models in tier 1. This meta-model is then used by the scheduling part of the program to select the algorithm and approximation parameters for the next iteration. 
+
+Figure \ref{architecture} shows this architecture diagrammatically after three iterations. Note how both tiers execute machine learning algorithms (coloured in blue) on a set of data (coloured in red) and how the result of the algorithms in the first tier form the data set for the Gaussian Process at the top of the diagram. The main loop of our program is shown, slightly simplified, in Figure \ref{mainloop}. When executing, the program switches back and forth between the two tiers: it executes an algorithm with a given set of approximation parameters, builds a new model that includes the performance during this execution. The scheduler then decides which algorithm/approximation parameter combination to run next and the system returns to the first step.
+
+\begin{figure}[ht]
+\begin{lstlisting}[language=Python]
+while True:
+   scheduler.decide() # Tier 2 (scheduling)
+   if scheduler.decision:
+      scheduler.execute() # Tier 1
+      scheduler.model() # Tier 2 (modelling)
+\end{lstlisting}
+\caption{The main loop}
+\label{mainloop}
+\end{figure}
+
+
+\subsection{Directory structure of the code}
+
+The directory of the project contains the following subdirectories:
+\begin{itemize}
+\item \textbf{data/}: This directory contains datasets in \texttt{data/raw\_arffs/}. It is also where data generated by the data generation scripts are stored. When creating plots based on this data, the results are written into this folder
+\item \textbf{figs/}: Every diagram that our system generates is automatically also saved to this directory
+\item \textbf{report}/: This folder is where the source file and diagrams for this document are stored
+\item \textbf{src/}: This directory holds all the source code for our project. It contains \texttt{main.py}, the main code file and two subdirectories, \texttt{src/data\_handling/} and \texttt{src/matlab/} which contain Python and Matlab code respectively
+\item \textbf{var/}: This folder is used to store temporary files that are used to exchange data between Python and Matlab code
+\end{itemize}
+
+\section{Measuring performance}
+% TODO END Cross-Validation spelling
+As shown in figure \ref{architecture}, the output of tier 1 is the performance of the model that the learning algorithm creates of the dataset given the particular approximation parameters that are selected by the scheduler. This section explains how the performance of the models is measured. Specifically, we describe how we measure predictive accuracy and training time of our models.
+
+\subsection{Classification accuracy}
+
+Measuring classification accuracy is more complex than stopping time. One common approach to measure the performance of a model is to split the dataset into two subsets, train the model on one subset and compare its predictions on the second subset with the actual values. This method has the disadvantage that only a subset of the available data is used for training which can make it susceptible to variance in reported classification accuracy depending on how the data is split.
+
+A superior method, that we slightly adjust to the requirements of this project is k-Fold Cross-Validation. This approach to measure model performance splits the dataset into $k$ subsets of equal size, here called folds. The algorithm then learns on the combined data of the second to $k$th folds, using the first fold as a validation set. This process is repeated $k$-times, using another fold as validation set in each iteration. The classification accuracies of the $k$ iterations are then averaged to calculate the overall classification accuracy. This approach ensures that all the data is used for training. Although the learning algorithm has to be executed $k$ times instead of just one, $k$ is a constant value in k-Fold Cross-Validation that does not depend on the size of the dataset and therefore does not impact the asymptotic run time.
+
+To implement the percentage of data approximation parameter, we need to restrict the data that is used for training our models while still keeping the advantages of k-fold cross-validation. We achieve this by further splitting the folds used for training. For each fold, a subset of samples is selected according to the percentage of data to be used. The fold used for validation, however, does not change. This approach ensures that all available data is used for validation.
+
+When calculating the score that a model achieves on a given validation set, two different methods are used. For binary classification tasks\footnote{Those in which each sample belongs to one of two classes such as \texttt{true} and \texttt{false}.}, we use the receiver operating characteristic (ROC) metric to asses model accuracy. This metric... % TODO explain ROC, its advantages (more robust?)
+
+Calculating an ROC curve is only possible for binary classification tasks because % TODO why?
+The classification accuracy in cases where the samples belong to more than one class is calculated as the percentage of samples whose class was correctly predicted.
+
+\subsection{Time}
+Measuring the time spent learning is more straightforward than measuring classification accuracy. We use Python's \texttt{time.time()} function to stop the time that elapses while training. As we don't want to include validation time spent in the iterations of Cross-Validation, we keep the current time spent in a variable that gets updated after training in each iteration finishes.
+
+Another factor to be considered is that other tasks running in parallel can pollute the timing data. During development of the program, we were on occasion forced to shut down resource intensive programs while running tests. This problem did not occur on the EC2 instance. % TODO why not?
+
+
+% TODO explain why this doesn't underestimate performance by not using all the data
+
+Before we split the dataset into the ten folds, we shuffle the samples to ensure proper randomisation across the folds. 
+
+% TODO roc (only used for binary, is valid as no comparison between binary and non binary
+% TODO http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.93.112
+
+
+
+
+
+
+
+\section{Interop} %TODO different name
+
+\section{Heuristics} 
 
 % TODO "Recall that..." bayesian optimisation
 % TODO talk about averaging over samples
 % TODO figures to explain different acquisition strategies
 
 \chapter{Evaluation}
+% TODO point cloud/graph that shows that one is better at first, then the other (for data vs score and time vs score)
 \textit{This chapter describes the results that our system achieved. It also lists challenges that we faced during its development and limitations it currently has.}
 
 % TODO mention how common logreg/rndforest are
@@ -736,7 +792,7 @@ Implementing the gradients of the hyperparameters to our kernel proved to be cha
 To test our gradient implementation, we used a script provided by the creators of GPML that checks kernel gradients\footnote{This script can be downloaded at http://learning.eng.cam.ac.uk/carl/code/minimize/checkgrad.m}.
 
 
-
+% TODO more than one class in training set error
 
 % TODO numerical accuracy for EI when sd is very small and peak is under lower bound, i.e. prob of impr is very small, get infs and nans
 %- model evidence

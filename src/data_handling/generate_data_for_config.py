@@ -23,7 +23,7 @@ def generate_data_for_config(dataset, classifier, param_names, param_values, per
 
     scores = []
 
-    t = time()
+    elapsed_time = 0
     
     for train_index, test_index in kf:
         # TODO select random subset
@@ -32,7 +32,11 @@ def generate_data_for_config(dataset, classifier, param_names, param_values, per
         y_train, y_test = y[train_index_subset], y[test_index]
 
         model = classifier(**dict(zip(param_names, param_values)))
+
+        t = time()
         clf = model.fit(X_train, y_train)
+        elapsed_time += time() - t
+
 
         if dataset['binary']:
             y_predict = clf.predict(X_test)
@@ -42,7 +46,7 @@ def generate_data_for_config(dataset, classifier, param_names, param_values, per
             score = clf.score(X_test, y_test)
         scores.append(score)
         
-    elapsed_time = time() - t
+    
     avg_score = round(np.mean(scores), 3)
 
     return (param_values, percentage_data, elapsed_time, avg_score)
