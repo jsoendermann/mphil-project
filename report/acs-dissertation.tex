@@ -467,6 +467,7 @@ The error rates for all four combinations of algorithms and datasets shown in re
 
 
 \section{The Exponential Mixture Kernel}
+% TODO mention that this kernel is added to a linear kernel
 % TODO change k to \kappa
 % TODO use x, x' and t, t' consistently 
 
@@ -637,7 +638,7 @@ As our program has to be able to handle both samples and single results returned
 
 
 
-\textit{This chapter describes the theoretical and practical aspects system we developed. It firsts gives a high level overview of the system architecture before describing in detail how the scheduling heuristics try to find optima within the time constraints.}
+\textit{This chapter describes the theoretical and practical aspects system we developed. It firsts gives a high level overview of the system architecture before describing in detail how the scheduling heuristics used try to to find optima within the time constraints.}
 
 \section{System Architecture} % TODO maybe something like "overview"
 
@@ -647,19 +648,24 @@ As our program has to be able to handle both samples and single results returned
 \subsection{High level architecture}
 % TODO END make sure this is properly centered
 % TODO two GPs
-\begin{figure}[!ht]
-  \begin{adjustwidth}{-\oddsidemargin-2in}{-\rightmargin-1.5in}
+\begin{figure}[p]
+  %\begin{adjustwidth}{-\oddsidemargin-2in}{-\rightmargin-1.5in}
     \centering
-    \includegraphics[trim=0 0 0 0,clip,width=0.9\paperwidth]{figures/architecture.pdf}
+    \includegraphics[angle=90,scale=0.8]{figures/architecture2.pdf}
     
-  \end{adjustwidth}
-  \caption{High level architecture, shown after three iterations. Data is coloured red, machine learning algorithms are coloured blue}
+ % \end{adjustwidth}
+  \caption{High level architecture, shown after three iterations. Data is green, numbers refer to notes in the text}
     \label{architecture}
 \end{figure}
 
-Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates a meta-model of the model performances of the models in tier 1. This meta-model is then used by the schedulers to select the algorithm and approximation parameters for the next iteration.
+Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates models of the running time and score of the models in tier 1. These meta-models are then used by the scheduler to select the algorithm and approximation parameters for the next iteration and the process is repeated.
 
-Figure \ref{architecture} shows this architecture diagrammatically for one scheduler after three iterations. Note how both tiers execute machine learning algorithms (coloured in blue) on a set of data (coloured in red) and how the result of the algorithms in the first tier form the data set for the Gaussian Process at the top of the diagram. The main loop of our program is shown, slightly simplified, in Figure \ref{mainloop}. When executing, the program switches back and forth between the two tiers: it executes an algorithm with a given set of approximation parameters, builds a new model that includes the performance during this execution. The scheduler then decides which algorithm/approximation parameter combination to run next and the system returns to the first step.
+Figure \ref{architecture} shows this architecture diagrammatically for one scheduler after three iterations. In tier 1, the dataset (1) is used as input to all learning. The learning process is parameterised by the learning algorithm and the approximation parameters to the algorithm (2). The running time and score for every model built this way are saved (3). 
+
+In tier 2, this performance data is used to train two Gaussian process, a linear one for the time and one based on the exponential mixture kernel for the score (4). The models 
+
+
+%Note how both tiers execute machine learning algorithms on data (coloured in green) and how the result of the algorithms in the first tier form the data set for the Gaussian Process at the top of the diagram. The main loop of our program is shown, slightly simplified, in Figure \ref{mainloop}. When executing, the program switches back and forth between the two tiers: it executes an algorithm with a given set of approximation parameters, builds a new model that includes the performance during this execution. The scheduler then decides which algorithm/approximation parameter combination to run next and the system returns to the first step.
 
 % TODO explain how every scheduler optimises over multiple algorithms, each algorithm has its own acquisition function
 % TODO four vectors: score m/sd, time m/sd
