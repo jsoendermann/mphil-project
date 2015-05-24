@@ -457,7 +457,10 @@ class TimedScheduler(ProbabilisticScheduler):
     def _draw_data(self):
         super(TimedScheduler, self)._draw_data()
 
-        self.ax_time.plot(np.linspace(0,1,100), np.ones(100) * self.remaining_time, 'k-')
+        time_x_min, time_x_max = self.ax_time.get_xlim()
+        self.ax_time.plot([0, 1], [self.remaining_time, self.remaining_time], 'k-')
+        self.ax_time.annotate('Remaining time', xy=(0, self.remaining_time), va="top", ha="left")
+        self.ax_time.set_xlim(time_x_min, min(1, time_x_max * 1.05))
 
     def _set_labels_and_limits(self):
         super(TimedScheduler, self)._set_labels_and_limits()
@@ -484,6 +487,8 @@ class ExpectedImprovementTimesProbOfSuccessScheduler(TimedScheduler, ExpectedImp
     def execute(self):
         super(ExpectedImprovementTimesProbOfSuccessScheduler, self).execute()
 
+        print self.remaining_time, self.time_steps
+
         if self.remaining_time < 0:
             if self.time_steps:
                 self.add_time(self.time_steps[0])
@@ -503,8 +508,12 @@ class ExpectedImprovementTimesProbOfSuccessScheduler(TimedScheduler, ExpectedImp
 
         #print ei
         #print prob_of_success
+
+        res = ei * prob_of_success
         
-        return ei * prob_of_success
+        print res
+
+        return res
 
 class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
     def __init__(self, scheduler_name, burn_in_percentages, explore_time, exploit_time):
@@ -513,6 +522,7 @@ class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
         
         self.exploit_time = exploit_time
         self.exploring = True
+
 
     def decide(self):
         super(MinimiseUncertaintyAndExploitScheduler, self).decide()
@@ -524,8 +534,6 @@ class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
                 self.remaining_time += self.exploit_time
             else:
                 self.decision = None
-
-
 
     def execute(self):
         super(MinimiseUncertaintyAndExploitScheduler, self).execute()
@@ -592,10 +600,10 @@ elif args.load_arff:
 
 
 schedulers = [
-    MinimiseUncertaintyAndExploitScheduler('explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 5, 20),
+    #MinimiseUncertaintyAndExploitScheduler('explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 5, 20),
     ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
-    FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3))
-    #ProbabilityOfImprovementScheduler('Prob. of impr.', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
+    #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3))
+    #ProbabilityOfImprovementScheduler('Prob. of improvement', exp_incl_float_range(0.005, 15, 0.1, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
     #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))

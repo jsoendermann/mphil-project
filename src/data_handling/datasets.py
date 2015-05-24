@@ -1,15 +1,15 @@
 from scipy.io.arff import loadarff
 import numpy as np
 from glob import glob
-from os.path import join, basename
+from os.path import join, dirname, realpath
 from json import loads
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.datasets import make_classification
 from random import randint, shuffle
 
-DATASETS_DIR = '../../data/raw_arffs/'
+DATASETS_DIR = join(dirname(realpath(__file__)), '../../data/raw_arffs/')
 
-with open('datasets_data.json') as datasets_data_file:  
+with open(join(dirname(realpath(__file__)), 'datasets_data.json')) as datasets_data_file:  
     datasets_data = loads(datasets_data_file.read())
 
 
