@@ -24,6 +24,7 @@
 % TODO comparing model evidence
 % TODO http://www.springer.com/gp/book/9783540653677
 % TODO END "n't" -> "not"
+% TODO END refer to sections, not chapters (as numbers)
 % TODO END don't talk about "subsection", subsub...
 % TODO END emph new definitions
 % TODO END use "equation" instead of equation* (also align)
@@ -828,7 +829,7 @@ After using up the time allotted for exploration, this scheduler uses the second
 % TODO rasmussen: local maxima correspond to a particular interpretation of the data
 
 % TODO describe characteristics of all schedulers
-Figure \ref{fixedsequenceexample} shows a \texttt{FixedSequenceScheduler} with a geometric sequence of data percentage values after a number of iterations. It just finished running logistic regression with about 80\% of the available data (the rightmost blue dot on both subplots) and is about to learn using random forests on the same amount of data.
+
 \begin{figure}
 \centering
 % TODO FIGURE trim this to only show fixed sequence scheduler
@@ -862,7 +863,10 @@ Another issue we faced when using the Auto-WEKA datasets is that the \texttt{arf
 
 % TODO explain why this is not a problem: we select datasets already b/c the small ones are too small to further increase data; the interesting ones work?
 
-\section{Results}
+\section{The Exponential Mixture Kernel}
+\subsection{Model comparison}
+
+\subsection{Challenges}
 
 \subsection{Hyperparameter selection}
 We generally found both of the methods we use for hyperparameter selection, sampling and optimisation, to return satisfying results. As is in the nature of optimisation, however, it is prone to overfit. This was  an issue especially in the early phases of data collection when only little data was available.
@@ -875,10 +879,11 @@ Although this addressed the issue of overfitting on too little data, sampling hy
 
 
 
-
+\section{Scheduling Results}
+Figure \ref{fixedsequenceexample} shows a \texttt{FixedSequenceScheduler} with a geometric sequence of data percentage values after a number of iterations. It just finished running logistic regression with about 80\% of the available data (the rightmost blue dot on both subplots) and is about to learn using random forests on the same amount of data.
 
 % TODO show case where one function is better initially but then gets overtaken
-\section{Testing}
+
 \section{Limitations}
 \section{Challenges}
 
