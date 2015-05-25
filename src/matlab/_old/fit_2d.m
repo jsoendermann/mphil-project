@@ -19,9 +19,12 @@ covfunc = {@covSum, {prod, @covConst}};
 hyp.cov = log([1 1 1 1 1 1 1]);
 
 likfunc = @likGauss;
-hyp.lik = 0;
+hyp.lik = 0.1;
 
 %% Fit GP
+
+%nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, x, y); 
+%hyp_opt = hyps_vec_to_struct(slice_optimisation_with_restarts(5, nlmlfunc, hyps_struct_to_vec(hyp), 200));
 
 hyp_opt = minimize(hyp, @gp, -100, @infExact, meanfunc, covfunc, likfunc, t, y);
 nlml = gp(hyp, @infExact, meanfunc, covfunc, likfunc, t, y);

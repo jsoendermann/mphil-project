@@ -5,7 +5,7 @@ prod = {@covProd, {exp1, exp2}};
 covfunc = {@covSum, {prod, @covConst}};
 covfunc_plus_noise = {@covSum, {covfunc, @covNoise}};
 
-hyp.cov = log([1 1 1 1 1 1 1 0.001]);
+hyp.cov = log([1 1 1 1 1 1 1]);
 
 %% Load real data
 
@@ -78,8 +78,8 @@ hyp_opt = fminunc(@(hyps) nlmlfunc(hyps, xx, y), hyp.cov);
 meanfunc = @meanZero; 
 hyp.mean = [];
 
-covfunc = @covSEiso;
-hyp.cov = log([1 1]);
+%covfunc = @covSEiso;
+%hyp.cov = log([1 1]);
 
 % exp1 = {@covMask, {[1 0], @covExpMixture1d}};
 % exp2 = {@covMask, {[0 1], @covExpMixture1d}};
@@ -100,8 +100,8 @@ slice_optimisation(
 
 %% Predict
 
- hyp_opt.cov=[0.2102   -5.2608    2.0376   -0.4723   -0.1536    1.1491   -0.5293];
- hyp_opt.lik = [-4.8580];
+ %hyp_opt.cov=[0.2102   -5.2608    2.0376   -0.4723   -0.1536    1.1491   -0.5293];
+ %hyp_opt.lik = [-4.8580];
 
 [~, ~, m, sd] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, xx, y, zz);
 nlml = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, xx, y);

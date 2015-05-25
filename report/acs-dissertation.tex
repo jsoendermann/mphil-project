@@ -1,7 +1,5 @@
 % TODO JAMES where to write more? which sections are weakest?
-% TODO JAMES We will demonstrate these ideas by building a system that can choose between different machine learning methods, doing so efficiently by running approximate versions of the algorithms to estimate which methods are most promising to run with less approximation
 % TODO JAMES O runtime online is different to empirical findings
-% TODO JAMES only time training or also testing?
 
 % TODO CHECK is "classification accuracy" correct?
 
@@ -10,18 +8,14 @@
 
 % TODO CITE http://mlg.eng.cam.ac.uk/hoffmanm/papers/hoffman:2014.pdf
 % TODO END remove todos from code
-% TODO compare with other approaches (matern kernel)
 % TODO END citations: switch to different format, make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 % TODO convert sparse arff files to non sparse
-% TODO rnd forest is bad at data thats heavily pos or neg, run tests
-% TODO describe gradient problems (stress that the gradients are correct)
+% TODO rnd forest is bad at data that's heavily pos or neg, run tests
 % TODO END random forest(s) spelling
-% TOOD END dataset /data set spelling
+% TODO END dataset /data set spelling
 % TODO END performance/time/accuracy, be clear
 % TODO END run time spelling
 % TODO END trade-off spelling
-% TODO implement better optimiser based on gradients
-% TODO comparing model evidence
 % TODO http://www.springer.com/gp/book/9783540653677
 % TODO END "n't" -> "not"
 % TODO END refer to sections, not chapters (as numbers)
@@ -39,8 +33,8 @@
 % TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
 % TODO explain datasets w/ images if they are interesting
 % TODO explain how exponential growth is at most 2x as bad as 100%
-% TOOD the field of "sequential analysis"
-% TODO metion bounds as alternative to EI
+% TODO the field of "sequential analysis"
+% TODO mention bounds as alternative to EI
 % TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
 % TODO END no footnotes or cites after formulas
 % TODO END random forest(s) consistent plural/capitalisatino (also logreg)
@@ -126,11 +120,13 @@ As part of the current trend to automise all aspects of machine learning, automa
 Classical optimisation methods may be ineffective as solutions to this problem as evaluating the function to be optimised can be very expensive to compute. Further complicating this problem is the fact that the time required to evaluate the function can vary drastically depending on where it is evaluated: consider the case where the approximation parameter is the number of layers in a deep neural network. Increasing the number of layers will cause the inference to take more time. The optimisation routine has to take this into account when exploring the function. A natural solution to this problem is Bayesian optimisation as Bayesian optimisation methods make very efficient use of data when optimising a function.
 
 % TODO MAYBE cite http://rbr.cs.umass.edu/papers/ZCCijcai99.pdf
+% TODO EDIT make the goals clear. maybe just two, anytime and contract
 Adding run time considerations to statistical learning methods can lead to a number of different goals. One possible goal are anytime algorithms that can be interrupted while running, returning a solution optimal for the amount of time they were allowed to run for. Another goal is to develop contract algorithms that receive a data set and a time budget as input and infer an optimal model within the time budget.
 
 % TODO is this true?
 %In this project, we develop a system that @. As neither of these two problems has an analytic solutions, we wrote a number of heuristics that use Bayesian optimisation methods to decide @.
 
+% TODO EDIT second major contribution ne?
 Our first major contribution in this project is a model of the function from approximation parameters to learning algorithm performance. This is the foundation for the second major part of our system which consists of a number of heuristics that use the model as a basis for Bayesian optimisation. Because these heuristics try to find an optimal evaluation sequence for the function to be optimised, we call them "schedulers".
 
 \begin{figure}
@@ -173,22 +169,22 @@ The rest of this dissertation is structured as follows:
 
 
 
-%\section{General machine Learning concepts}
-%\begin{figure}
-%\centering
-%  \includegraphics[width=.8\textwidth]{figures/ml.pdf}
-%  \caption{The general process of learning from data}
-%  \label{mlstructure}
-%\end{figure}
+\section{General machine Learning concepts}
+\begin{figure}
+\centering
+  \includegraphics[width=.8\textwidth]{figures/ml.pdf}
+  \caption{The general process of learning from data}
+  \label{mlstructure}
+\end{figure}
 
 \section{Key concepts}
-Our project falls into the field of meta machine learning. We use machine learning algorithms to learn and predict the performance of other machine learning algorithms. This makes it necessary to describe the 
+Our project falls into the field of meta machine learning. We use machine learning algorithms to learn and predict the performance of other machine learning algorithms. This necessitates a very brief overview of machine learning principles. Figure \ref{mlstructure} shows the general structure of learning from data: a learning algorithm takes some training data and outputs a function $\hat{f}$, usually called a model of the data, that models the true function $f$ underlying the data. This function is then used to make predictions on unseen data.
 
-% needs to understand ML. also a few concepts that we introduce in this project
+Of particular relevance to our project is the second input to the learning algorithm: its hyperparameters. These hyperparameters control the behaviour of the learning algorithm and influence the quality of the model which makes selecting appropriate hyperparameters crucial.
 
-% TODO ML overview
+
 \subsection{Approximation parameters}
-Approximation parameters are parameters to machine learning algorithms that influence the trade-off between statistical and computational efficiency. They let us vary the degree of approximateness at which the algorithm runs. Changing an approximation parameters should either decrease the run time at the cost of classification accuracy or improve accuracy while making training slower. 
+By "approximation parameters", we denote parameters to machine learning algorithms that influence the trade-off between statistical and computational efficiency, letting us vary the degree of approximateness at which the algorithm runs. Changing an approximation parameters should either decrease the run time at the cost of classification accuracy or improve accuracy while making training slower. 
 
 The approximation parameter that we put most of our focus on in this project is the proportion of the available data. Other approximation parameters are hyperparameters to the machine learning algorithms such as the number of decision trees in a random forest. These parameters are considered in the modelling chapter to analyse how multiple interaction parameters interact.
 
@@ -212,6 +208,20 @@ This subsection introduces the two machine learning algorithms that we focus on 
 % TODO talk about what each algorithm is good/weak at
 
 \subsubsection{Logistic regression}
+% TODO in linear regression, are more complex base functions used
+Logistic regression is a variant of linear regression, a very widely used machine learning algorithms. In linear regression, the model $\hat{f}$ has the form
+\begin{equation}
+\hat{f}(x) = w_0 + \sum_{i=1}^n w_ix_i
+\end{equation}
+% TODO changing the parameters to what?
+where the vector $\mathbf{w}$ contains the model parameters and $n$ is the number of features. Fitting the model to data is achieved by changing the parameters.
+
+Linear regression is useful in regression problems where the values to be predicted are continuous. The datasets we consider in this report belong to a different class where the required output is a label taken from a finite set of classes. This requires a slight adjustment to linear regression to obtain sensible values.
+
+In the simplest case of classification problems, binary classification, where each sample belongs to one of two classes, we wrap the computation of $\hat{f}$ in a function that forces all values in the range from 0 to 1 such as the sigmoid function $\sigma(x) = \frac{1}{1+e^x}$. We then assign the classes to 0 and 1, such that values for $\hat{f}$ close to 1 are to be interpreted to mean that the sample is likely to be of class 1.
+
+% TODO c is used as index and as class
+In the multiclass case with $c$ classes, the machine learning library used in this project, described in detail below, constructs $c$ functions $\hat{f}^{(c)}$. Each function performs a binary classification between class $c$ and all other classes, such that for samples likely to belong to class $c$, $\hat{f}^{(c)}$ has values close to 1. $\hat{f}$ is then computed by selecting the class $c$ for which $\hat{f}^{(c)}$ is largest. This scheme is known as one-vs-all.
 
 \subsubsection{Random forests}
 Random forests, introduced in \cite{rndforests}, is an algorithm that extends the idea of decision trees. Growing decision trees involves repeatedly splitting the feature space into rectangular regions using one feature, such that a the proportion of samples of the same class in the region is maximised \cite{james2014introduction}. 
@@ -295,6 +305,16 @@ Another way to combine kernels is multiplication. Figure \ref{prod_of_lin_and_li
   \label{prod_of_lin_and_lin}
 \end{figure}
 
+% TODO END should f be a $f$ or a vector f in this chapter?
+
+\subsubsection{Marginal Likelihood}
+The marginal likelihood of a Gaussian process given some data $X$ and a set of hyperparameters $\theta$ is obtained by integrating over the functions $f$ that the Gaussian process defines a distribution over. Formally:
+\begin{equation}
+p(\mathbf{y}|X, \theta) = \int p(\mathbf{y}|f, X, \theta)p(f|X, \theta) df
+\end{equation}
+
+% TODO why -log?
+Comparing the marginal likelihood of two models allows us to choose the one that better fits the data. Often, the negative log of the marginal likelihood is calculated. In this case, lower values are better.
 
 
 \section{Bayesian optimisation and expected improvement}
@@ -335,6 +355,7 @@ a_{PI}(x) &= P(z \geq y_{max}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\s
 % TODO http://mlss2014.com/files/defreitas_slides1.pdf
 Equation \ref{eq:pi_equation} is visualised in figure @. Due to the fact that the Gaussian process tends to be most certain about points that are close to a known data point and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x$ and the current maximum, thir tends to be very conservative acquisition function. In figure \ref{bayesianopti}, we can see the acquisition function for the probability of improvement in the second plot. Note how $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have evaluated the function, and quickly drops off as $x$ increases. This is the phenomenon just described: this acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
 
+% TODO ADD james' notes
 % TODO cite mockus 1978, better place to cite
 Another, superior, strategy to decide which point to evaluate next is Expected improvement. The acquisition function for Expected improvement is defined \cite{eipaper} as
 \begin{align}
@@ -369,7 +390,7 @@ While little work has been published on the precise problem that we are consider
 
 In \cite{ThoHutHooLey13-AutoWEKA}, the authors build on the popular WEKA framework, an implementation of many machine learning algorithms in Java, to create a system that automatically chooses and algorithm together with appropriate hyperparameters. % TODO bayesian opt
 
-
+% TODO ADD finish this
 
 
 % TODO Auto weka
@@ -435,6 +456,7 @@ Once it has finished all the computations, the program outputs the data to a com
   \label{sampledata2}
 \end{figure}
 
+% TODO maybe replace this with data/rnd-forest_mnist/
 \begin{figure}
 \centering
   \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/lr_synth.pdf}
@@ -505,6 +527,10 @@ such that the term for our kernel becomes
 \kappa(x, x') = \frac{\frac{1}{\psi\xi}^{\frac{1}{\xi}}}{(x+x'+\frac{1}{\psi\xi})^{\frac{1}{\xi}}}
 \end{equation}
 
+% TODO ADD say why this is convenient
+
+% TODO ADD say that one can add a linear kernel to model different plateaus
+
 % TODO show plots of reparameterised gamma function
 % TODO show plots drawn from priors
 
@@ -535,6 +561,8 @@ decided to implement this when gpml minimise didn't work
 
 The main advantage of sampling the hyperparameters is that it does not suffer from overfitting the same way optimisation does, given that the samples are successfully drawn from the posterior distribution. Its major drawback is that it is computationally more expensive than optimisation methods. Implementation wise, sampling also takes more effort than optimisation, as the result of the computations the program executes have to be correctly averaged over.
 
+
+% TODO ADD finish this
 
 %The Bayesian way to handle hyperparameters is to integrate them out. 
 % TODO add maths on integrating out hyperparams
@@ -665,6 +693,7 @@ Figure \ref{architecture} shows this architecture diagrammatically for one sched
 
 In tier 2, this performance data is used to train two Gaussian process, a linear one for the time and one based on the exponential mixture kernel for the score (4). The models 
 
+% TODO ADD finish this
 
 %Note how both tiers execute machine learning algorithms on data (coloured in green) and how the result of the algorithms in the first tier form the data set for the Gaussian Process at the top of the diagram. The main loop of our program is shown, slightly simplified, in Figure \ref{mainloop}. When executing, the program switches back and forth between the two tiers: it executes an algorithm with a given set of approximation parameters, builds a new model that includes the performance during this execution. The scheduler then decides which algorithm/approximation parameter combination to run next and the system returns to the first step.
 
@@ -830,13 +859,7 @@ After using up the time allotted for exploration, this scheduler uses the second
 
 % TODO describe characteristics of all schedulers
 
-\begin{figure}
-\centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/fixed_sequence_example.pdf}
-  \caption{A fixed exponential sequence}
-  \label{fixedsequenceexample}
-\end{figure}
+
 
 \section{Data sources}
 The second source of datasets we used was created synthetically using scikit-learn's \texttt{make\_classification} function. This function takes a number of parameters that define the dataset, such as the number of samples, the number of features and the number of classes and creates data according to these parameters. 
@@ -863,48 +886,124 @@ Another issue we faced when using the Auto-WEKA datasets is that the \texttt{arf
 
 % TODO explain why this is not a problem: we select datasets already b/c the small ones are too small to further increase data; the interesting ones work?
 
-\section{The Exponential Mixture Kernel}
-\subsection{Model comparison}
+\section{Model comparison}
+% TODO ADD finish this section
 
-\subsection{Challenges}
+% artificial data
+% TODO marginal likelihood
+% TODO how much variance gets explained
+% TODO show and discuss plots
+
+\section{The Exponential Mixture Kernel}
+
+
+
 
 \subsection{Hyperparameter selection}
-We generally found both of the methods we use for hyperparameter selection, sampling and optimisation, to return satisfying results. As is in the nature of optimisation, however, it is prone to overfit. This was  an issue especially in the early phases of data collection when only little data was available.
+We generally found both of the methods we use for hyperparameter selection, sampling and optimisation, to return satisfying results. As is in the nature of optimisation, however, it is prone to overfit. This is an issue especially in the early phases of data collection after a few iterations when only little data was available.
+% TODO show figure
 
-One way we addressed this problem was by decreasing the number of data points collected during the burn in phase. As the subsets used in this phase are a small percentage of the whole dataset, this only adds marginally to the time that is spent on burn-in.
+One way we addressed this problem was by increasing the number of data points collected during the burn in phase. As the subsets used in this phase are a small percentage of the whole dataset, this only adds marginally to the time that is spent on burn-in.
 
 % TODO is this really true? verify
 Although this addressed the issue of overfitting on too little data, sampling hyperparameters still proved more robust and less likely to return models that clash with the expectations that we had looking at the data.
 
 
+\subsection{Issues}
+% TODO kernel "cliffs"
 
 
 \section{Scheduling Results}
-Figure \ref{fixedsequenceexample} shows a \texttt{FixedSequenceScheduler} with a geometric sequence of data percentage values after a number of iterations. It just finished running logistic regression with about 80\% of the available data (the rightmost blue dot on both subplots) and is about to learn using random forests on the same amount of data.
+% TODO finish this section
 
 % TODO show case where one function is better initially but then gets overtaken
 
-\section{Limitations}
+\subsection{Scheduler Behaviour}
+
+
+\subsubsection{\texttt{FixedSequenceScheduler}}
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/fixed_sequence_example.pdf}
+  \caption{A fixed exponential sequence}
+  \label{fixedsequenceexample}
+\end{figure}
+
+Figure \ref{fixedsequenceexample} shows a \texttt{FixedSequenceScheduler} with a geometric sequence of data percentage values after a number of iterations. In the last iteration, it trained logistic regression with about 80\% of the available data (the rightmost blue dot on both subplots) and is about to learn using random forests on the same amount of data.
+
+This scheduler does not model performance data and does not adjust its decisions during the course of its execution.
+
+
+\subsubsection{\texttt{ProbabilityOfImprovementScheduler}}
+
+
+
+\subsubsection{\texttt{ExpectedImprovementScheduler}}
+
+\subsubsection{\texttt{ExpectedImprovementPerTimeScheduler}}
+
+
+\subsubsection{\texttt{ExpectedImprovementTimesProbOfSuccessScheduler}}
+
+\subsubsection{\texttt{MinimeseUncertaintyThenExploitScheduler}}
+
+
+\subsection{Scheduler comparison}
+
+
+% TODO MAYBE write this
+%\section{Limitations}
+
+
 \section{Challenges}
+One challenge we faced during the course of this problem which kept creating new problems resulted from our choice to implement our program in more than one programming languages. Python's \texttt{subprocess} library, which we used to call Matlab as described in section @@@, is far from intuitive and often caused zombie children of our main program to accumulate. 
 
-% TODO matlab, json, for single element lists, an empty [] is added
+Matlab, on the other side of our interoperability structure, is clearly not very well suited for reading and writing JSON data. Currently, we have to append an empty cell \texttt{\{\}} to a Matlab array that contains only one element when exporting it to prevent it from being exported as an individual object. This is an unsatisfying workaround to which the only true solution is to rewrite the Matlab code in Python.
 
-Implementing the gradients of the hyperparameters to our kernel proved to be challenging. Even though we are not currently using them, we originally assumed we would use GPML's optimisation function which relies on gradient information. The difficulty of implementing them was compounded by the fact that kernels receive parameters in log space and that we reparameterised our kernel which made the terms more complex.
+Implementing the gradients of the hyperparameters to our kernel proved to be challenging. Even though we are not currently using them, we originally assumed we would use GPML's optimisation function which relies on gradient information. The difficulty of implementing them was compounded by the facts that kernels receive parameters in log space and that we reparameterised our kernel which made the derivative terms more complex.
 
-To test our gradient implementation, we used a script provided by the creators of GPML that checks kernel gradients\footnote{This script can be downloaded at http://learning.eng.cam.ac.uk/carl/code/minimize/checkgrad.m}.
+To test our gradient implementation and ensure its correctness, we used a script provided by the creators of GPML that checks kernel gradients\footnote{This script can be downloaded at http://learning.eng.cam.ac.uk/carl/code/minimize/checkgrad.m}. % TODO maybe stress that they are correct
+
+% TODO MAYBE move this somewhere else (data collection?)
+% TODO ADD finish this
+Another challenge we encountered during data collection for this project were unexplainable changepoints in the linear growth of running time. Figures \ref{time_dropoff1}, \ref{time_dropoff2} and \ref{time_dropoff3} show examples of this effect. Usually
+
+This problem was very hard to investigate. We strongly suspect it to be explained by the particularities of the scikit-learn implementations and our computer specifications. It  disappeared when executing the same algorithm/parameter combinations on the EC2 instance and even on our local computer, small changes in hyperparameters often caused the problem to appear or disappear. Possible explanations would be an implementation that changes from one routine to another once some kind of threshold is reached or caching-related effects.
+
+As this problem occurred rarely and did not have a noticeable impact on the performance of our system, we did not investigate it further.
 
 
-% TODO more than one class in training set error
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/time_dropoff1.pdf}
+  \caption{@@@}
+  \label{time_dropoff1}
+\end{figure}
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/time_dropoff2.pdf}
+  \caption{@@@}
+  \label{time_dropoff2}
+\end{figure}
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/time_dropoff2.pdf}
+  \caption{@@@}
+  \label{time_dropoff3}
+\end{figure}
+
+
 
 % TODO numerical accuracy for EI when sd is very small and peak is under lower bound, i.e. prob of impr is very small, get infs and nans
-%- model evidence
-%- testing
-%- how well it performs
 % TODO "hinge" on my computer
-% TODO kernel "cliffs"
-% TODO optimisation gets overfits, too much confidence in one interpretation
-% TODO gradients. difficult b/c of log space (and long term)
+
+
 \chapter{Conclusion and future work} 
+% TODO finish this chapter
 \section{Conclusions}
 In this project, we have succeeded in
 \begin{itemize}
@@ -930,6 +1029,8 @@ Greedy strategies such as those implemented as schedulers in this project are no
 
 \appendix
 \singlespacing
+
+% TODO ADD more references
 
 \bibliographystyle{unsrt} 
 \bibliography{references}
