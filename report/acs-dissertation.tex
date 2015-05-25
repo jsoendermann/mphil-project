@@ -5,7 +5,9 @@
 
 
 % TODO NOW rename slice optimisation
-
+% TODO END always mention name when you cite
+% TODO for acquisition function: describe a hat for samples
+% TODO maybe switch from "score" to "error"
 % TODO CITE http://mlg.eng.cam.ac.uk/hoffmanm/papers/hoffman:2014.pdf
 % TODO END remove todos from code
 % TODO END citations: switch to different format, make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
@@ -19,6 +21,7 @@
 % TODO http://www.springer.com/gp/book/9783540653677
 % TODO END "n't" -> "not"
 % TODO END refer to sections, not chapters (as numbers)
+% TODO possible goal: fixed error, trade off data and time
 % TODO END don't talk about "subsection", subsub...
 % TODO END emph new definitions
 % TODO END use "equation" instead of equation* (also align)
@@ -108,9 +111,16 @@ Our project falls into the field of meta-machine learning that tries to use mach
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
+% TODO jordan: compscis see more data a a problem & try to get runtime under control, statisticians see it as something positive
+
 Before the advent of computers, statistical methods had to be simple enough to be calculable by hand which greatly limited the degree of complexity that these methods could reach. As computing power available to statisticians increased, many new methods were devised to make use of these new resources. In some cases, these new methods even exceed the computational possibilities and are computationally intractable. 
 
-Although machine learning is a very diverse subject that combines influences from many different fields such as engineering, computer science, computational biology and physics, many of the recent advances have come from statistics or made use of statistical methods. As is true for mathematics more generally, considerations of run time and complexity are usually not in the focus of attention of statistical research. Public perception of machine learning has concentrated on the rapid growth of data to be analysed, a phenomenon often called "Big Data". This development has made issues of run time become increasingly acute. 
+Although machine learning is a very diverse subject that combines influences from many different fields such as engineering, computer science, computational biology and physics, many of the recent advances have come from statistics or made use of statistical methods. As is true for mathematics more generally, considerations of run time and complexity are usually not in the focus of attention of statistical research. 
+
+% TODO instead of burden -> jordan: workload
+The cultural differences between computer science and statistics is revealed in the attitudes towards data that these fields exhibit: while in computer science, more data is viewed as a "burden", something negative to be brought under control, in statistics, the perception is that more data is desirable as it allows higher confidence in inferential results.
+
+Public perception of machine learning has concentrated on the rapid growth of data to be analysed, a phenomenon often called "Big Data". This development has made issues of run time become increasingly acute. 
 
 The current states of the field of machine learning requires skilled humans to make high level decisions on trade-offs between computational and statistical efficiency such as when to use approximate inference methods or when to use a simple method with lots of data rather than a complex method with a small amount of data. The knowledge necessary to make adequate decisions in these cases is often acquired through experience and an intuitive familiarity with the learning algorithms that can be hard to formalise and teach.
 
@@ -384,20 +394,32 @@ Finally, we use jsonlab, a json implementation for Matlab and matplotlib, a Pyth
 
 
 \chapter{Related Work}
-Jordan \cite{jordan2013}
+In \cite{jordan2013}, Jordan stresses the importance of the problem and the lack of attention that has been payed to it. They summarise research by Kleine et al. \cite{RSSB:RSSB12050} on extending the bootstrap, describe divide-and-conquer strategies that allow parallel inferential computations and explain an ordering of algorithms based on a hierarchy ordered by computational and statistical efficiency described by Chandrasekaran et al. \cite{Chandrasekaran26032013}.
+
+These approaches put much focus on theoretical guarantees while we take an empirical approach. While a theoretical understanding of approximations are very useful and necessary for a deep understanding, our empirical approach can much more easily be extended into new directions.
+
 
 While little work has been published on the precise problem that we are considering in this report, there has been a strong interest in the automatic selection of hyperparameters.
 
-In \cite{ThoHutHooLey13-AutoWEKA}, the authors build on the popular WEKA framework, an implementation of many machine learning algorithms in Java, to create a system that automatically chooses and algorithm together with appropriate hyperparameters. % TODO bayesian opt
+Snoek et al. \cite{PracticalBayesianOptimization} use Bayesian optimisation to optimise hyperparameters to machine learning algorithms. This relies on adequate models of training time and performance. We build on this paper, adding time constraints to the optimisation process.
 
-% TODO ADD finish this
+%adams papers: /freeze thaw
+
+In \cite{ThoHutHooLey13-AutoWEKA}, the authors build on the popular WEKA framework, an implementation of many machine learning algorithms in Java, to create a system that automatically chooses and algorithm together with appropriate hyperparameters. Their approach is also based on Bayesian optimisation.
+
+
+Shalev et al. \cite{Shalev-Shwartz:2008:SOI:1390156.1390273} describe how the process of training a Support Vector Machine can be sped up with more data if the quality of the model is fixed. This is the opposite perspective taken by us and most authors that consider approximation trade-offs where the amount of data is set to be fixed and the time is variable.
+
+Approximation algorithms are one of the ways computer scientists have devised to handle NP-hard optimisation problems \cite{Vazirani:2001:AA:500776}. They commonly guarantee a solution worse than the optimal solution by a factor in polynomial time (in which case they are called Polynomial-time approximation scheme). This makes them different from our approach with operates with time budgets which allows the desired runtime to be set entirely independently of the complexity of the project.
+
+
 
 
 % TODO Auto weka
 % TODO look at spearmint
 
 %- hyper param optim
-%- multi armed bandits
+
 
 
 
@@ -561,6 +583,7 @@ decided to implement this when gpml minimise didn't work
 
 The main advantage of sampling the hyperparameters is that it does not suffer from overfitting the same way optimisation does, given that the samples are successfully drawn from the posterior distribution. Its major drawback is that it is computationally more expensive than optimisation methods. Implementation wise, sampling also takes more effort than optimisation, as the result of the computations the program executes have to be correctly averaged over.
 
+% integral has no analytic solution -> approximated with MCMC -> what's mcmc -> we use slice sampling
 
 % TODO ADD finish this
 
