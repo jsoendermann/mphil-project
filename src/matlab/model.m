@@ -4,7 +4,7 @@ JSONLAB_DIR = '/Users/jan/Dropbox/mphil_project/repo/src/matlab/jsonlab/';
 IN_FILENAME = 'scheduler_data.json';
 OUT_FILENAME = 'models.json';
 
-OPTIMISE = true;
+OPTIMISE = false;
 
 % GPML
 run(strcat(GPML_DIR, 'startup.m'));

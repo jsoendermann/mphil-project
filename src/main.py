@@ -525,30 +525,56 @@ class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
 
 
     def decide(self):
+        print 'decide. remaining: ', self.remaining_time
+        
         super(MinimiseUncertaintyAndExploitScheduler, self).decide()
         
-        if self.remaining_time < 0:
+        if self.remaining_time <= 0:
             if self.exploring:
                 print colored('Exploiting!', 'red')
                 self.exploring = False
                 self.remaining_time += self.exploit_time
+                print 'new time', self.remaining_time
+                self.model()
+                self.draw()
+                plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
+                super(MinimiseUncertaintyAndExploitScheduler, self).decide()
             else:
                 self.decision = None
+        else:
+            if self.burn_in_sequence_index > len(self.burn_in_sequence):
+                max_acq = 0
+                for _, acquisition_function in self.acquisition_functions.items():
+                   # print acquisition_function
+                  #  print max(acquisition_function)
+                    max_acq = max(max_acq, max(acquisition_function[1]))
+
+                if max_acq < 0.00001:
+                    print "SKIPPING!"
+                    self.decision = "SKIP"
+                    self.remaining_time = -1
 
     def execute(self):
-        super(MinimiseUncertaintyAndExploitScheduler, self).execute()
+        if self.decision == "SKIP":
+            print "Skipped execution"
+        else:
+            super(MinimiseUncertaintyAndExploitScheduler, self).execute()
 
 
     def model(self):
-        super(MinimiseUncertaintyAndExploitScheduler, self).model()
+        if self.decision == "SKIP":
+            print "Skip modelling"
+        else:
+            super(MinimiseUncertaintyAndExploitScheduler, self).model()
 
-        for algorithm, acquisition_function in self.acquisition_functions.items():
-            xs_org, ys_org = acquisition_function
-            xs, ys = truncate_func_at_x(self.burn_in_end, xs_org, ys_org)
-            acquisition_function = (xs, ys)
-                
-            self.acquisition_functions[algorithm] = acquisition_function
-
+            for algorithm, acquisition_function in self.acquisition_functions.items():
+                xs_org, ys_org = acquisition_function
+                xs, ys = truncate_func_at_x(self.burn_in_end, xs_org, ys_org)
+                acquisition_function = (xs, ys)
+                    
+                self.acquisition_functions[algorithm] = acquisition_function
+        
+        
 
     @classmethod
     def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev, remaining_time):
@@ -556,7 +582,10 @@ class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
         for i, (tm, tsd) in enumerate(zip(time_mean, time_std_dev)):
             prob_of_success[i] = norm.cdf(remaining_time, loc=tm, scale=tsd)
         if self.exploring:
-            return score_std_dev / time_mean * prob_of_success
+            res = score_std_dev / time_mean * prob_of_success
+            if max(res) < 0.00001:
+                print colored('No viable option', 'red')
+            return res
         else:
             return score_mean * prob_of_success
             
@@ -600,11 +629,20 @@ elif args.load_arff:
 
 
 schedulers = [
-    #MinimiseUncertaintyAndExploitScheduler('explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 5, 20),
-    ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
+    MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
+    MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
+    MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
+    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
+    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
+    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 10, 30),
+    #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
+    #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
+    #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) )
     #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3))
-    #ProbabilityOfImprovementScheduler('Prob. of improvement', exp_incl_float_range(0.005, 15, 0.1, 1.3)),
-    #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
+    #ExpectedImprovementPerTimeScheduler('EI/time', exp_incl_float_range(0.005, 15, 0.1, 1.3)),
+    #ExpectedImprovementPerTimeScheduler('EI/time', exp_incl_float_range(0.005, 15, 0.1, 1.3)),
+    #ExpectedImprovementPerTimeScheduler('EI/time', exp_incl_float_range(0.005, 15, 0.1, 1.3))
+    ##ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
     #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
     ]
@@ -650,6 +688,7 @@ while True:
 
     for scheduler in schedulers:
         scheduler.decide()
+        print 'schedule.decision: {}; {}'.format(scheduler.decision, bool(scheduler.decision))
         if scheduler.decision:
             terminate = False
             scheduler.execute()

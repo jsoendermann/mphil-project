@@ -1,13 +1,19 @@
 distr = @(x, psi, xi) pdf('Gamma', x, 1/xi, 1/(psi*xi));
 
-hold on;
-for psi = 1:2:10
-    fplot(@(x) distr(x, psi,1.5), [0,2.5,0,4], 'k');
-end
-hold off;
+clf; hold on;
 
-hold on;
-for xi = 1:2:10
-    fplot(@(x) distr(x, 1.5, xi), [0,2.5,0,4], 'r');
+if true
+    range = 0.5:0.5:3;
+    
+    for psi = range
+        fplot(@(x) distr(x, psi,1.1), [0,2,0,4]);
+    end
+    legend(arrayfun(@(x) sprintf('psi = %.1f', x), range, 'UniformOutput', false));
+else
+    range = 0.5:0.5:3;
+    
+    for xi = range
+        fplot(@(x) distr(x, 1.1, xi), [0,2,0,4]);
+    end
+    legend(arrayfun(@(x) sprintf('xi = %.1f', x), range, 'UniformOutput', false));
 end
-hold off;

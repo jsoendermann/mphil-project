@@ -1,31 +1,26 @@
 meanfunc =  @meanConst; hyp.mean = 0;
 
-%covfunc = @covExpMixture1d; 
-%hyp.cov = log([1 10 2]);
-
-%covfunc = {@covSum, {@covSEiso, @covLINiso}}; 
-%hyp.cov = log([1 1 1]);
-
-covfunc = {@covProd, {@covLINiso, @covLINiso}};
-hyp.cov = log([1 1]);
+covfunc = @covExpMixture1d; 
+hyp.cov = log([1 10 2]);
 
 likfunc = @likGauss; hyp.lik = 1;
 
-x_max = 10;
+x_max = 5;
 
 n = 100;
 x = linspace(0, x_max, n)';
 
-clf;
+%clf;
 hold on; 
 
-for i = 1:3
-K = feval(covfunc{:}, hyp.cov, x);
-K = K + 1e-6*eye(n);
+%range = 0.5:0.5:2;
+for i = 1:30
+    K = feval(covfunc, [1 1 10], x);
+    K = K + 1e-6*eye(n);
 
-y = chol(K)'*randn(n, 1);
+    y = chol(K)'*randn(n, 1);
 
-plot(x, y);
-%axis([0,x_max,-3,3])
-
+    plot(x, y, 'k');
+    axis([0,x_max,-5,5])
 end
+%legend(arrayfun(@(x) sprintf('psi = %.1f', x), range, 'UniformOutput', false))

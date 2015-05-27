@@ -1,7 +1,7 @@
 function [models] = slice_sample_wrapper(function_type, x, y, z, n_samples)
 
 if nargin < 4, z = linspace(0, 1, 100)'; end
-if nargin < 5, n_samples = 10; end
+if nargin < 5, n_samples = 5; end
 
 meanfunc = @meanZero;
 likfunc = @likGauss;

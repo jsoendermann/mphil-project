@@ -1,9 +1,8 @@
-% TODO JAMES where to write more? which sections are weakest?
+% TODO JAMES where to write more? which sections are weakest? (more code?)
 % TODO JAMES O runtime online is different to empirical findings
-
 % TODO CHECK is "classification accuracy" correct?
 
-
+% TODO END add "recall that"
 % TODO NOW rename slice optimisation
 % TODO END always mention name when you cite
 % TODO for acquisition function: describe a hat for samples
@@ -15,8 +14,10 @@
 % TODO rnd forest is bad at data that's heavily pos or neg, run tests
 % TODO END random forest(s) spelling
 % TODO END dataset /data set spelling
+% TODO END abkürzungsverzeichnis
 % TODO END performance/time/accuracy, be clear
 % TODO END run time spelling
+% TODO END explain score and 1-score, more natural to think in terms of improvement
 % TODO END trade-off spelling
 % TODO http://www.springer.com/gp/book/9783540653677
 % TODO END "n't" -> "not"
@@ -51,7 +52,7 @@
 \def\authorcollege{Selwyn College\xspace}
 \def\authoremail{jjes2@cam.ac.uk}
 \def\dissertationtitle{Bayesian optimisation of approximateness in the trade-off between statistical and computational efficiency}
-% TODO word count
+% TODO END word count
 \def\wordcount{@}
 
 \usepackage{euscript}
@@ -69,12 +70,6 @@
 \newcommand{\Break}{\State \textbf{break} }
 \usepackage{listings}
 \lstset{breaklines=true, frame=single, numbers=left, basicstyle=\small\ttfamily}
-
-% TODO make this work
-%\lstset{ %
-%  commentstyle=\color{grey}    % comment style
-%}
-
 
 \DeclareMathOperator*{\argmax}{arg\,max}
 
@@ -106,12 +101,11 @@ Our project falls into the field of meta-machine learning that tries to use mach
 %% START OF MAIN TEXT 
 
 \chapter{Introduction}
-% TODO talk more abt the statistics/compsci divide
 % TODO add citations
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
-% TODO jordan: compscis see more data a a problem & try to get runtime under control, statisticians see it as something positive
+% TODO explain that we need not only be fast when optimising but are also constrained by the time budget (need to finish in time)
 
 Before the advent of computers, statistical methods had to be simple enough to be calculable by hand which greatly limited the degree of complexity that these methods could reach. As computing power available to statisticians increased, many new methods were devised to make use of these new resources. In some cases, these new methods even exceed the computational possibilities and are computationally intractable. 
 
@@ -348,6 +342,7 @@ Besides the function prior, one also needs to choose an acquisition function whe
 Out of the possible acquisition functions, we consider two that we use in the implementation of our schedulers: Probability of improvement and Expected improvement. Figure \ref{bayesianopti} shows an example of an optimisation in progress. The topmost plot shows the function $f$ as a dashed, blue line. This is the true, underlying function to which we only have access through individual evaluations. It function has been evaluated seven times and the Gaussian process has created a model with the mean shown as a read line and twice the standard deviation shown in grey. This is the information that is available to us when we construct the acquisition function.
 
 % TODO mention how we can see that aorund 9 is the true maximum but the model doesnt predict that (it does, however, say that its not confident in its prediction)
+% TODO add description of red/blue dashed lines to caption
 \begin{figure}
 \centering
   \includegraphics[trim=60 120 60 120,clip,width=\textwidth]{figures/bayesian_opti.pdf}
@@ -365,11 +360,17 @@ a_{PI}(x) &= P(z \geq y_{max}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\s
 % TODO http://mlss2014.com/files/defreitas_slides1.pdf
 Equation \ref{eq:pi_equation} is visualised in figure @. Due to the fact that the Gaussian process tends to be most certain about points that are close to a known data point and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x$ and the current maximum, thir tends to be very conservative acquisition function. In figure \ref{bayesianopti}, we can see the acquisition function for the probability of improvement in the second plot. Note how $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have evaluated the function, and quickly drops off as $x$ increases. This is the phenomenon just described: this acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
 
-% TODO ADD james' notes
+% TODO  explain 2.8->2.9
 % TODO cite mockus 1978, better place to cite
 Another, superior, strategy to decide which point to evaluate next is Expected improvement. The acquisition function for Expected improvement is defined \cite{eipaper} as
 \begin{align}
-a_{EI}(x) &= \mathbb{E}(\text{max}\{z - y_{max}, 0\}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\\
+a_{EI}(x) &= \mathbb{E}(\text{max}\{y - y_{max}, 0\}) \text{\ with\ } y \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\\
+&= \mathbb{E}(\begin{cases}
+        y-y_{max} \text{\ \ if\ \ } y \geq y_{max}
+        \\
+        0 \text{\ \ \ \ \ \ \ \ \ \ \ \ otherwise}
+        \end{cases})\\
+&= \int_{y_{max}}^\infty (y-y_{max})p(y)dy\\
 &= (\mu(x) - f_{max})\Phi(\frac{\mu(x) - y_{max}}{\sigma(x)}) + \sigma(x)(\frac{\mu(x) - y_{max}}{\sigma(x)})
 \end{align}
 
@@ -394,28 +395,28 @@ Finally, we use jsonlab, a json implementation for Matlab and matplotlib, a Pyth
 
 
 \chapter{Related Work}
+% TODO make clear that there are two broad trends: approximate algorithm developed by statisticians and bayesian optimisation of hyperparameters
 In \cite{jordan2013}, Jordan stresses the importance of the problem and the lack of attention that has been payed to it. They summarise research by Kleine et al. \cite{RSSB:RSSB12050} on extending the bootstrap, describe divide-and-conquer strategies that allow parallel inferential computations and explain an ordering of algorithms based on a hierarchy ordered by computational and statistical efficiency described by Chandrasekaran et al. \cite{Chandrasekaran26032013}.
 
-These approaches put much focus on theoretical guarantees while we take an empirical approach. While a theoretical understanding of approximations are very useful and necessary for a deep understanding, our empirical approach can much more easily be extended into new directions.
+Bottou et al. \cite{Bottou08thetradeoffs} consider the tradeoffs of approximate learning, describing qualitative differences between approximation of small and large datasets. 
 
+These approaches put much focus on theoretical statistical guarantees while we take an empirical approach. While a theoretical understanding of approximations are necessary for a deep understanding, our empirical approach can much more easily be extended into new directions. Wang et al. \cite{2015arXiv150207989W} survey the state of these approximate methods.
 
-While little work has been published on the precise problem that we are considering in this report, there has been a strong interest in the automatic selection of hyperparameters.
+Shalev et al. \cite{Shalev-Shwartz:2008:SOI:1390156.1390273} describe how the process of training a Support Vector Machine can be sped up with more data if the quality of the model is fixed. This is the opposite perspective taken by us and most authors that consider approximation trade-offs where the amount of data is set to be fixed and the time is variable. Bruer et al. \cite{NIPS2014_5259} use additional data to allow smoothing the optimisation process thus saving time by being able to optimise faster.
 
-Snoek et al. \cite{PracticalBayesianOptimization} use Bayesian optimisation to optimise hyperparameters to machine learning algorithms. This relies on adequate models of training time and performance. We build on this paper, adding time constraints to the optimisation process.
+Although little work has been published on the precise problem that we are considering in this report, there has been a strong interest in the automatic selection of hyperparameters.
 
-%adams papers: /freeze thaw
+Snoek et al. \cite{PracticalBayesianOptimization} use Bayesian optimisation to optimise hyperparameters to machine learning algorithms. This relies on adequate models of training time and performance. We build on this paper, adding time constraints to the optimisation process. The results detailed in this paper have been implemented in a Python program called spearmint\footnote{https://github.com/HIPS/Spearmint}.
+
+Swersky et al \cite{2014arXiv1406.3896S} describe a hyperparameter selection mechanism that keeps a list of models that are being trained, pausing the training of those that look less promising, potentially continuing the training process later. Like Snoek et al., their goal is traditional hyperparameter optimisation.
 
 In \cite{ThoHutHooLey13-AutoWEKA}, the authors build on the popular WEKA framework, an implementation of many machine learning algorithms in Java, to create a system that automatically chooses and algorithm together with appropriate hyperparameters. Their approach is also based on Bayesian optimisation.
-
-
-Shalev et al. \cite{Shalev-Shwartz:2008:SOI:1390156.1390273} describe how the process of training a Support Vector Machine can be sped up with more data if the quality of the model is fixed. This is the opposite perspective taken by us and most authors that consider approximation trade-offs where the amount of data is set to be fixed and the time is variable.
 
 Approximation algorithms are one of the ways computer scientists have devised to handle NP-hard optimisation problems \cite{Vazirani:2001:AA:500776}. They commonly guarantee a solution worse than the optimal solution by a factor in polynomial time (in which case they are called Polynomial-time approximation scheme). This makes them different from our approach with operates with time budgets which allows the desired runtime to be set entirely independently of the complexity of the project.
 
 
 
 
-% TODO Auto weka
 % TODO look at spearmint
 
 %- hyper param optim
@@ -463,7 +464,7 @@ Once it has finished all the computations, the program outputs the data to a com
 
 \subsection{Collected sample data}
 
-% TODO JAMES maybe use different figures
+
 \begin{figure}
 \centering
   \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/lr_mnist.pdf}
@@ -544,22 +545,90 @@ and
 &= \frac{1}{\alpha}
 \end{align}
 
-such that the term for our kernel becomes
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=0.95\linewidth]{figures/gamma_psi.pdf}
+  \caption{Varying $\psi$, $\xi$ fixed at 1.1}
+  \label{gammapsi}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=0.95\linewidth]{figures/gamma_xi.pdf}
+  \caption{Varying $\xi$, $\psi$ fixed at 1.1}
+  \label{gammaxi}
+\end{subfigure}
+\caption{Varying the parameters to the reparameterised $\Gamma$-distribution}
+\label{gammadist}
+\end{figure}
+
+
+Figure \ref{gammadist} show how the distribution changes as $\psi$ and $\xi$ are varied.
+% TODO ADD how do they change
+% TODO ADD say why this is convenient
+
+After reparameterisation, the term for our kernel becomes
 \begin{equation}
 \kappa(x, x') = \frac{\frac{1}{\psi\xi}^{\frac{1}{\xi}}}{(x+x'+\frac{1}{\psi\xi})^{\frac{1}{\xi}}}
 \end{equation}
 
-% TODO ADD say why this is convenient
+\begin{figure}
+\centering
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi1.pdf}
+  \caption{$\psi=1$, $\xi=1$}
+  \label{expmix11}
+\end{subfigure}%
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi5_xi1.pdf}
+  \caption{$\psi=5$, $\xi=1$}
+  \label{expmix51}
+\end{subfigure}%
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi10_xi1.pdf}
+  \caption{$\psi=10$, $\xi=1$}
+  \label{expmix101}
+\end{subfigure}
+\caption{Functions drawn from the kernel for three different values of $\psi$}
+\label{kernelpsi}
+\end{figure}
 
-% TODO ADD say that one can add a linear kernel to model different plateaus
+\begin{figure}
+\centering
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi1.pdf}
+  \caption{$\psi=1$, $\xi=1$}
+  \label{expmix11_}
+\end{subfigure}%
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi5.pdf}
+  \caption{$\psi=1$, $\xi=5$}
+  \label{expmix15}
+\end{subfigure}%
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi10.pdf}
+  \caption{$\psi=1$, $\xi=10$}
+  \label{expmix110}
+\end{subfigure}
+\caption{Functions drawn from the kernel for three different values of $\xi$}
+\label{kernelxi}
+\end{figure}
 
-% TODO show plots of reparameterised gamma function
-% TODO show plots drawn from priors
+Figures \ref{kernelpsi} and \ref{kernelxi} show the effect that varying $\psi$ and $\xi$ has on the kernel.
 
-% TODO show derivatives
+% TODO ADD iterpret these figures
+
+The score functions shown in the previous section don't normally decay to zero, instead they plateau at values between zero and one. To model this effect, we add a constant function to our exponential mixture kernel as described in the Background chapter.
 
 \section{Selecting Kernel Hyperparameters} 
-% TODO JAMES is it correct to call this model selection?
+
 
 To fit a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance and likelihood function. There two main methods to achieve this are marginalisation and optimisation. For reasons explained in the evaluation chapter, we implement both of these methods in our project.
 
@@ -676,13 +745,14 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 
 %show diagrams, talk about the relationship. is it always linear for time (no, svm, O(n^2-3)), is it always exponential for score
 
+% TODO move this to evaluation
 \subsection{Using both methods} % TODO different name
 
 As our program has to be able to handle both samples and single results returned by optimisation, we decided to treat the result of our optimisation routine as a single sample in the routines that make use of our model. This makes it completely transparent to these routines which of the two hyperparameter selection methods were used and enables us to switch between them according to the requirements of the schedulers.
 
 % TODO END hyperparameter spelling
 
-
+% TODO END go over all section/chapter headings again
 % TODO END "classification accuracy" maybe isn't correct if we also use roc
 % TODO END mention somewhere that "performance" means time + score
 % TODO END sort out use of "classification accuracy", "accuracy", "performance", "score"
@@ -692,27 +762,22 @@ As our program has to be able to handle both samples and single results returned
 
 \textit{This chapter describes the theoretical and practical aspects system we developed. It firsts gives a high level overview of the system architecture before describing in detail how the scheduling heuristics used try to to find optima within the time constraints.}
 
-\section{System Architecture} % TODO maybe something like "overview"
-
-
-
-
+\section{System Architecture}
 \subsection{High level architecture}
-% TODO END make sure this is properly centered
-% TODO two GPs
 \begin{figure}[p]
-  %\begin{adjustwidth}{-\oddsidemargin-2in}{-\rightmargin-1.5in}
-    \centering
-    \includegraphics[angle=90,scale=0.8]{figures/architecture2.pdf}
-    
- % \end{adjustwidth}
-  \caption{High level architecture, shown after three iterations. Data is green, numbers refer to notes in the text}
+    \centerline{\includegraphics[trim=40 90 35 90,clip,scale=0.8]{figures/architecture3.pdf}}
+  \caption{High level architecture for one scheduler, shown after three iterations. Data is shown in green, machine learning algorithm in red and the scheduler in blue. Circled numbers refer to notes in the text.}
     \label{architecture}
 \end{figure}
 
-Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and prediction accuracy of these models makes up the input to tier 2. This second layer first creates models of the running time and score of the models in tier 1. These meta-models are then used by the scheduler to select the algorithm and approximation parameters for the next iteration and the process is repeated.
+% TODO 2d kernel
 
-Figure \ref{architecture} shows this architecture diagrammatically for one scheduler after three iterations. In tier 1, the dataset (1) is used as input to all learning. The learning process is parameterised by the learning algorithm and the approximation parameters to the algorithm (2). The running time and score for every model built this way are saved (3). 
+% TODO say in the beginning that we focus on rndforest/log reg and % data
+Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and accuracy of these models makes up the input to tier 2. This second layer first creates meta-models of the running time and score of the models in tier 1. These meta-models are then used by the scheduler to select the algorithm and approximation parameters for the next iteration and the process is repeated.
+
+In this system, we focus on the two algorithms described in the background chapter
+
+Figure \ref{architecture} shows this architecture diagrammatically for one scheduler after three iterations. In tier 1, the dataset (1) is used as input to all learning. The learning process is parameterised by the learning algorithm and the approximation parameters to the algorithm (2). The running time and score for every iteration are saved (3) separately for every array. This saved data is then. 
 
 In tier 2, this performance data is used to train two Gaussian process, a linear one for the time and one based on the exponential mixture kernel for the score (4). The models 
 
@@ -867,7 +932,6 @@ After using up the time allotted for exploration, this scheduler uses the second
 % TODO point cloud/graph that shows that one is better at first, then the other (for data vs score and time vs score)
 \textit{This chapter describes the results that our system achieved. It also lists challenges that we faced during its development and limitations it currently has.}
 
-% TODO mention how common logreg/rndforest are
 % TODO PROGRAM skewed datasets with lots of pos, few neg
 
 % TODO hinge: show plots where it occurs early and has little impact on modelling
@@ -909,6 +973,7 @@ Another issue we faced when using the Auto-WEKA datasets is that the \texttt{arf
 
 % TODO explain why this is not a problem: we select datasets already b/c the small ones are too small to further increase data; the interesting ones work?
 
+% TODO END maybe always distinguish between model and meta-model
 \section{Model comparison}
 % TODO ADD finish this section
 
@@ -932,8 +997,8 @@ One way we addressed this problem was by increasing the number of data points co
 Although this addressed the issue of overfitting on too little data, sampling hyperparameters still proved more robust and less likely to return models that clash with the expectations that we had looking at the data.
 
 
-\subsection{Issues}
-% TODO kernel "cliffs"
+%\subsection{Unexpected behaviour}
+% TODO MAYBE mention kernel "cliffs"
 
 
 \section{Scheduling Results}
@@ -957,23 +1022,131 @@ Figure \ref{fixedsequenceexample} shows a \texttt{FixedSequenceScheduler} with a
 
 This scheduler does not model performance data and does not adjust its decisions during the course of its execution.
 
+% TODO END explain and distinguish score, performance, accuracy, time, error early on
+% TODO explain how there are multiple acquisition functions, maximum of all of them is selected
 
 \subsubsection{\texttt{ProbabilityOfImprovementScheduler}}
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=530 495 510 295,clip,width=\textwidth]{figures/prob_of_imp_01.pdf}
+  \caption{Probability of improvement acquisition function}
+  \label{sched:probofimpr1}
+\end{figure}
 
+The \texttt{ProbabilityOfImprovementScheduler} tends to be conservative in exploring the function. Figure \ref{sched:probofimpr1} shows the score models and the acquisition functions for both algorithms as dashed lines. Although it models the blue algorithm to have a higher score for all $x$ values, it is less sure about how the score of this algorithm changes as $x$ grows. Consequently, it will evaluate the red algorithm next.
 
+Although the uncertainty about the performance of the red algorithm does not change much for larger x values, as it does for the blue algorithm, the probability of improvement acquisition function for the red algorithm has its maximum at about 0.25 and decreases for larger values than that. This is due to the fact that the probability of improvement scheduler does not consider the magnitude of the increase over the current best value.
+
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=530 270 507 510,clip,width=\textwidth]{figures/prob_of_imp_02.pdf}
+  \caption{Probability of improvement acquisition function}
+  \label{sched:probofimpr2}
+\end{figure}
+
+Figure \ref{sched:probofimpr2} shows a situation similar to the one shown in figure \ref{sched:probofimpr1} with the difference that the uncertainty is roughly equal for both algorithms. The acquisition functions behave accordingly with the acquisition function for the red algorithm being lower because it is less likely to improve over the current maximum $y$ which was achieved by the blue algorithm.
+
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=530 710 493 55,clip,width=\textwidth]{figures/prob_of_imp_03.pdf}
+  \caption{Probability of improvement acquisition function}
+  \label{sched:probofimpr3}
+\end{figure}
+
+In figure \ref{sched:probofimpr3}, we see the final state of a probability of improvement scheduler. The small step size for evaluating the blue algorithm is a typical behaviour of this scheduler. 
 
 \subsubsection{\texttt{ExpectedImprovementScheduler}}
 
+Although the purpose of this scheduler in our program is to function as a superclass for more complex schedulers, it is nevertheless necessary to study its behaviour to understand these later schedulers.
+
+% TODO make sure to mention exploration/exploitation trade-off when explaining EI above, maybe show integral here, rewrite this to make sure it's correct.
+Figure \ref{sched:expimpr01} shows typical acquisition functions for the \texttt{ExpectedImprovementScheduler}. Recall that the expected improvement strategy automatically balances exploration and exploitation, and that both, a high mean and a high variance increase the value of the acquisition function. Figure \ref{sched:expimpr01} demonstrates this effect: while the mean for the blue and the red algorithms for x values greater than about 0.4 are almost equal, the expected improvement for the red algorithm overtakes the one for the blue algorithm because its variance is greater.
+
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=530 710 493 55,clip,width=\textwidth]{figures/expimpr01.pdf}
+  \caption{Expected improvement acquisition function}
+  \label{sched:expimpr01}
+\end{figure}
+
+
+
 \subsubsection{\texttt{ExpectedImprovementPerTimeScheduler}}
+\begin{figure}
+\centering
+% TODO FIGURE trim this to only show fixed sequence scheduler
+  \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/ei_by_time_1.pdf}
+  \caption{Expected improvement per time performance models and acquisition function}
+  \label{sched:expimprpertime01}
+\end{figure}
 
+The \texttt{ExpectedImprovementPerTimeScheduler} is a slight variation of the \texttt{ExpectedImprovementScheduler}. To calculate its acquisition function, it divides the expected improvement by the mean of the time model. Figure \ref{sched:expimprpertime01} shows the bias this scheduler has towards function evaluations that are predicted to be fast. Although the expected improvement increases as shown in figure label{sched:expimpr01}, the required time also grows (shown on the left).
 
+% TODO in the scheduler explanation section, mention that "success" means finishing in time
+% TODO emphasize that these are the two truly new schedulers, anytime & contract
+% TODO mention that some schedulers trim their acquisition functions while others dont
 \subsubsection{\texttt{ExpectedImprovementTimesProbOfSuccessScheduler}}
+% TODO say what this scheduler is for (anytime)
+
+This is one of the two schedulers that expect to be given a time budget during initialisation. Figure \ref{sched:expimprpertime01} shows the state of the scheduler after the burn in phase having been alloted one second to spend. This time limit is marked on the left plot. As can be seen on that plot, the probability that evaluating the red algorithm with an x value higher than the current maximum of 0.15 will finish in time is extremely low. Consequently, the acquisition function for the red algorithm is essentially flat and not visible in the right plot.
+
+\begin{figure}
+\centering
+  \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/ei_probofsuccess1.pdf}
+  \caption{Expected improvement times probability of success after the burn in period with an initial time budget of one second}
+  \label{sched:expimprpertime01}
+\end{figure}
+
+The acquisition function of the blue algorithm with its peak around 0.2 reflects that the fact that, although the running time of the blue algorithm grows slower, the time model predicts that evaluating the blue algorithm with 20\% of the data will take roughly one second. For values larger than that, the probability of success rapidly decreases.
+
+\begin{figure}
+\centering
+  \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/ei_probofsuccess2.pdf}
+  \caption{Expected improvement times probability of success}
+  \label{sched:expimprpertime02}
+\end{figure}
+
+Figure \ref{sched:expimprpertime02} shows the \texttt{ExpectedImprovementTimesProbOfSuccessScheduler} at a later stage of execution. The blue algorithm has been evaluated at multiple points and the scheduler does not expect much improvement by evaluating it again at any point. The scheduler has about 12 seconds to spend on the red algorithm. The running time for this algorithm exceeds this limit for x values close to 1, which is reflected in the sharp drop off in the acquisition function on the right at around $0.9$.
 
 \subsubsection{\texttt{MinimeseUncertaintyThenExploitScheduler}}
+% TODO say what this scheduler is for (contract)
+
+The \texttt{MinimeseUncertaintyThenExploitScheduler} is the most advanced scheduler implemented in this project. Although it fulfils a different purpose than the \texttt{ExpectedImprovementTimesProbOfSuccessScheduler} and can therefore not be compared to it directly, its behaviour is more complex and interesting. Recall that it functions in two stages, exploration and exploitation, that are each allocated a time budget.
+
+
+
+% individual samples unimportant, only the overall variance
+
+\begin{figure}
+\centering
+  \includegraphics[trim=140 710 493 55,clip,frame,width=\textwidth]{figures/exp_then_exp1.pdf}
+  \caption{@@}
+  \label{sched:eexp_then_exp1}
+\end{figure}
+
+\begin{figure}
+\centering
+  \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/exp_then_exp2.pdf}
+  \caption{@@}
+  \label{sched:exp_then_exp2}
+\end{figure}
+
+\begin{figure}
+\centering
+  \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/exp_then_exp3.pdf}
+  \caption{@@}
+  \label{sched:exp_then_exp3}
+\end{figure}
+
 
 
 \subsection{Scheduler comparison}
-
+In this section we will compare
+% TOOD IMPLEMENT EI/time scheduler that gets fixed block of time
 
 % TODO MAYBE write this
 %\section{Limitations}
@@ -996,6 +1169,7 @@ This problem was very hard to investigate. We strongly suspect it to be explaine
 
 As this problem occurred rarely and did not have a noticeable impact on the performance of our system, we did not investigate it further.
 
+% TODO mention sample sizes in all relevant places
 
 \begin{figure}
 \centering
@@ -1014,7 +1188,7 @@ As this problem occurred rarely and did not have a noticeable impact on the perf
 \begin{figure}
 \centering
 % TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/time_dropoff2.pdf}
+  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/time_dropoff3.pdf}
   \caption{@@@}
   \label{time_dropoff3}
 \end{figure}
