@@ -1,6 +1,7 @@
-function [hyp_opt, m, sd] = gp_wrapper(function_type, x, y, z, hyp_opt)
+function [hyp_opt, m, sd] = gp_wrapper(function_type, x, y, z, hyp_opt, restarts)
 
 if nargin < 4, z = linspace(0, 1, 100)'; end
+if nargin < 5, restarts = 5; end
 
 meanfunc = @meanZero;
 likfunc = @likGauss;
@@ -23,7 +24,7 @@ if nargin < 5
     
     % Slice optimisation
     nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, x, y); 
-    hyp_opt = hyps_vec_to_struct(slice_optimisation_with_restarts(5, nlmlfunc, hyps_struct_to_vec(hyp), 200));
+    hyp_opt = hyps_vec_to_struct(slice_optimisation_with_restarts(restarts, nlmlfunc, hyps_struct_to_vec(hyp), 200));
     
     % Gradient based optimisation
     % nlmlfunc = @(hyps) gp(hyps_vec_to_struct(hyps), @infExact, meanfunc, covfunc, likfunc, x, y);

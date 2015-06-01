@@ -1,21 +1,24 @@
 meanfunc =  @meanConst; hyp.mean = 0;
 
 covfunc = @covExpMixture1d; 
-hyp.cov = log([1 10 2]);
+hyp.cov = log([1 1 1]);
 
 likfunc = @likGauss; hyp.lik = 1;
 
-x_max = 5;
+psi = 100;
+xi = 1;
+
+x_max = 5 * psi;
 
 n = 100;
 x = linspace(0, x_max, n)';
 
-%clf;
+clf;
 hold on; 
 
-%range = 0.5:0.5:2;
-for i = 1:30
-    K = feval(covfunc, [1 1 10], x);
+%range = ;
+for i = 0.5:0.5:2
+    K = feval(covfunc, [1 psi xi], x);
     K = K + 1e-6*eye(n);
 
     y = chol(K)'*randn(n, 1);

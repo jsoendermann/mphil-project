@@ -629,22 +629,24 @@ elif args.load_arff:
 
 
 schedulers = [
-    MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
-    MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
-    MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
-    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
+    FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3)),
+    ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
+    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 10, 30),
+    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0001, 15, 0.001, 1.3), 60, 120),
+    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0001, 15, 0.001, 1.3), 60, 120),
+    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0001, 15, 0.001, 1.3), 60, 120),
     #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
     #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 10, 30),
-    #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
+    
     #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
     #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) )
-    #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3))
+    #FixedSequenceScheduler('fixed_exponential', )
     #ExpectedImprovementPerTimeScheduler('EI/time', exp_incl_float_range(0.005, 15, 0.1, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/time', exp_incl_float_range(0.005, 15, 0.1, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/time', exp_incl_float_range(0.005, 15, 0.1, 1.3))
     ##ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
     #ExpectedImprovementPerTimeScheduler('EI/Time', exp_incl_float_range(0.005, 15, 0.2, 1.3)),
-    #FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.05, 10, 1.0, 1.3))
+    
     ]
 n_schedulers = len(schedulers)
 
