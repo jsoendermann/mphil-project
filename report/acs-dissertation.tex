@@ -1,6 +1,5 @@
-% TODO JAMES where to write more? which sections are weakest? (more code?)
 % TODO JAMES O runtime online is different to empirical findings
-% TODO CHECK is "classification accuracy" correct?
+
 
 % TODO PROGRAM skewed datasets with lots of pos, few neg
 % TODO END add "recall that"
@@ -9,14 +8,10 @@
 % TODO END always mention name when you cite
 % TODO for acquisition function: describe a hat for samples
 % TODO x-axis spelling
-% TODO consistent capitalisation of section heads
 % TODO END don't call your program "system"
-% TODO PROOF maybe switch from "score" to "error"
 % TODO CITE http://mlg.eng.cam.ac.uk/hoffmanm/papers/hoffman:2014.pdf
 % TODO END remove todos from code
-% TODO END citations: switch to different format, make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
-% TODO convert sparse arff files to non sparse
-% TODO rnd forest is bad at data that's heavily pos or neg, run tests
+% TODO END citations: make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 % TODO END random forest(s) spelling
 % TODO END performance/time/accuracy, be clear
 % TODO END explain score and 1-score, more natural to think in terms of improvement
@@ -27,9 +22,6 @@
 % TODO possible goal: fixed error, trade off data and time
 % TODO END don't talk about "subsection", subsub...
 % TODO END emph new definitions
-% TODO END use "equation" instead of equation* (also align)
-% TODO END figure/Figure capitalisation
-% TODO END capitalisation of chapters/sections
 % TODO END no arxiv references
 % TODO END percentage of data values, consistent term
 % TODO END present/past
@@ -42,8 +34,6 @@
 % TODO END don't just use "algorithms", use learning algorithms. also "performance model", not just "model"
 % TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
 % TODO END no footnotes or cites after formulas
-% TODO "explained below" -> precise section number
-% TODO END random forest(s) consistent plural/capitalisation (also logreg)
 % TODO ----------------------------------------------------------------
 
 \documentclass[a4paper,12pt,twoside,openright]{report}
@@ -90,17 +80,13 @@
 \singlespacing
 \input{abstract}
 
-% TODO write abstract
-Our project falls into the field of meta-machine learning that tries to use machine learning methods to improve the result of using these methods.
+
 
 \pagenumbering{roman}
 \setcounter{page}{0}
 \pagestyle{plain}
 \tableofcontents
 \listoffigures
-% TODO END maybe make tables appear in this list (otherwise remove it)
-\listoftables 
-\listoftodos % TODO END remove this
 
 \onehalfspacing
 
@@ -175,14 +161,13 @@ The remainder of this report is structured as follows:
 
 
 \chapter{Background}
-\textit{This chapter describes the background assumed in the remainder of the document. We give a brief explanation of general machine learning principles together with a summary of the algorithms used in this project. We then describe Bayesian optimisation and briefly mention third-party software we used to build our system.\todo{Explain: GPs=bg knowledge for modelling, BO for optimisation}}
+\textit{This chapter describes the background assumed in the remainder of the document. We give a brief explanation of general machine learning principles together with a summary of the algorithms used in this project, including Gaussian processes which form the basis of the Modelling chapter. We then describe Bayesian optimisation which is the method underlying the ideas described in the Schedulers chapter, and briefly mention third-party software we used to build our system.}
 
 
-% TODO performance/score/time
-\section{Key concepts}
+\section{Key Concepts}
 \begin{figure}
 \centering
-  \includegraphics[width=.8\textwidth]{figures/ml.pdf}
+  \includegraphics[width=\textwidth]{figures/ml.pdf}
   \caption{The general process of learning from data}
   \label{mlstructure}
 \end{figure}
@@ -192,7 +177,7 @@ Our project falls into the field of meta machine learning. We use machine learni
 Of particular relevance to our project is the second input to the learning algorithm: its hyperparameters. These hyperparameters control the behaviour of the learning algorithm and influence the quality of the model which makes selecting appropriate hyperparameters crucial.
 
 
-\subsection{Approximation parameters}
+\subsection{Approximation Parameters}
 By "approximation parameters", we denote parameters to machine learning algorithms that influence the trade-off between statistical and computational efficiency, letting us vary the degree of approximateness at which the algorithm runs. Changing an approximation parameters should either decrease the runtime at the cost of classification accuracy or improve accuracy while making training slower. 
 
 The approximation parameter that we put most of our focus on in this project is the proportion of the available data. Other approximation parameters are hyperparameters to the machine learning algorithms such as the number of decision trees in a random forest. This parameter is considered in the modelling chapter to analyse how multiple interaction parameters interact.
@@ -204,11 +189,11 @@ As mentioned in the introduction, the problem we try to solve in this project is
 
 We use the term "scheduler" to denote heuristics that are used to select such a sequence. Schedulers allocate the time available to the models bulit during optimisation.
 
-\subsection{Time, score and performance}
+\subsection{Time, Score and Performance}
 The learning algorithm can be assessed in two ways: the time it takes to create a model and the quality of its prediction. We denote this predictive strength by "score" and call both the time and score together the algorithms "performance".
 
-\section{Machine learning algorithms}
-\subsection{Logistic regression and random forest}
+\section{Machine Learning Algorithms}
+\subsection{Logistic Regression and Random Forest}
 % TODO CITE add a citation for this
 This subsection introduces the two machine learning algorithms that we focus on in the evaluation of our system, logistic regression and random forests. These two algorithms are among the most common machine learning algorithm and are frequently used in real world applications.
 
@@ -269,14 +254,14 @@ Figure \ref{sekernel_draws} shows five functions drawn from a Gaussian process w
 
 \begin{figure}
 \centering
-  \includegraphics[trim=120 240 100 230,clip,width=.4\textwidth]{figures/se_kernel_draws.pdf}
+  \includegraphics[trim=120 240 100 230,clip,width=.6\textwidth]{figures/se_kernel_draws.pdf}
   \caption{Five draws from a Gaussian process with a squared exponential kernel}
   \label{sekernel_draws}
 \end{figure}
 
 \begin{figure}
 \centering
-  \includegraphics[trim=120 240 100 230,clip,width=.4\textwidth]{figures/se_kernel_draws_different_ls.pdf}
+  \includegraphics[trim=120 240 100 230,clip,width=.6\textwidth]{figures/se_kernel_draws_different_ls.pdf}
   \caption{Functions drawn from Gaussian processes with squared exponential kernels that have different length-scales}
   \label{sekernel_draws_different_ls}
 \end{figure}
@@ -293,7 +278,7 @@ Although there is a substantial number of such common kernels, their number is s
 
 \begin{figure}
 \centering
-  \includegraphics[trim=80 210 70 195,clip,width=.4\textwidth]{figures/sum_of_lin_and_se.pdf}
+  \includegraphics[trim=80 210 70 195,clip,width=.6\textwidth]{figures/sum_of_lin_and_se.pdf}
   \caption{Adding a linear kernel to a squared exponential kernel}
   \label{sum_of_lin_and_se}
 \end{figure}
@@ -302,7 +287,7 @@ Another way to combine kernels is multiplication. Figure \ref{prod_of_lin_and_li
 
 \begin{figure}
 \centering
-  \includegraphics[trim=80 210 70 195,clip,width=.4\textwidth]{figures/prod_of_lin_and_lin.pdf}
+  \includegraphics[trim=80 210 70 195,clip,width=.6\textwidth]{figures/prod_of_lin_and_lin.pdf}
   \caption{Multiplying two linear kernels}
   \label{prod_of_lin_and_lin}
 \end{figure}
@@ -358,7 +343,7 @@ where $\mu$ and $\sigma$ are the mean and variance of the Gaussian process model
 % TODO cite kushner 1964
 % TODO http://mlss2014.com/files/defreitas_slides1.pdf
 % TODO maybe visualise this equation with a diagram
-As the Gaussian process tends to be more certain about points that are close to known data points and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x_{\text{next}}$ and the current maximum $y_{max}$, it tends to be very conservative in its evaluations, often making small steps. Note how in figure \ref{bayesianopti}, $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have already evaluated the function, and quickly drops off as $x$ increases. This acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
+As the Gaussian process tends to be more certain about points that are close to known data points and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x_{\text{next}}$ and the current maximum $y_{max}$, it tends to be very conservative in its evaluations, often making small steps. Note how in Figure \ref{bayesianopti}, $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have already evaluated the function, and quickly drops off as $x$ increases. This acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
 
 % TODO  explain 2.8->2.9
 % TODO cite mockus 1978, better place to cite
@@ -382,7 +367,7 @@ An example of this function is shown in the third plot of \ref{bayesianopti}. If
 
 
 
-\section{Third-party libraries used}
+\section{Third-Party Libraries}
 Besides the standard libraries of Python 2.7 and Matlab 2014b, our project uses a number of additional third-party libraries . The first and most important library for our project is scikit-learn, a Python implementation of many common machine learning algorithms. Scikit-learn is built on NumPy and SciPy, two very widespread Python frameworks for scientific computing. Besides its implementation of random forest and logistic regression, we also use it to generate datasets with its \texttt{make\_classification} function as explained in the Evaluation chapter.
 
 We further use the "Gaussian Processes for Machine Learning" (GPML) Matlab library by Rasmussen and Williams, an implementation of Gaussian Processes. Although there are Gaussian process implementations in Python such as GPy, the maturity of GPML and prior experience using it made us choose GPML over its alternatives. One compelling advantage of GPML is that it is very straightforward to implement new kernels which we had to do for this project.
@@ -422,7 +407,7 @@ Approximation algorithms are one of the ways computer scientists have devised to
 \section{Collecting Sample Data}
 The first step towards modelling performance was to collect sample data. This data was used to investigate the function and formulate an initial hypothesis on the nature of the function from approximation parameters to performance. After creating a model of performance, we tested it using this sample data.
 
-\subsection{Data collection script}
+\subsection{Data Collection Script}
 As data collection was resource and time intensive, we implemented a command line script that accepts a range of configuration flags and collects data based on the parameters it receives. This script was then executed on an Amazon EC2 instance. Our script can be configured with the following list of command line flags:
 
 \begin{itemize}
@@ -446,7 +431,7 @@ Once it has finished all the computations, the program outputs the data to a com
 
 
 
-\subsection{Measuring performance}
+\subsection{Measuring Performance}
 
 \subsubsection{Time}
 We use the \texttt{time.time()} function included in Python's standard library to measure training time. As we do not want to include validation time in our measurements, we keep the current time spent in a variable that gets updated after training in each iteration finishes.
@@ -457,7 +442,7 @@ One possible source of contamination for runtime measurements are other programs
 
 Measuring score is more complex than stopping time. One common approach to measure the accuracy of a model is to split the dataset into two subsets, train the model on one subset and compare its predictions on the second subset with the actual values. This method has the disadvantage that only a subset of the available data is used for training which can make it susceptible to variance in reported classification accuracy depending on how the data is split.
 
-A superior method, that we slightly adjust to the requirements of this project is k-Fold Cross-Validation. This approach to measure model performance splits the dataset into $k$ subsets of equal size called folds. The algorithm then learns on the combined data of the second to $k$th folds, using the first fold as a validation set. This process is repeated $k$-times, using a new fold as validation set in each iteration. The classification accuracies of the $k$ iterations are then averaged over to calculate the overall classification accuracy. This approach ensures that all data is used for training. Although the learning algorithm has to be executed $k$ times instead of just once, $k$ is a constant value in k-Fold Cross-Validation that does not depend on the size of the dataset and therefore does not impact the asymptotic runtime.
+A superior method, that we slightly adjust to the requirements of this project is k-fold cross-validation. This approach to measure model performance splits the dataset into $k$ subsets of equal size called folds. The algorithm then learns on the combined data of the second to $k$th folds, using the first fold as a validation set. This process is repeated $k$-times, using a new fold as validation set in each iteration. The classification accuracies of the $k$ iterations are then averaged over to calculate the overall classification accuracy. This approach ensures that all data is used for training. Although the learning algorithm has to be executed $k$ times instead of just once, $k$ is a constant value in k-fold cross-validation that does not depend on the size of the dataset and therefore does not impact the asymptotic runtime.
 
 To be able to vary the proportion of data used, we need to restrict the data that is used for training our models while still keeping the advantages of k-fold cross-validation. We achieve this by further splitting up the folds used for training. For each fold, a subset of samples is selected according to the value of the approximation parameter. The fold used for validation, however, does not change. This approach ensures that all available data is used for validation.
 
@@ -468,48 +453,49 @@ This metric has been shown to be more robust than the simpler accuracy metric we
 
 
 
-\subsection{Collected sample data}
-\todo{All four figures should show score, not 1-score}
+
+\subsection{Collected Sample Data}
 
 \begin{figure}
 \centering
-  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/lr_mnist.pdf}
-  \caption{Running logistic regression on the MNIST dataset}
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=50 200 35 205,clip,width=\linewidth]{figures/lr_mnist.pdf}
+  \caption{Logistic regression/MNIST}
   \label{sampledata1}
-\end{figure}
-
-\begin{figure}
-\centering
-  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/rf_mnist.pdf}
-  \caption{Running random forest on the MNIST dataset}
+\end{subfigure}%
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=50 200 35 205,clip,width=\linewidth]{figures/rf_mnist.pdf}
+  \caption{Random forest/MNIST}
   \label{sampledata2}
-\end{figure}
-
-\begin{figure}
-\centering
-  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/lr_synth.pdf}
-  \caption{Running logistic regression on a synthetic dataset}
+\end{subfigure}
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=50 200 35 205,clip,width=\linewidth]{figures/lr_synth.pdf}
+  \caption{Logistic regression/synthetic data}
   \label{sampledata3}
-\end{figure}
-
-\begin{figure}
-\centering
-  \includegraphics[trim=50 200 35 205,clip,width=.6\linewidth]{figures/rf_synth.pdf}
-  \caption{Running random forest on a synthetic dataset}
+\end{subfigure}
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=50 200 35 205,clip,width=\linewidth]{figures/rf_synth.pdf}
+  \caption{Random forest/synthetic data}
   \label{sampledata4}
+\end{subfigure}
+\caption{Sample data plotting time and score against the proportion of data used}
+\label{sampledata}
 \end{figure}
 
-Figures \ref{sampledata1}, \ref{sampledata2}, \ref{sampledata3} and \ref{sampledata4} show the results of collecting performance data, varying the percentage of data used. The four plots show the result of running random forest with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
 
-In all four figures, the runtime shown in blue shows linear growth as the amount of data increases. As runtime values shown in figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected. The runtime shown in figure \ref{sampledata2} shows a change in growth at around 75\%. This is an effect which sometimes occurred during data collection and which we analyse in detail in the Challenges section of the Evaluation chapter.
 
-The error rates for all four combinations of algorithms and datasets shown in red exhibits exponentially decaying behaviour, falling very rapidly initially before levelling off.
+
+Figure \ref{sampledata} show the results of collecting performance data, varying the percentage of data used. The four plots show the result of running random forest with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
+
+In all four figures, the runtime shown in blue shows linear growth as the amount of data increases. As runtime values shown in Figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected.
+
+The score (shown in red) for all four combinations of algorithms and datasets exhibits exponentially growth, rising very rapidly initially before levelling off.
 
 \todo{Also show a 2d plot of rnd forest+mnist with data/trees as appr. params}
-
-
-
-
 
 
 
@@ -523,8 +509,8 @@ Based on the results shown in the previous section, we implemented a kernel to m
 &= \int_{0}^{\infty} e^{-\lambda(x+x')}\mu(d\lambda)
 \end{align}
 
-% TODO kernel assumptions: decay starts at zero, maybe add limes
-% TODO does this kernel always go to 0?
+
+
 with $\mu$ being a mixing measure\footnote{We use $\mu$ instead of $\psi$ to denote the mixing measure to avoid confusion with the $\psi$ parameter to the gamma function explained below} that weighs the $e^{-\lambda(x+x')}$ term. Note that this is not a stationary kernel as $\kappa(x, x') \neq \kappa(x + \tau, x' + \tau)$. This conforms to our prior that moving further away from the origin, the value of $\kappa$ should decrease.
 
 Again following \cite{2014arXiv1406.3896S}, we choose a gamma distribution as $\mu$ which leads to an analytic solution to the integral:
@@ -534,7 +520,7 @@ Again following \cite{2014arXiv1406.3896S}, we choose a gamma distribution as $\
 &=\frac{\beta^\alpha}{(x+x'+\beta)^\alpha}
 \end{align}
 
-Diverging from \cite{2014arXiv1406.3896S}, we reparameterise the gamma distribution with\todo{Explain why}
+Diverging from \cite{2014arXiv1406.3896S}, we reparameterise the gamma distribution with
 \begin{equation}
 \psi = \mathbb{E}(x) = \frac{\alpha}{\beta}
 \end{equation}
@@ -563,7 +549,7 @@ and
 \end{figure}
 
 
-Figure \ref{gammadist} show how the distribution changes as $\psi$ and $\xi$ are varied.\todo{Only show three overall plots of the kernel}
+Figure \ref{gammadist} show how the distribution changes as $\psi$ and $\xi$ are varied.
 
 After reparameterisation, the term for our kernel becomes
 \begin{equation}
@@ -572,53 +558,14 @@ After reparameterisation, the term for our kernel becomes
 
 \begin{figure}
 \centering
-\begin{subfigure}{.33\textwidth}
+
   \centering
-  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi1.pdf}
-  \caption{$\psi=1$, $\xi=1$}
+  \includegraphics[trim=80 190 70 190,clip,width=.6\linewidth]{figures/expmix_psi1_xi1.pdf}
+  \caption{Functions drawn from an exponential mixture kernel}
   \label{expmix11}
-\end{subfigure}%
-\begin{subfigure}{.33\textwidth}
-  \centering
-  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi5_xi1.pdf}
-  \caption{$\psi=5$, $\xi=1$}
-  \label{expmix51}
-\end{subfigure}%
-\begin{subfigure}{.33\textwidth}
-  \centering
-  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi10_xi1.pdf}
-  \caption{$\psi=10$, $\xi=1$}
-  \label{expmix101}
-\end{subfigure}
-\caption{Functions drawn from the kernel for three different values of $\psi$}
-\label{kernelpsi}
 \end{figure}
 
-\begin{figure}
-\centering
-\begin{subfigure}{.33\textwidth}
-  \centering
-  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi1.pdf}
-  \caption{$\psi=1$, $\xi=1$}
-  \label{expmix11_}
-\end{subfigure}%
-\begin{subfigure}{.33\textwidth}
-  \centering
-  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi5.pdf}
-  \caption{$\psi=1$, $\xi=5$}
-  \label{expmix15}
-\end{subfigure}%
-\begin{subfigure}{.33\textwidth}
-  \centering
-  \includegraphics[trim=80 190 70 190,clip,width=\linewidth]{figures/expmix_psi1_xi10.pdf}
-  \caption{$\psi=1$, $\xi=10$}
-  \label{expmix110}
-\end{subfigure}
-\caption{Functions drawn from the kernel for three different values of $\xi$}
-\label{kernelxi}
-\end{figure}
-
-Figures \ref{kernelpsi} and \ref{kernelxi} show the effect that varying $\psi$ and $\xi$ has on the kernel.
+Figure \ref{expmix11} shows functions drawn from the exponential mixture kernel. %TODO mention how they decay to 0
 
 The score functions shown in the previous section do not normally decay to zero, instead they plateau at values between zero and one. To model this effect, we add a constant function to our exponential mixture kernel as described in the Background chapter.
 
@@ -628,7 +575,7 @@ The score functions shown in the previous section do not normally decay to zero,
 To achieve a good fit of a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance function. There two main ways to do so are marginalisation and optimisation. For reasons explained in the evaluation chapter, we implement both of these methods in our project.
 
 % TODO this algorithm is "too clever"
-GPML includes an optimisation function called \texttt{minimize} that is meant to be used to optimise kernel hyperparameters. It relies on gradient information, which we implemented for the exponential mixture kernel. We were, however, not able to successfully optimise the hyperparameters to our kernel with this function as the optimisation would terminate after a very small number of steps having moved only slightly from the initial values without having found a minimum. We suspect the reason for this to be numerical instability that creates small amounts of noise and creates tiny local minima that the optimiser is unable to escape from. Figure \todo{NLML plot}@ shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}.
+GPML includes an optimisation function called \texttt{minimize} that is meant to be used to optimise kernel hyperparameters. It relies on gradient information, which we implemented for the exponential mixture kernel. We were, however, not able to successfully optimise the hyperparameters to our kernel with this function as the optimisation would terminate after a very small number of steps having moved only slightly from the initial values without having found a minimum. We suspect the reason for this to be numerical instability that creates small amounts of noise and creates tiny local minima that the optimiser is unable to escape from. Figure \todo{NLML plot} shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}.
 
 After failing to optimise the hyperparameters to our kernel using the optimisation function included with GPML, we decided to implement a sampling method which does not suffer from the same problems as optimisation. After successfully implementing sampling, we also decided to write our own optimisation routine for reasons of speed and ease of use. Both methods are described in detail in the remainder of this section. An evaluation of the two methods applied to our data can be found in the Evaluation chapter.
 
@@ -775,9 +722,8 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 \textit{This chapter describes the schedulers developed during the course of this project. It firsts gives a high level overview of the system architecture before describing the details of each of the schedulers.}
 
 \section{System Architecture}
-% TODO MAYBE mention drawing and how all figures are automatically saved
 
-\subsection{High level architecture}
+\subsection{High Level Architecture}
 \begin{figure}[p]
     \centerline{\includegraphics[trim=40 90 35 90,clip,scale=0.8]{figures/architecture4.pdf}}
   \caption{High level architecture for one scheduler, shown after three iterations. Data is shown in green, machine learning algorithm in red and the scheduler in blue. Circled numbers refer to notes in the text.}
@@ -814,7 +760,7 @@ Note how both tiers execute machine learning algorithms (coloured in red) on dat
     \label{systemexample}
 \end{figure}
 
-Figure \ref{systemexample} shows the program running with three schedulers. Rows one to three are each one instance of the architecture depicted in figure \ref{architecture}; the plot in row four compares the performance of the three schedulers. For the three running instances, the first column shows runtime information. Logistic regression data is shown in blue while random forest data is shown in red. The dots represent recorded data points, the blue line shows the mean of the model that predicts runtime while the filled area is twice the standard deviation of the model, showing the uncertainty the model has. The scheduler shown in row one does not require models to make decisions and only shows the recorded data points. For schedulers that operate on time budgets, this plot also shows how much time is currently remaining by drawing a black line at the time threshold.
+Figure \ref{systemexample} shows the program running with three schedulers. Rows one to three are each one instance of the architecture depicted in Figure \ref{architecture}; the plot in row four compares the performance of the three schedulers. For the three running instances, the first column shows runtime information. Logistic regression data is shown in blue while random forest data is shown in red. The dots represent recorded data points, the blue line shows the mean of the model that predicts runtime while the filled area is twice the standard deviation of the model, showing the uncertainty the model has. The scheduler shown in row one does not require models to make decisions and only shows the recorded data points. For schedulers that operate on time budgets, this plot also shows how much time is currently remaining by drawing a black line at the time threshold.
 
 The plot in the second column shows the score data and model in the same way the time information is drawn. Additionally, for schedulers that model time and score (the second and third in the example), the acquisition functions for both algorithm is shown as dashed line. The precise shape of these functions depends on the strategy the scheduler uses to make decision. 
 
@@ -824,7 +770,7 @@ The third row contains plots of the time against the score function as a point c
 
 
 
-\subsection{Directory structure of the code}
+\subsection{Directory Structure of the Code}
 
 The directory of the project contains the following subdirectories:
 \begin{itemize}
@@ -847,17 +793,14 @@ Once it has finished modelling, the Matlab script writes the models to \texttt{v
 
 
 \section{Implemented Schedulers}
-% TODO JAMES add code to this?
-
 \begin{figure}
     \centerline{\includegraphics[trim=55 70 35 55,clip,width=\linewidth]{figures/scheduler_inheritance.pdf}}
   \caption{The inheritance structure of the implemented schedulers. Abstract schedulers are shown in grey}
     \label{schedulerinheritance}
 \end{figure}
 
-Every scheduler is implemented in a separate class of which there are nine in total. There are three abstract scheduler classes that implement functionality shared between two or more schedulers while the other six implement scheduling strategies that can be used to schedule data collection. The inheritance structure of the scheduler classes is shown in figure \ref{schedulerinheritance}. In this section, we describe each scheduler's functionality before comparing and evaluating them in the Evaluation chapter.
+Every scheduler is implemented in a separate class of which there are nine in total. There are three abstract scheduler classes that implement functionality shared between two or more schedulers while the other six implement scheduling strategies that can be used to schedule data collection. The inheritance structure of the scheduler classes is shown in Figure \ref{schedulerinheritance}. In this section, we describe each scheduler's functionality before comparing and evaluating them in the Evaluation chapter.
 
-\todo{maybe include code and a few diagrams in this section}
 \subsection{\texttt{\textit{Scheduler}}}
 This is the base class that all schedulers inherit from. It defines a framework of functionality that all schedulers share. Besides drawing routines and code to write performance and read model data, this class contains the following methods:
 
@@ -900,7 +843,7 @@ This scheduler inherits from the \texttt{ExpectedImprovementScheduler} and diffe
 \subsection{\texttt{ExpectedImprovementTimesProbOfSuccessScheduler}}
 This scheduler inherits from both the \texttt{\textit{TimedScheduler}} and the \texttt{ExpectedImprovementScheduler}. To compute its acquisition function, it multiplies the expected improvement with the probability of successfully finishing the learning process in the remaining time. The probability of success for a given $x$ value is calculated by cutting off the distributions of the time model at $x$ and computing the amount of remaining probability mass.
 
-The constructor of \texttt{ExpectedImprovementTimesProbOfSuccessScheduler} expects a sequence of time intervals. Whenever the scheduler has used up its available time budget, the next time interval in the sequence is added to the remaining time.\todo{example}
+The constructor of \texttt{ExpectedImprovementTimesProbOfSuccessScheduler} expects a sequence of time intervals. Whenever the scheduler has used up its available time budget, the next time interval in the sequence is added to the remaining time.
 
 \subsection{\texttt{MinimeseUncertaintyThenExploitScheduler}}
 The \texttt{MinimeseUncertaintyThenExploitScheduler} inherits from \texttt{\textit{TimedScheduler}}. It has two scheduling phases and is allocated a separate time budget for each phase. In the first phase, it tries to build adequate models by reducing uncertainty. Its acquisition function during this phase is calculated as the score model standard deviation divided by the time it takes to evaluate the function at the point under consideration.% This behaviour is similar to the \texttt{ExpectedImprovementPerTimeScheduler} using.
@@ -927,21 +870,15 @@ After using up the time allotted for exploration, this scheduler uses the second
 
 
 
-\section{Data sources}
-% TODO say how they were sourced from the auto weka list
-
-
+\section{Data Sources}
 The first set of datasets we used was created synthetically using scikit-learn's \texttt{make\_classification} function. This function takes a number of parameters that define the dataset, such as the number of samples, the number of features and the number of classes and creates data according to these parameters. 
 
 This fine grained control over the properties of the datasets was very valuable to us, as it allowed us to see how our system handles datasets of different nature. We wrote a small script\footnote{Saved at \texttt{src/data\_handling/dataset\_creator.py}} to enable us to quickly create datasets and see how logistic regression and random forest perform on subsets of these datasets.
 
 
-
-% TODO actually mention this
 A second set of datasets was drawn from the list of datasets that were used in the development of Auto-WEKA as mentioned in the Related Work chapter. The authors of Auto-WEKA made the datasets used to test Auto-WEKA available on their website\footnote{They can be downloaded at http://www.cs.ubc.ca/labs/beta/Projects/autoweka/datasets/}.
 
 
-% TODO END k-fold cross-validation spelling
 These datasets originally came from other sources \cite{Lichman:2013, Larochelle:2007:EED:1273496.1273556, Krizhevsky09learningmultiple} and were converted by the Auto-WEKA creators to WEKA's own data format, the Attribute-Relation File Format (\texttt{arff}). This made it very convenient for us to use these datasets as they are originally in a wide range of differing data formats and would have had to have individual import routines written for them. 
 
 Besides converting them to the \texttt{arff} format, the authors of the Auto-WEKA paper also split them up in a training and a test set. As we described in the Implementation chapter, we implement k-fold cross-validation and therefore needed all the data in a single file. To achieve this, a small ruby script\footnote{Saved at \texttt{src/data\_handling/utils/append\_arff\_files.rb}} was written to merge the \texttt{train.arff} and \texttt{test.arff} files for each dataset. Figure \ref{datasets_info} lists the names and sizes of these datasets.
@@ -985,7 +922,7 @@ This encoding expands every feature of type string with $n$ possible values into
 %A second issue we faced when using the Auto-WEKA datasets is that the \texttt{arff} file format allows are sparse encoding for datasets that mostly contain zeros. Other datasets contain samples with missing values. SciPy's \texttt{loadarff} routine is not currently able to open either of these two types of \texttt{arff} files these files.
 
 
-\section{Model comparison}
+\section{Model Comparison}
 In this section, we assess the quality of the fits to score data our exponential mixture kernel achieves. We do so by comparing the marginal likelihoods of the models it generates to those of a kernel that encodes weaker prior knowledge about the shape of the data, the squared exponential kernel.
 
 % TODO JAMES should this be the nlml of the predictions or only the fit to the data
@@ -1058,37 +995,37 @@ These results show that the exponential mixture kernel is an appropriate choice 
 
 \section{The Exponential Mixture Kernel}
 
-\subsection{Hyperparameter selection}
+\subsection{Hyperparameter Selection}
 
 We generally found both of the methods we use for hyperparameter selection, sampling and optimisation, to return satisfactory results. As is in its nature, however, optimisation is prone to overfitting. This happens when there are multiple likely interpretations of the data reflected in multiple optima of the marginal likelihood. Optimisation can only choose one of these optima and becomes overfitting in one particular interpretation of the data.
 
 This is an issue especially in the early phases of data collection after a few iterations when only little data was available. We addressed this problem by increasing the number of data points collected during the burn-in phase. As the subsets used in this phase are a small percentage of the whole dataset, this only adds marginally to the time spent on burn-in.
 
-Although this solved the issue of overfitting on too little data, sampling hyperparameters still proved more robust and less likely to return models that clash with the expectations that we had looking at the data.
+Although this solved the issue of overfitting on too little data, sampling hyperparameters still proved more robust and less likely to return models that clash with the expectations that we had looking at the data. Figures \ref{kernel_issues_big1} and \ref{kernel_issues3} show cases of optimisation with such results.
 
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/kernel_issues1.pdf}
-  \caption{@@}
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=540 520 493 80,clip,width=\textwidth]{figures/kernel_issues1.pdf}
+\caption{The blue mean grows in the wrong direction}
   \label{kernel_issues1}
-\end{figure}
-\todo{interpret these figures}
-
-\begin{figure}
-\centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/kernel_issues2.pdf}
-  \caption{@}
+\end{subfigure}%
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=540 520 493 80,clip,width=\textwidth]{figures/kernel_issues2.pdf}
+  \caption{Both means have a shape unlikely to be correct and the blue models' variance is too low}
   \label{kernel_issues2}
+\end{subfigure}
+\caption{Optimisation issues}
+\label{kernel_issues_big1}
 \end{figure}
 
 
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/kernel_issues3.pdf}
-  \caption{@}
+  \includegraphics[trim=540 710 500 75,clip,width=\textwidth]{figures/kernel_issues3.pdf}
+  \caption{The red model completely fails to model the exponential nature of the data}
   \label{kernel_issues3}
 \end{figure}
 
@@ -1113,8 +1050,7 @@ As our program has to be able to handle both samples and single results returned
 \subsubsection{\texttt{FixedSequenceScheduler}}
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/fixed_sequence_example.pdf}
+  \includegraphics[trim=130 275 507 510,clip,width=\textwidth]{figures/fixed_sequence_example.pdf}
   \caption{A fixed exponential sequence}
   \label{fixedsequenceexample}
 \end{figure}
@@ -1129,7 +1065,6 @@ This scheduler does not model performance data and does not adjust its decisions
 \subsubsection{\texttt{ProbabilityOfImprovementScheduler}}
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
   \includegraphics[trim=530 496 510 296,clip,width=\textwidth]{figures/prob_of_imp_01.pdf}
   \caption{Probability of improvement acquisition function}
   \label{sched:probofimpr1}
@@ -1141,23 +1076,22 @@ Although the uncertainty about the performance of random forests does not change
 
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
+
   \includegraphics[trim=530 270 507 510,clip,width=\textwidth]{figures/prob_of_imp_02.pdf}
   \caption{Probability of improvement acquisition function}
   \label{sched:probofimpr2}
 \end{figure}
 
-Figure \ref{sched:probofimpr2} shows a situation similar to the one shown in figure \ref{sched:probofimpr1} with the difference that the uncertainty is roughly equal for both algorithms. The acquisition functions behave accordingly with the acquisition function for random forest being lower because it is less likely to improve over the current maximum $y$ which was achieved by logistic regression.
+Figure \ref{sched:probofimpr2} shows a situation similar to the one shown in Figure \ref{sched:probofimpr1} with the difference that the uncertainty is roughly equal for both algorithms. The acquisition functions behave accordingly with the acquisition function for random forest being lower because it is less likely to improve over the current maximum $y$ which was achieved by logistic regression.
 
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
   \includegraphics[trim=530 710 493 55,clip,width=\textwidth]{figures/prob_of_imp_03.pdf}
   \caption{Probability of improvement acquisition function}
   \label{sched:probofimpr3}
 \end{figure}
 
-In figure \ref{sched:probofimpr3}, we see the final state of a probability of improvement scheduler. The small step size in creating logistic regression models is a typical behaviour of this scheduler. 
+In Figure \ref{sched:probofimpr3}, we see the final state of a probability of improvement scheduler. The small step size in creating logistic regression models is a typical behaviour of this scheduler. 
 
 \subsubsection{\texttt{ExpectedImprovementScheduler}}
 
@@ -1168,7 +1102,6 @@ Figure \ref{sched:expimpr01} shows typical acquisition functions for the \texttt
 
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
   \includegraphics[trim=530 710 493 55,clip,width=\textwidth]{figures/expimpr01.pdf}
   \caption{Expected improvement acquisition function}
   \label{sched:expimpr01}
@@ -1179,7 +1112,6 @@ Figure \ref{sched:expimpr01} shows typical acquisition functions for the \texttt
 \subsubsection{\texttt{ExpectedImprovementPerTimeScheduler}}
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
   \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/ei_by_time_1.pdf}
   \caption{Expected improvement per time performance models and acquisition function}
   \label{sched:expimprpertime01}
@@ -1223,14 +1155,14 @@ Figure \ref{sched:exp_then_exp1} shows the scheduler shortly after the burn-in p
 % TODO explain why you sample
 % Recall that the means of the sampled meta-models are irrelevant during the exploration phase of the \texttt{MinimeseUncertaintyThenExploitScheduler} and decisions are made solely on the amount of variance at a certain point.
 
-In figure \ref{sched:exp_then_exp1}, random forest has, on average, higher variance in its models than the blue algorithm. It also takes longer to evaluate, however, which causes its acquisition function to have smaller values as the scheduler computes it as $\sigma/\text{time} \cdot \text{probability of success}$. Note how the acquisition functions for both algorithms sharply drop off as the projected time crosses the current time budget of about 9 seconds. This point is reached for random forest at 0.1 and at 0.2 for logistic regression.
+In Figure \ref{sched:exp_then_exp1}, random forest has, on average, higher variance in its models than the blue algorithm. It also takes longer to evaluate, however, which causes its acquisition function to have smaller values as the scheduler computes it as $\sigma/\text{time} \cdot \text{probability of success}$. Note how the acquisition functions for both algorithms sharply drop off as the projected time crosses the current time budget of about 9 seconds. This point is reached for random forest at 0.1 and at 0.2 for logistic regression.
 
 
 
 \begin{figure}
 \centering
   \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/exp_then_exp1.pdf}
-  \caption{@@}
+  \caption{The \texttt{MinimeseUncertaintyThenExploitScheduler} after burn-in has finished}
   \label{sched:exp_then_exp1}
 \end{figure}
 
@@ -1239,19 +1171,19 @@ Figure \ref{sched:exp_then_exp2} shows the scheduler at the next iteration. A lo
 \begin{figure}
 \centering
   \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/exp_then_exp2.pdf}
-  \caption{@@}
+  \caption{After creating a logistic regression model}
   \label{sched:exp_then_exp2}
 \end{figure}
 
 % TODO make an example where the time limit doesn't get exceeded
-In figure \ref{sched:exp_then_exp3}, the scheduler has created a random forest model at the point where the red acquisition function shown in figure \ref{sched:exp_then_exp2} has its maximum. This required all the remaining exploration time and the scheduler has now switched to the exploration phase. This is reflected in the remaining time which has been set to 30 seconds. Using this time, the scheduler tries to create the best model it can using its time budget, calculated as the score mean times the probability of success.
+In Figure \ref{sched:exp_then_exp3}, the scheduler has created a random forest model at the point where the red acquisition function shown in Figure \ref{sched:exp_then_exp2} has its maximum. This required all the remaining exploration time and the scheduler has now switched to the exploration phase. This is reflected in the remaining time which has been set to 30 seconds. Using this time, the scheduler tries to create the best model it can using its time budget, calculated as the score mean times the probability of success.
 
 The acquisition functions for both logistic regression and random forest reflect the mean of the means of the sampled score models until the predicted time exceeds 30 seconds and the probability of success quickly goes to zero. The scheduler predicts the best model to be a random forest model created with about 23\% of the available data.
 
 \begin{figure}
 \centering
   \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/exp_then_exp3.pdf}
-  \caption{@@}
+  \caption{The exploitation phase}
   \label{sched:exp_then_exp3}
 \end{figure}
 
@@ -1260,7 +1192,7 @@ Figure \ref{sched:exp_then_exp4} shows the final result of running the \texttt{M
 \begin{figure}
 \centering
   \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/exp_then_exp4.pdf}
-  \caption{@@}
+  \caption{The \texttt{MinimeseUncertaintyThenExploitScheduler} after finishing exploiting}
   \label{sched:exp_then_exp4}
 \end{figure}
 
@@ -1277,7 +1209,7 @@ Figure \ref{sched:exp_then_exp4} shows the final result of running the \texttt{M
 
 
 \section{Challenges}
-One challenge we faced during the course of this problem resulted from our choice to implement our program in more than one programming language. Python's \texttt{subprocess} library, which we used to call Matlab as described in section @@@, is unintuitive to use and often caused zombie children of our main program to accumulate. 
+One challenge we faced during the course of this problem resulted from our choice to implement our program in more than one programming language. Python's \texttt{subprocess} library, which we used to call Matlab as described in the Scheduling chapter, is unintuitive to use and often caused zombie children of our main program to accumulate. 
 
 Matlab, on the other side of our interoperability structure, is clearly not very well suited for reading and writing JSON data. Currently, we have to append an empty cell array to a Matlab array that contains only one element when exporting it to prevent it from being exported as an individual object. This is an unsatisfying workaround to which the only true solution is to rewrite the Matlab code in Python.
 
@@ -1285,7 +1217,7 @@ Implementing the gradients of the hyperparameters to our kernel also proved to b
 
 %The difficulty of implementing them was compounded by the facts that kernels receive parameters in log space and that we reparameterised our kernel which made the derivative terms more complex.
 
-Another challenge we encountered during data collection for this project were unexplainable changepoints in the linear growth of runtime. Figures \ref{time_dropoff1}, \ref{time_dropoff2} and \ref{time_dropoff3} show examples of this effect.
+Another challenge we encountered during data collection for this project were unexplainable changepoints in the linear growth of the runtime. Figure \ref{time_hinge} shows examples of this effect.
 
 This problem was very hard to investigate. We strongly suspect it to stem from the particularities of the scikit-learn implementations and our computer specifications. It  disappeared when executing the same algorithm/parameter combinations on the EC2 instance and even on our local computer, small changes in hyperparameters often caused the problem to disappear. One possible explanations is an implementation that changes from one routine to another once some kind of threshold is reached. Caching-related effects are another possibility.
 
@@ -1294,31 +1226,29 @@ As this problem occurred rarely and did not have a noticeable impact on the perf
 
 % TODO mention numerical inaccuracies, e.g. the problem where for very small amounts of remaining time, a behaves weirdly
 
+
 \begin{figure}
 \centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=100 10 100 10,clip,frame,width=\textwidth]{figures/time_dropoff1.pdf}
-  \caption{@@@}
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=65 200 30 200,clip,width=\textwidth]{figures/time_dropoff1.pdf}
+  \caption{}
   \label{time_dropoff1}
-\end{figure}
-\begin{figure}
-\centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/time_dropoff2.pdf}
-  \caption{@@@}
+\end{subfigure}%
+\begin{subfigure}{.45\textwidth}
+  \centering
+  \includegraphics[trim=65 200 30 200,clip,width=\textwidth]{figures/time_dropoff2.pdf}
+  \caption{}
   \label{time_dropoff2}
-\end{figure}
-\begin{figure}
-\centering
-% TODO FIGURE trim this to only show fixed sequence scheduler
-  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/time_dropoff3.pdf}
-  \caption{@@@}
-  \label{time_dropoff3}
+\end{subfigure}
+\caption{Non linear behaviour in the growth of the blue line}
+\label{time_hinge}
 \end{figure}
 
 
 
-\chapter{Conclusion and future work} 
+
+\chapter{Conclusion and Future Work} 
 \section{Conclusions}
 In this project, we have succeeded in
 \begin{itemize}
@@ -1331,7 +1261,7 @@ In this project, we have succeeded in
 
 % TODO better than a human
 
-\section{Future work}
+\section{Future Work}
 One straightforward way our system could be extended is by considering more algorithms besides logistic regression and random forest. Scikit-learn contains implementations of a great number of other machine learning algorithms that could be added to the current list of algorithms with little additional work. One challenge in this is to make the graphical output of the program stay readable while more models and lines are added.
 
 Similarly, the program could be extended to consider additional approximation parameters besides the percentage of data, both individually and in combination with other parameters. The groundwork for this has been laid in this project by fitting exponential mixture kernels to 2D data, but additional investigations on how the approximation parameters influence each other would likely be necessary. This would likely require entirely new ways of visualising the output as it is very difficult to plot functions that take more than one argument.

@@ -1,13 +1,13 @@
 function plot_one_param_vs_time_and_score(D, parameter_index, time_index, score_index, label_table, label_x, label_y1, label_y2)
 
-if nargin<7, label_y1 = 'Time'; end
-if nargin<8, label_y2 = '1 - Score'; end
+if nargin<7, label_y1 = 'Time in sec.'; end
+if nargin<8, label_y2 = 'Score in %'; end
 
 
 [ax, ~, ~]=plotyy(100*D(:,parameter_index), ...
                     D(:,time_index), ...
                     100*D(:,parameter_index), ...
-                    (1-D(:,score_index)), 'plot','plot');
+                    (100*D(:,score_index)), 'plot','plot');
 
 %title(label_table); % label table
 xlabel(ax(1), label_x) % label x-axis
