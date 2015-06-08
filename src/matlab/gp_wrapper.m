@@ -19,7 +19,7 @@ if nargin < 5
         case 'linear'
             hyp.cov = log([1 1]);
         case 'exp'
-            hyp.cov = log([1 1 1 1]);
+            hyp.cov = log([1 2 1 1]);
     end
     
     % Slice optimisation

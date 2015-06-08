@@ -109,6 +109,10 @@ class Scheduler(object):
             self._reset_models()
             for algorithm, _ in ALGORITHMS.items():
                 self._model_algorithm(algorithm)
+        elif self.decision == 'SKIP':
+            print 'model all after skipping'
+            for algorithm in ALGORITHMS.keys():
+                self._model_algorithm(algorithm)
         elif self.decision:
             _, last_algorithm = self.decision
             self._model_algorithm(last_algorithm)
@@ -439,17 +443,39 @@ class TimedScheduler(ProbabilisticScheduler):
         self.remaining_time += t
         print colored('Added time, now {}'.format(self.remaining_time), 'cyan')
 
-    def execute(self):
-        res = super(TimedScheduler, self).execute()
-        if not res:
-            return None
-
-        time, _ = res
+    def decide(self):
+        super(TimedScheduler, self).decide()
 
         if self.burn_in_sequence_index > len(self.burn_in_sequence):
-            self.remaining_time -= time
-            
-        print colored('Remaining time: {}'.format(self.remaining_time), 'cyan')
+            max_acq = 0
+            for _, acquisition_function in self.acquisition_functions.items():
+                max_acq = max(max_acq, max(acquisition_function[1]))
+
+            if max_acq < 1e-20:
+                print "SKIPPING! " + self.scheduler_name + ' ' + str(self.remaining_time)
+                self.decision = "SKIP"
+                self.remaining_time = -1
+
+    def execute(self):
+        if self.decision == "SKIP":
+            print "Skipped execution"
+        else:
+            res = super(TimedScheduler, self).execute()
+            if not res:
+                return None
+
+            time, _ = res
+
+            if self.burn_in_sequence_index > len(self.burn_in_sequence):
+                self.remaining_time -= time
+                
+            print colored('Remaining time: {}'.format(self.remaining_time), 'cyan')
+
+    def model(self):
+        #if self.decision == "SKIP":
+        #    print "Skip modelling"
+        #else:
+        super(TimedScheduler, self).model()
 
     def _additional_acquisition_function_parameters(self):
         return {'remaining_time': self.remaining_time}
@@ -481,16 +507,15 @@ class ExpectedImprovementTimesProbOfSuccessScheduler(TimedScheduler, ExpectedImp
 
     def decide(self):
         super(ExpectedImprovementTimesProbOfSuccessScheduler, self).decide()
-        if self.remaining_time < 0:
+        if self.remaining_time < 0 and len(self.time_steps) == 0:
             self.decision = None
 
     def execute(self):
         super(ExpectedImprovementTimesProbOfSuccessScheduler, self).execute()
 
-        print self.remaining_time, self.time_steps
-
         if self.remaining_time < 0:
             if self.time_steps:
+                print "Adding time!"
                 self.add_time(self.time_steps[0])
                 self.time_steps = self.time_steps[1:]
             else:
@@ -498,22 +523,12 @@ class ExpectedImprovementTimesProbOfSuccessScheduler(TimedScheduler, ExpectedImp
 
     @classmethod
     def a(cls, self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev, remaining_time):
-        # TODO Change this to a list comprehension
         prob_of_success = np.zeros(len(time_mean))
         for i, (tm, tsd) in enumerate(zip(time_mean, time_std_dev)):
             prob_of_success[i] = norm.cdf(remaining_time, loc=tm, scale=tsd)
 
-        # TODO Find out if there's a way to refer to this class indirectly
         ei = ExpectedImprovementScheduler.a(self, overall_best_score, score_mean, score_std_dev, time_mean, time_std_dev)
-
-        #print ei
-        #print prob_of_success
-
-        res = ei * prob_of_success
-        
-        print res
-
-        return res
+        return ei * prob_of_success
 
 class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
     def __init__(self, scheduler_name, burn_in_percentages, explore_time, exploit_time):
@@ -525,41 +540,23 @@ class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
 
 
     def decide(self):
-        print 'decide. remaining: ', self.remaining_time
-        
         super(MinimiseUncertaintyAndExploitScheduler, self).decide()
         
-        if self.remaining_time <= 0:
+        if self.remaining_time <= 0 and not self.exploring:
+              self.decision = None
+            
+
+    def execute(self):
+        super(MinimiseUncertaintyAndExploitScheduler, self).execute()
+
+        if self.remaining_time < 0:
             if self.exploring:
                 print colored('Exploiting!', 'red')
                 self.exploring = False
-                self.remaining_time += self.exploit_time
-                print 'new time', self.remaining_time
-                self.model()
-                self.draw()
-                plt.savefig(FIG_DIR + 'fig_{}.pdf'.format(datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')), format='pdf')
-                super(MinimiseUncertaintyAndExploitScheduler, self).decide()
-            else:
-                self.decision = None
-        else:
-            if self.burn_in_sequence_index > len(self.burn_in_sequence):
-                max_acq = 0
-                for _, acquisition_function in self.acquisition_functions.items():
-                   # print acquisition_function
-                  #  print max(acquisition_function)
-                    max_acq = max(max_acq, max(acquisition_function[1]))
+                self.remaining_time += self.exploit_time  
 
-                if max_acq < 0.00001:
-                    print "SKIPPING!"
-                    self.decision = "SKIP"
-                    self.remaining_time = -1
-
-    def execute(self):
-        if self.decision == "SKIP":
-            print "Skipped execution"
-        else:
-            super(MinimiseUncertaintyAndExploitScheduler, self).execute()
-
+                self.models = None
+                self.decision = 'DONT SKIP'
 
     def model(self):
         if self.decision == "SKIP":
@@ -583,8 +580,8 @@ class MinimiseUncertaintyAndExploitScheduler(TimedScheduler):
             prob_of_success[i] = norm.cdf(remaining_time, loc=tm, scale=tsd)
         if self.exploring:
             res = score_std_dev / time_mean * prob_of_success
-            if max(res) < 0.00001:
-                print colored('No viable option', 'red')
+            #if max(res) < 0.00001:
+            #    print colored('No viable option', 'red')
             return res
         else:
             return score_mean * prob_of_success
@@ -629,12 +626,12 @@ elif args.load_arff:
 
 
 schedulers = [
-    FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.005, 15, 0.15, 1.3) + exp_incl_float_range(0.175, 10, 1.0, 1.3)),
-    ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
+    FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.01, 15, 0.15, 1.3) + exp_incl_float_range(0.155, 10, 1.0, 1.3)),
+    ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.01, 15, 0.15, 1.3), exp_incl_float_range(1, 10, 50, 1.3) ),
     #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 10, 30),
-    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0001, 15, 0.001, 1.3), 60, 120),
-    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0001, 15, 0.001, 1.3), 60, 120),
-    #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0001, 15, 0.001, 1.3), 60, 120),
+   # MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.05, 10, 0.4, 1.3), 5, 15),
+  #  MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.05, 15, 0.25, 1.3), 20, 40),
+  #  MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.05, 15, 0.25, 1.3), 20, 40),
     #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.0005, 15, 0.015, 1.3), 10, 30),
     #MinimiseUncertaintyAndExploitScheduler('Explore then exploit', exp_incl_float_range(0.005, 15, 0.15, 1.3), 10, 30),
     

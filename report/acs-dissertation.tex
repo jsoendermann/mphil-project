@@ -1,40 +1,13 @@
-% do todos
-% add citations
-
-
-
 % TODO JAMES O runtime online is different to empirical findings
 
-% TODO evaluation: show dataset_creator output then how schedulers learn the dataset
-% TODO mention bandits, cite paper
-% TODO cite optimisation paper
-% TODO explain why datasets have crossing scores
-% TODO END add "recall that"
-% TODO END make vectors in formulas bold
-% TODO END always mention name when you cite
-% TODO for acquisition function: describe a hat for samples
-% TODO END don't call your program "system"
-% TODO CITE http://mlg.eng.cam.ac.uk/hoffmanm/papers/hoffman:2014.pdf
-% TODO END remove todos from code
-% TODO END citations: make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
-% TODO END random forest(s) spelling
-% TODO END performance/time/accuracy, be clear
-% TODO http://www.springer.com/gp/book/9783540653677
-% TODO END spelling out numbers, check for consistency
-% TODO possible goal: fixed error, trade off data and time
-% TODO END emph new definitions
-% TODO END no arxiv references
+% TODO mention point cloud somewhere
+
 % TODO END percentage of data values, consistent term
 % TODO END present/past
 % TODO END check for emotional language
-% TODO datasets: http://rodrigob.github.io/are_we_there_yet/build/classification_datasets_results.html
-% TODO explain datasets w/ images if they are interesting
-% TODO explain how exponential growth is at most 2x as bad as 100%
-% TODO the field of "sequential analysis"
-% TODO mention bounds as alternative to EI
-% TODO END don't just use "algorithms", use learning algorithms. also "performance model", not just "model"
-% TODO cite http://www.cs.ubc.ca/~poole/papers/randaccref.pdf
-% TODO END no footnotes or cites after formulas
+% TODO END as -> since
+% TODO END citations: make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
+
 % TODO ----------------------------------------------------------------
 
 \documentclass[a4paper,12pt,twoside,openright]{report}
@@ -88,6 +61,8 @@
 \pagestyle{plain}
 \tableofcontents
 \listoffigures
+\listoftables
+\listoftodos
 
 \onehalfspacing
 
@@ -98,8 +73,7 @@
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-% TODO explain that we need not only be fast when optimising but are also constrained by the time budget (need to finish in time)
-Before the advent of computers, statistical methods had to be simple enough to be calculable by hand which greatly limited the degree of complexity that these methods could reach. As computing power available to statisticians increased, many new methods were devised to make use of these new resources, in some cases exceeding the computational possibilities available. %and are computationally intractable. 
+Before the advent of computers, statistical methods had to be simple enough to be calculable by hand which greatly limited the degree of complexity that these methods could reach. As computing power available to statisticians increased, many new methods were devised to make use of these new resources, in some cases exceeding the computational possibilities available.
 
 Although machine learning is a very diverse subject that combines influences from many different fields such as engineering, computer science, computational biology and physics, many of the recent advances have come from statistics or made use of statistical methods. As is true for mathematics more generally, considerations of runtime and complexity are usually not in the focus of attention of statistical research. This is a stark contrast to computer science where the analysis of algorithmic complexity has been of great importance since the early beginnings of the field.
 
@@ -139,11 +113,11 @@ Our first major contribution in this project is a model of how approximation par
 
 Figure \ref{anytime1} shows a plot that compares the performance of two anytime heuristics running in parallel. The $x$-axis shows the time in seconds that has elapsed since the start of the program while the $y$-axis shows the classification accuracy of the best model the heuristics have found. The "\texttt{fixed\_exponential}" heuristic (shown in green) is a naive implementation that simply tries a fixed sequence of values for the approximation parameter. The "\texttt{EI * prob.\ of success}" heuristic (shown in blue) is a more advanced heuristic which is explained in detail below. 
 
-Both heuristic spend about 10 seconds in a burn-in phase in which they build the same models. After this burn-in ends, the blue heuristic immediately starts producing better models green heuristic and plateaus out at the maximum value about 50 seconds after learning starts. To reach the same classification accuracy, the naive heuristic needs about 80 seconds.
+Both heuristics spend about 10 seconds in a burn-in phase in which they build the same models. After this burn-in ends, the blue heuristic immediately starts producing better models green heuristic and plateaus out at the maximum value about 50 seconds after learning starts. To reach the same classification accuracy, the naive heuristic needs about 80 seconds.
 
-Although eventually both heuristics reach the same final accuracy, if we terminate both heuristics after 30 seconds, the best model found by the "\texttt{EI * prob of success}" is substantially better than that found by the naive heuristic at this point which makes it a better anytime algorithm. 
+Although both heuristics reach the same final accuracy eventually, if we terminate them after 30 seconds, the best model found by the "\texttt{EI * prob of success}" is substantially better than that found by the naive heuristic at this point which makes it a better anytime algorithm. 
 
-\todo{Mention that we have a contract algorithm too}
+Besides this anytime heuristic, we also describe a contract heuristic that constructs models in a time budget it is given.
 
 
 The remainder of this report is structured as follows:
@@ -195,14 +169,13 @@ The learning algorithm can be assessed in two ways: the time it takes to create 
 
 \section{Machine Learning Algorithms}
 \subsection{Logistic Regression and Random Forest}
-% TODO CITE add a citation for this
 This subsection introduces the two machine learning algorithms that we focus on in the evaluation of our system, logistic regression and random forests. These two algorithms are among the most common machine learning algorithm and are frequently used in real world applications.
 
 \subsubsection{Logistic regression}
 % TODO JAMES in linear regression, are more complex base functions used?
 Logistic regression is a variant of linear regression, a very widely used machine learning algorithms. In linear regression, the model $\hat{f}$ has the form
 \begin{equation}
-\hat{f}(x) = w_0 + \sum_{i=1}^n w_ix_i
+\hat{f}(\mathbf{x}) = \mathbf{w}_0 + \sum_{i=1}^n \mathbf{w}_i \mathbf{x}_i
 \end{equation}
 
 where the vector $\mathbf{w}$ contains the model parameters and $n$ is the number of features. Fitting the model to data is achieved by adapting these parameters.
@@ -223,7 +196,7 @@ Random forests improve the results obtained by bagging through decorrelating the
 The number of trees is a possible approximation parameter to random forests. Another hyperparameter that is also an approximation parameter is the minimum number of samples that must be contained in each region of the feature space for the trees in the forest.
 
 \subsection{Gaussian Processes}
-Gaussian processes are a machine learning method commonly used for regression problems. Unlike methods such as logistic regression or random forest that learn by updating a set of model parameters, Gaussian processes place a prior directly over the function $\hat{f}$ \cite{Murphy:2012:MLP:2380985}. For this reason, they belong to the nonparametric family of learning algorithms. This prior is updated to a posterior based on the training data using Bayes' theorem.
+Gaussian processes are a machine learning method commonly used for regression problems. Unlike methods such as logistic regression or random forests that learn by updating a set of model parameters, Gaussian processes place a prior directly over the function $\hat{f}$ \cite{Murphy:2012:MLP:2380985}. For this reason, they belong to the nonparametric family of learning algorithms. This prior is updated to a posterior based on the training data using Bayes' theorem.
 
 If we think of functions as infinitely sized vector indexed by the domain of the function, Gaussian processes can be understood as a generalisation of the multivariate Gaussian distribution to a distribution over infinitely many variables. Formally, a multivariate Gaussian distribution $\mathcal{N}(\mu, \Sigma)$ is specified by a mean vector $\mu$ and a covariance matrix $\Sigma$. Equivalently, a Gaussian process $\EuScript{G}\EuScript{P}(m, \kappa)$ is specified by a mean function $m(x)$ and a covariance function $\kappa(x, x')$ (if we think of infinite vectors as single valued functions, infinitely large matrices can be seen as functions with two arguments). It is common for the mean function to be a constant function with $\mu(x) = 0$ as the mean can be included in the covariance function. Covariance functions are also commonly called kernels. We will use the two terms interchangeably.
 
@@ -293,8 +266,6 @@ Another way to combine kernels is multiplication. Figure \ref{prod_of_lin_and_li
   \label{prod_of_lin_and_lin}
 \end{figure}
 
-% TODO END should f be a $f$ or a vector f in this chapter?
-
 \subsubsection{Marginal Likelihood}
 The marginal likelihood of some data $y$ for a Gaussian process given data $\mathcal{D}$ and hyperparameters $\theta$ is obtained by integrating over the functions $f$ that the Gaussian process defines a distribution over. Formally:
 \begin{equation}
@@ -302,11 +273,8 @@ p(\mathbf{y}|\mathcal{D}, \theta) = \int p(\mathbf{y}|f, \mathcal{D}, \theta)p(f
 \end{equation}
 
 Comparing the marginal likelihood of two models allows us to choose the one that better fits the data.
-% TODO MAYBE mention how it's calculated
 
 \section{Bayesian Optimisation}
-% TODO consistent naming for "prob of impr" and EI
-
 Bayesian optimisation is a method to solve the optimisation problem of having to find an $x$ that maximises\footnote{We will consider maximisation only in this section as minimising $f$ is equivalent to maximising $-f$} $f(x)$ for a given function $f$, commonly written 
 \begin{equation}
 \argmax_x f(x)
@@ -341,13 +309,10 @@ a_{PI}(x) &= P(z \geq y_{max}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\s
 
 where $\mu$ and $\sigma$ are the mean and variance of the Gaussian process model.
 
-% TODO cite kushner 1964
-% TODO http://mlss2014.com/files/defreitas_slides1.pdf
-% TODO maybe visualise this equation with a diagram
 As the Gaussian process tends to be more certain about points that are close to known data points and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x_{\text{next}}$ and the current maximum $y_{max}$, it tends to be very conservative in its evaluations, often making small steps. Note how in Figure \ref{bayesianopti}, $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have already evaluated the function, and quickly drops off as $x$ increases. This acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
 
-% TODO  explain 2.8->2.9
-% TODO cite mockus 1978, better place to cite
+% TODO JAMES necessary to explain 2.8->2.9
+% TODO JAMES in 2.9, are the two summands exploration/exploitation
 A superior strategy to decide which point to evaluate next is to maximise the expected improvement. The acquisition function for the acquisition function in this case is defined \cite{eipaper} as
 \begin{align}
 a_{EI}(x) &= \mathbb{E}(\text{max}\{y - y_{max}, 0\}) \text{\ with\ } y \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\\
@@ -357,19 +322,13 @@ a_{EI}(x) &= \mathbb{E}(\text{max}\{y - y_{max}, 0\}) \text{\ with\ } y \thicksi
         0 \text{\ \ \ \ \ \ \ \ \ \ \ \ otherwise}
         \end{cases})\\
 &= \int_{y_{max}}^\infty (y-y_{max})p(y)dy\\
-&= (\mu(x) - f_{max})\Phi(\frac{\mu(x) - y_{max}}{\sigma(x)}) + \sigma(x)(\frac{\mu(x) - y_{max}}{\sigma(x)})
+&= (\mu(x) - f_{max})\Phi(\frac{\mu(x) - y_{max}}{\sigma(x)}) + \sigma(x)\phi(\frac{\mu(x) - y_{max}}{\sigma(x)})
 \end{align}
 
-% TODO make sure to mention exploration/exploitation trade-off when explaining EI above
-% TODO give an intuition for what this means
-% TODO look up what max does to an expectation
-% TODO bad style (we)
 An example of this function is shown in the third plot of \ref{bayesianopti}. If we compare the second and third plot, we can clearly see the difference between the two strategies in the range of $x$ values between four and five. In contrast to the probability of improvement, the acquisition function for the expected improvement has its maximum further to the right, as it also considers the difference between the current maximum and the $y$ value it expects.
 
-
-
 \section{Third-Party Libraries}
-Besides the standard libraries of Python 2.7 and Matlab 2014b, our project uses a number of additional third-party libraries . The first and most important library for our project is scikit-learn, a Python implementation of many common machine learning algorithms. Scikit-learn is built on NumPy and SciPy, two very widespread Python frameworks for scientific computing. Besides its implementation of random forest and logistic regression, we also use it to generate datasets with its \texttt{make\_classification} function as explained in the Evaluation chapter.
+Besides the standard libraries of Python 2.7 and Matlab 2014b, our project uses a number of additional third-party libraries . The first and most important library for our project is scikit-learn, a Python implementation of many common machine learning algorithms. Scikit-learn is built on NumPy and SciPy, two very widespread Python frameworks for scientific computing. Besides its implementation of random forests and logistic regression, we also use it to generate datasets with its \texttt{make\_classification} function as explained in the Evaluation chapter.
 
 We further use the "Gaussian Processes for Machine Learning" (GPML) Matlab library by Rasmussen and Williams, an implementation of Gaussian Processes. Although there are Gaussian process implementations in Python such as GPy, the maturity of GPML and prior experience using it made us choose GPML over its alternatives. One compelling advantage of GPML is that it is very straightforward to implement new kernels which we had to do for this project.
 
@@ -378,6 +337,7 @@ Finally, we use jsonlab, a json implementation for Matlab and matplotlib, a Pyth
 
 
 \chapter{Related Work}
+% TODO the field of "sequential analysis"
 % TODO make clear that there are two broad trends: approximate algorithm developed by statisticians and bayesian optimisation of hyperparameters
 
 
@@ -425,9 +385,11 @@ As data collection was resource and time intensive, we implemented a command lin
 \item \texttt{-p/--parallel} This flag was originally included to parallelise data collection using multiple threads. Testing it revealed that running multiple instances of the algorithms in parallel led to distorted runtime data. This flag was therefore not used for data collection
 \end{itemize}
 
-The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}. Avoiding hard coded values for data generation in this fashion made it possible to quickly collect fresh data.
+The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}. 
 	
-These arrays contain all the values for the approximation parameters of the algorithm at which data should be collected. Before creating the desired models, the program takes the cartesian product of these arrays. It then runs the learning algorithm once for every element in this product. The number of elements in the cartesian product grows exponentially with every parameter. This made access to the EC2 instance, which could be run overnight, crucial.
+% TODO explain how exponential growth is at most 2x as bad as 100%
+
+These arrays contain all the values for the approximation parameters of the algorithm at which data should be collected. Before creating the desired models, the program takes the cartesian product of these arrays. It then runs the learning algorithm once for every element in this product. The number of elements in the cartesian product grows exponentially with every parameter. This made access to the EC2 instance, which could be run overnight, crucial. Avoiding hard coded values for data generation made data collection on the Amazon server convenient.
 
 Once it has finished all the computations, the program outputs the data to a comma-separated value (\texttt{csv}) file with a column containing a unique id for the dataset, one column for each parameter and one column each for the percentage of data used, the time spent on learning and the score. All the values in these files are numbers which makes it easy to import them into Matlab as matrices. 
 
@@ -491,21 +453,45 @@ This metric has been shown to be more robust than the simpler accuracy metric we
 
 
 
-Figure \ref{sampledata} show the results of collecting performance data, varying the percentage of data used. The four plots show the result of running random forest with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
+Figure \ref{sampledata} show the results of collecting performance data, varying the percentage of data used. The four plots show the result of running random forests with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
 
 In all four figures, the runtime shown in blue shows linear growth as the amount of data increases. As runtime values shown in Figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected.
 
 The score (shown in red) for all four combinations of algorithms and datasets exhibits exponentially growth, rising very rapidly initially before levelling off.
 
-\todo{Also show a 2d plot of rnd forest+mnist with data/trees as appr. params}
+
+\begin{figure}
+\centering
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=50 200 35 205,clip,width=\linewidth]{figures/2d_sample_data1.pdf}
+  \caption{}
+  \label{2d_1}
+\end{subfigure}%
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=50 200 35 205,clip,width=\linewidth]{figures/2d_sample_data2.pdf}
+  \caption{}
+  \label{2d_2}
+\end{subfigure}
+\begin{subfigure}{.33\textwidth}
+  \centering
+  \includegraphics[trim=50 200 35 205,clip,width=\linewidth]{figures/2d_sample_data3.pdf}
+  \caption{}
+  \label{2d_3}
+\end{subfigure}
+\caption{Three different perspectives on the same plot of score data for two dimensions}
+\label{2d}
+\end{figure}
 
 
+Figure \ref{2d} shows a plot of random forests score data for two approximation parameters. The $x$-axis shows the number of decision trees, the $y$-axis the percentage of data used. The shape of the plot suggests a multiplicative relationship between the two parameters.
 
 
 \section{The Exponential Mixture Kernel}
 
 Based on the results shown in the previous section, we implemented a kernel to model the exponential behaviour of classification accuracy. Following \cite{2014arXiv1406.3896S}, we define the kernel as
-% TODO JAMES can this be written as \psi(\lambda)d\lambda ?
+
 \begin{align}
 \kappa(x,x') &= \int_{0}^{\infty} e^{-\lambda x}e^{-\lambda x'}\mu(d\lambda)\\
 &= \int_{0}^{\infty} e^{-\lambda(x+x')}\mu(d\lambda)
@@ -551,7 +537,7 @@ and
 \end{figure}
 
 
-Figure \ref{gammadist} show how the distribution changes as $\psi$ and $\xi$ are varied.
+Figure \ref{gammadist} show how the distribution changes as $\psi$ and $\xi$ are varied. Note how the distributions Figure \ref{gammapsi} have the same shape with a different mean while the shape parameter $\xi$, shown in Figure \ref{gammaxi}, changes the shape of the distribution.
 
 After reparameterisation, the term for our kernel becomes
 \begin{equation}
@@ -571,13 +557,24 @@ Figure \ref{expmix11} shows functions drawn from the exponential mixture kernel.
 
 The score functions shown in the previous section do not normally decay to zero, instead they plateau at values between zero and one. To model this effect, we add a constant function to our exponential mixture kernel as described in the Background chapter.
 
+To model multi-dimensional data with multiple approximation parameters, we model every input dimension with a separate exponential mixture kernel and multiply these kernels together, adding a constant kernel to this product for the reason described in the previous paragraph. To model each dimension with its own kernel, we use GPML's \texttt{covMask} utility kernel that allows masking out arbitrary input dimensions.
+
 \section{Selecting Kernel Hyperparameters} 
 
 
 To achieve a good fit of a Gaussian process to a given set of data points, one needs to find appropriate values for the hyperparameters to its covariance function. There two main ways to do so are marginalisation and optimisation. For reasons explained in the Evaluation chapter, we implement both of these methods in our project.
 
-% TODO this algorithm is "too clever"
-GPML includes an optimisation function called \texttt{minimize} that is meant to be used to optimise kernel hyperparameters. It relies on gradient information, which we implemented for the exponential mixture kernel. We were, however, not able to successfully optimise the hyperparameters to our kernel with this function as the optimisation would terminate after a very small number of steps having moved only slightly from the initial values without having found a minimum. We suspect the reason for this to be numerical instability that creates small amounts of noise and creates tiny local minima that the optimiser is unable to escape from. Figure \todo{NLML plot} shows an example of a marginal likelihood function that we tried to optimise with GPML's \texttt{minimize}.
+GPML includes an optimisation function called \texttt{minimize} that is meant to be used to optimise kernel hyperparameters. It relies on gradient information, which we implemented for the exponential mixture kernel. We were, however, not able to successfully optimise the hyperparameters to our kernel with this function as the optimisation would terminate after a very small number of steps having moved only slightly from the initial values without having found a minimum. We suspect the reason for this to be numerical instability that creates small amounts of noise and creates tiny local minima that the optimiser is unable to escape from. 
+
+Figure \ref{nlmlopt} shows a plot of a marginal likelihood function for data drawn from a Gaussian process prior that we tried to optimise with GPML's \texttt{minimize}. Clearly, this is not a difficult function to optimise in principle.
+
+\begin{figure}
+\centering
+  \centering
+  \includegraphics[trim=60 190 70 190,clip,width=.6\linewidth]{figures/nlml_opt.pdf}
+  \caption{The negative log marginal likelihood of an exponential mixture kernel as a function of $\psi$}
+  \label{nlmlopt}
+\end{figure}
 
 After failing to optimise the hyperparameters to our kernel using the optimisation function included with GPML, we decided to implement a sampling method which does not suffer from the same problems as optimisation. After successfully implementing sampling, we also decided to write our own optimisation routine for reasons of speed and ease of use. Both methods are described in detail in the remainder of this section. An evaluation of the two methods applied to our data can be found in the Evaluation chapter.
 
@@ -600,54 +597,30 @@ This integral does not have an analytic solution and, as such, must be approxima
 p(\mathbf{y}|\mathcal{D}) \approx \sum p(\mathbf{y}|\mathcal{D}, \theta)p(\theta|\mathcal{D}) \Delta\theta
 \end{equation}
 
+% TODO MAYBE explain what sampling is ("sample from distribution")
+
 The main advantage of sampling the hyperparameters is that it does not suffer from overfitting given that the samples are successfully drawn from the posterior distribution. Its major drawback is that it is computationally more expensive than optimisation methods. Implementation wise, sampling also takes more effort than optimisation, as the result of the computations the program executes have to be correctly averaged over.
 
 \subsubsection{Slice sampling}
 
-Slice sampling \cite{MacKay:2002:ITI:971143, neal2003} is a Markov Chain Monte Carlo sampling method. Sampling methods of this type generate samples by constructing a Markov chain that converges to the posterior distribution. The main advantage of slice sampling over other MCMC sampling methods is that it does not require careful tuning of its parameters which makes it particularly easy to use\todo{Add diagram}. Algorithm \ref{slicesampling} shows how slice sampling is implemented.
+Slice sampling \cite{MacKay:2002:ITI:971143, neal2003} is a Markov Chain Monte Carlo (MCMC) sampling method. Sampling methods of this type generate samples by constructing a Markov chain that converges to the posterior distribution. The main advantage of slice sampling over other MCMC sampling methods is that it does not require careful tuning of its parameters which makes it particularly easy to use. 
 
+The general outline of slice sampling given a distribution $f$ from which we want to sample is as follows. We start at a point $x$ and evaluate $y = f(x)$. From the interval $(0, y)$, we uniformly draw a value $u$, the height of the slice that gives slice sampling its name. The next step is to span an interval $(x_l, x_r)$ around $x$. We then draw $x'$ uniformly from this interval and calculate $y' = f(x')$. If $y' > u$, we return $x'$ as a sample. Otherwise we narrow the interval $(x_l, x_r)$ by setting $x'$ to be the new endpoint of the interval on the side of $x$ on which $x'$ falls.
 
-\begin{algorithm}
-\begin{algorithmic}[1]
-\Procedure{Slice\_sampling}{$f, x, iterations, width=1$}
-\State $D\gets \Call{get\_dimensions}{x},\ Samples\gets[\ ]$
-\For{$i\gets 1, iterations$}
-\State $u\gets \Call{Uniform}{0, f(x)}$\Comment{The height of the slice}
-\For{$dim\gets \Call{permute}{D}$}\Comment{Iterate over all dimensions}
-\State $r\gets \Call{Uniform}{0, 1}$
-\State $x_l(dim)\gets x(dim) - r * width$
-\State $x_r(dim)\gets x(dim) + (1 - r) * width$
-\State $attempts\gets 0$
-\Loop
-\State $x'(dim) \gets \Call{Uniform}{x_r(dim), x_l(dim)}$
-\State $y'\gets f(x')$
-\If{$y' > u$}
-  \State $x(dim)\gets x'(dim)$
-  \Break
-\Else
-  \State $attemps \gets attempts + 1$
-  \If{$attempts > 10$}
-    \Break
-  \ElsIf{$x'(dim) > x(dim)$}
-    \State $x_r(dim) \gets x'(dim)$
-  \ElsIf{$x'(dim) < x(dim)$}
-    \State $x_l(dim) \gets x'(dim)$
-  \EndIf
-\EndIf
-\EndLoop
-\EndFor
-\State $\Call{append}{Samples, x}$
-\EndFor
-\EndProcedure
-\end{algorithmic}
-\caption{Multi-dimensional slice sampling}
-\label{slicesampling}
-\end{algorithm}
-\todo{Simplify this, 1D only; add comments}
+Figure \ref{slsamp} shows slice sampling after the height $u$ of the slice has been chosen, the interval $(x_l, x_r)$ has been created and an $x'$ has been drawn from that interval. As $f(x')$ is less than $u$, the next step of execution will shrink the interval by setting $x_r$ to $x'$.
+
+\begin{figure}
+\centering
+  \includegraphics[trim=0 0 0 0,clip,width=\textwidth]{figures/slice_sampling.pdf}
+  \caption{Slice sampling}
+  \label{slsamp}
+\end{figure}
+
 
 
 
 \subsection{Optimisation}
+
 Another approach to find suitable hyperparameters is to optimise the marginal likelihood of the model with respect to its hyperparameters:
 
 \begin{equation}
@@ -719,6 +692,8 @@ While this updated algorithm produces adequate results, it takes substantially l
 
 One shortcoming of this optimisation routine is that all its steps have to be axis aligned. If the gradient of the function being optimised at $x$ is not aligned with any axis, this causes the optimiser to make very small steps along multiple axes. A superior approach would be to directly move along the gradients, which are available to us. This would not be hard to implement because gradient information is available for our kernel. As our current algorithm already performs to a high standard, we did not investigate this potential improvement further.
 
+% TODO cite henning optimisation paper
+
 
 \chapter{Scheduling} 
 \label{ch:scheduling}
@@ -736,10 +711,12 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 
 Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and score of these models makes up the input to tier 2. This second layer first creates meta-models of the time and score of the models in tier 1. These meta-models are then used by the scheduler to select the algorithm and approximation parameters for the next iteration and the process is repeated.
 
-In the implemented program for this project, we focus on the two algorithms described in the Background chapter, random forest and logistic regression. The approximation parameter we use is the percentage of the available data given to the learning algorithm to train\todo{justify this}.
+% TODO JAMES how to justify this?
+In the implemented program for this project, we focus on the two algorithms described in the Background chapter, random forests and logistic regression. The approximation parameter we use is the percentage of the available data given to the learning algorithm to train.
 
 Figure \ref{architecture} shows this architecture diagrammatically for one scheduler after three iterations. In tier 1, the dataset \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {1}}} is used as input for all model creation. The learning process is parameterised by the learning algorithm and the approximation parameters to the algorithm \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {2}}}. The runtime time and score for every iteration are saved \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {3}}} separately for every algorithm.
 
+% TODO explain how there are multiple acquisition functions, maximum of all of them is selected
 In tier 2, this performance data is used to train Gaussian processes \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {4}}}, two each for every algorithm. These Gaussian processes model the time and the score of the algorithms as the approximation parameter is varied. These meta-models form the input to the scheduler \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {5}}} that uses them to make a decision on an algorithm/approximation parameter combination for the next iteration \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {6}}}.
 
 \begin{figure}[ht]
@@ -763,11 +740,11 @@ Note how both tiers execute machine learning algorithms (coloured in red) on dat
     \label{systemexample}
 \end{figure}
 
-Figure \ref{systemexample} shows the program running with three schedulers. Rows one to three are each one instance of the architecture depicted in Figure \ref{architecture}; the plot in row four compares the performance of the three schedulers. For the three running instances, the first column shows runtime information. Logistic regression data is shown in blue while random forest data is shown in red. The dots represent recorded data points, the blue line shows the mean of the model that predicts runtime while the filled area is twice the standard deviation of the model, showing the uncertainty the model has. The scheduler shown in row one does not require models to make decisions and only shows the recorded data points. For schedulers that operate on time budgets, this plot also shows how much time is currently remaining by drawing a black line at the time threshold.
+Figure \ref{systemexample} shows the program running with three schedulers. Rows one to three are each one instance of the architecture depicted in Figure \ref{architecture}; the plot in row four compares the performance of the three schedulers. For the three running instances, the first column shows runtime information. Logistic regression data is shown in blue while random forests data is shown in red. The dots represent recorded data points, the blue line shows the mean of the model that predicts runtime while the filled area is twice the standard deviation of the model, showing the uncertainty the model has. The scheduler shown in row one does not require models to make decisions and only shows the recorded data points. For schedulers that operate on time budgets, this plot also shows how much time is currently remaining by drawing a black line at the time threshold.
 
 The plot in the second column shows the score data and model in the same way the time information is drawn. Additionally, for schedulers that model time and score (the second and third in the example), the acquisition functions for both algorithm is shown as dashed line. The precise shape of these functions depends on the strategy the scheduler uses to make decision. 
 
-The third row contains plots of the time against the score function as a point cloud for logistic regression (blue) and random forest (red). These point clouds are created by drawing 100 points each from the time and score model and plotting one against the other. Again, these plots are only computed for schedulers that model performance data.
+The third row contains plots of the time against the score function as a point cloud for logistic regression (blue) and random forests (red). These point clouds are created by drawing 100 points each from the time and score model and plotting one against the other. Again, these plots are only computed for schedulers that model performance data.
 
 
 
@@ -792,7 +769,6 @@ Choosing Matlab to implement the performance modelling code and Python to implem
 To start the program, the \texttt{main.py} file is executed. This file then calls the Matlab script that contains modelling code whenever it has collected new data and needs to update one of its performance models. Data is transferred between the Python and the Matlab scripts by writing it to \texttt{json} files\footnote{JSON is a widespread data format similar to XML.} in the \texttt{var/} directory.  Before the Matlab script is executed, \texttt{main.py} writes the recorded performances of the algorithm for which it has just updated its data to \texttt{var/scheduler\_data.json}. This file contains a JSON object with the fields \texttt{x\_percent\_data}, \texttt{y\_times} and \texttt{y\_scores} which hold the data collected so far.
 
 Once it has finished modelling, the Matlab script writes the models to \texttt{var/models.json} and terminates. This file contains an array of model objects. These models are represented as 100 equally spaced data points between 0\% and 100 \% of available data. They each have an \texttt{m} and an \texttt{sd} field for the mean and standard deviation respectively. This file is then read by \texttt{main.py} and the old models are overwritten with the updated ones.
-
 
 
 \section{Implemented Schedulers}
@@ -855,29 +831,17 @@ After using up the time allotted for exploration, this scheduler uses the second
 
 
 \chapter{Evaluation}
-\label{ch:evaluation}
-% TODO point cloud/graph that shows that one is better at first, then the other (for data vs score and time vs score)
+% TODO END add "recall that"
+
 \textit{This chapter describes the results of our project and evaluates the system we built. It also lists challenges that we faced during its development and limitations it currently has.}
 
 
 
-% TODO hinge: show plots where it occurs early and has little impact on modelling
 
-% TODO evaluate kernel (model evidence etc)
-% TODO for 2d: plot variance
- 
-% TODO optimisation is faster and produces only one mean/sd, easier to use
-% using the \texttt{checkgrad.m}
-% compare optimisation/sampling adv/disadv
-% TODO rasmussen: local maxima correspond to a particular interpretation of the data
-
-
-
-
-\section{Data Sources}
+\section{Datasets}
 The first set of datasets we used was created synthetically using scikit-learn's \texttt{make\_classification} function. This function takes a number of parameters that define the dataset, such as the number of samples, the number of features and the number of classes and creates data according to these parameters. 
 
-This fine grained control over the properties of the datasets was very valuable to us, as it allowed us to see how our system handles datasets of different nature. We wrote a small script\footnote{Saved at \texttt{src/data\_handling/dataset\_creator.py}} to enable us to quickly create datasets and see how logistic regression and random forest perform on subsets of these datasets.
+This fine grained control over the properties of the datasets was very valuable to us, as it allowed us to see how our system handles datasets of different nature. We wrote a small script\footnote{Saved at \texttt{src/data\_handling/dataset\_creator.py}} to enable us to quickly create datasets and see how logistic regression and random forests perform on subsets of these datasets.
 
 
 A second set of datasets was drawn from the list of datasets that were used in the development of Auto-WEKA as mentioned in the Related Work chapter. The authors of Auto-WEKA made the datasets used to test Auto-WEKA available on their website\footnote{They can be downloaded at http://www.cs.ubc.ca/labs/beta/Projects/autoweka/datasets/}.
@@ -885,11 +849,12 @@ A second set of datasets was drawn from the list of datasets that were used in t
 
 These datasets originally came from other sources \cite{Lichman:2013, Larochelle:2007:EED:1273496.1273556, Krizhevsky09learningmultiple} and were converted by the Auto-WEKA creators to WEKA's own data format, the Attribute-Relation File Format (\texttt{arff}). This made it very convenient for us to use these datasets as they are originally in a wide range of differing data formats and would have had to have individual import routines written for them. 
 
-Besides converting them to the \texttt{arff} format, the authors of the Auto-WEKA paper also split them up in a training and a test set. As we described in the Implementation chapter, we implement k-fold cross-validation and therefore needed all the data in a single file. To achieve this, a small ruby script\footnote{Saved at \texttt{src/data\_handling/utils/append\_arff\_files.rb}} was written to merge the \texttt{train.arff} and \texttt{test.arff} files for each dataset. Figure \ref{datasets_info} lists the names and sizes of these datasets.
+Besides converting them to the \texttt{arff} format, the authors of the Auto-WEKA paper also split them up in a training and a test set. As we described in the Implementation chapter, we implement k-fold cross-validation and therefore needed all the data in a single file. To achieve this, a small ruby script\footnote{Saved at \texttt{src/data\_handling/utils/append\_arff\_files.rb}} was written to merge the \texttt{train.arff} and \texttt{test.arff} files for each dataset. Table \ref{datasets_info} lists the names and sizes of these datasets.
 
 
-\begin{figure}
+\begin{table}
 \centering
+
 
 \begin{tabular}{|l|l|l|l|}
 \hline
@@ -897,23 +862,26 @@ Dataset          & \# samples & \# features & \# classes \\ \hline\hline
 Abalone          & 4177       & 8           & 28         \\ \hline
 Amazon           & 1500       & 10000       & 50         \\ \hline
 Car              & 1728       & 6           & 4          \\ \hline
-Cifar10          & 60000      & 3072        & 10         \\ \hline
-Cifar10small     & 20000      & 3072        & 10         \\ \hline
 Germancredit     & 1000       & 20          & 2          \\ \hline
 Krvskp           & 3196       & 36          & 2          \\ \hline
 Madelon          & 2600       & 500         & 2          \\ \hline
-MNIST            & 62000      & 784         & 10         \\ \hline
 Semeion          & 1593       & 256         & 10         \\ \hline
 Shuttle          & 58000      & 9           & 7          \\ \hline
 Waveform         & 5000       & 40          & 3          \\ \hline
 Winequalitywhite & 4898       & 11          & 7          \\ \hline
-Yeast            & 1484       & 8           & 10         \\ \hline
+Yeast            & 1484       & 8           & 10         \\ \hline\hline
+MNIST            & 62000      & 784         & 10         \\ \hline
+%Cifar10small     & 20000      & 3072        & 10         \\ \hline
+Synthetic1            & 10000       & 500           & 2         \\ \hline
+Synthetic2            & 10000       & 1000           & 2         \\ \hline
+Synthetic3            & 20000       & 1500           & 2         \\ \hline
+Synthetic4            & 40000       & 2000           & 2         \\ \hline
 \end{tabular}
 
-\caption{Datasets used for evaluation}
+\caption{Datasets used for evaluation with large datasets shown at the bottom}
 \label{datasets_info}
 
-\end{figure}
+\end{table}
 
 
 While some of the datasets in this collection are entirely numerical, some have textual features while still others have a mixture of strings and numbers as features. An example of this is the \texttt{germancredit} dataset, which has a feature \texttt{credit\_history} with possible values such as \texttt{"all paid"} and \texttt{"critical/other existing credit"}. It also has a feature called \texttt{age} that is of type integer.
@@ -923,79 +891,102 @@ When using these datasets, we load the \texttt{arff} files using SciPy's \texttt
 
 This encoding expands every feature of type string with $n$ possible values into $n$ boolean typed features. This means that a feature such as \texttt{other\_payment\_plans}, also taken from the \texttt{germancredit} dataset, with possible values \texttt{bank}, \texttt{stores} and \texttt{none} is converted to three separate features, \texttt{other\_payment\_plans=bank}, \texttt{other\_payment\_plans=stores} and \texttt{other\_payment\_plans=none}. For every sample in the dataset, one of these features is be set to $1$ and all others to $0$, according to the value of \texttt{other\_payment\_plans}.
 
-%A second issue we faced when using the Auto-WEKA datasets is that the \texttt{arff} file format allows are sparse encoding for datasets that mostly contain zeros. Other datasets contain samples with missing values. SciPy's \texttt{loadarff} routine is not currently able to open either of these two types of \texttt{arff} files these files.
-
 
 \section{Model Comparison}
 In this section, we assess the quality of the fits to score data our exponential mixture kernel achieves. We do so by comparing the marginal likelihoods of the models it generates to those of a kernel that encodes weaker prior knowledge about the shape of the data, the squared exponential kernel.
 
-% TODO JAMES should this be the nlml of the predictions or only the fit to the data
-% TODO also test fit of linear kernel
+
+
 
 %\subsection{In one Dimension}
-% TODO add some synthetic data to these experiments
+
+
+
+% TODO JAMES linear kernel fits don't work
+
+\begin{table}
+\centering
+	\begin{tabular}{|l|l|l|l|}
+\hline
+Dataset          & Exp. mixture nlml & Squared exp. nlml & Bayes factor \\ \hline\hline
+Abalone          & \textbf{-37.984}  & -34.138  & 3.846         \\ \hline
+Amazon           & \textbf{-24.641}  & -21.769  & 2.872         \\ \hline
+Car              & \textbf{-30.685}  & -25.251  & 5.434         \\ \hline
+Germancredit     & \textbf{-27.806}  & -23.858  & 3.948         \\ \hline
+Krvskp           & \textbf{-33.710}  & -30.226  & 3.484         \\ \hline
+Madelon          & -24.786           & \textbf{-25.212} & -0.426  \\ \hline
+Semeion          & \textbf{-32.969}  & -27.234  & 5.735         \\ \hline
+Shuttle          & \textbf{-45.728}  & -44.317  & 1.411         \\ \hline
+Waveform         & \textbf{-38.294}  & -27.317  & 10.977        \\ \hline
+Winequalitywhite & \textbf{-34.842}  & -32.331  & 2.511         \\ \hline
+Yeast            & -28.428           & \textbf{-28.676} & -0.248  \\ \hline\hline
+MNIST            & \textbf{-46.028}  & -37.350  & 8.678         \\ \hline
+Synthetic1       & \textbf{-30.107}  & -11.668  & 18.439        \\ \hline
+Synthetic2       & \textbf{-24.622}  & -11.661  & 12.961        \\ \hline
+Synthetic3       & \textbf{-19.479}  & -15.978  & 3.5014        \\ \hline
+Synthetic4       & \textbf{-16.761}  & -7.059   & 9.702         \\ \hline
+\end{tabular}
+
+	\caption{The negative log marginal likelihoods of fitting an exponential mixture kernel and a squared exponential kernel to logistic regression score data}
+\label{log_reg_fits}
+\end{table}
+
+
+\begin{table}
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+Dataset          & Exp. mixture nlml & Squared exp. nlml & Bayes factor \\ \hline\hline
+Abalone          & -                 & -       & -              \\ \hline
+Amazon           & \textbf{-20.737}  & -18.355 & 2.382          \\ \hline
+Car              & \textbf{-27.436}  & -24.440 & 2.996          \\ \hline
+Germancredit     & \textbf{-24.955}  & -23.857 & 1.098          \\ \hline
+Krvskp           & \textbf{-35.775}  & -27.289 & 8.486          \\ \hline
+Madelon          & \textbf{-24.589}  & -23.921 & 0.668          \\ \hline
+Semeion          & \textbf{-22.272}  & -18.516 & 3.756          \\ \hline
+Shuttle          & \textbf{-50.859}  & -47.183 & 3.676          \\ \hline
+Waveform         & \textbf{-32.038}  & -27.309 & 4.729          \\ \hline
+Winequalitywhite & \textbf{-27.074}  & -24.302 & 2.772          \\ \hline
+Yeast            & \textbf{-24.474}  & -23.146 & 1.328          \\ \hline\hline
+MNIST            & \textbf{-41.603}  & -30.850 & 10.753         \\ \hline
+Synthetic1       & \textbf{-25.364}  & -13.954 & 11.41          \\ \hline
+Synthetic2       & \textbf{-25.224}  & -14.714 & 10.511         \\ \hline
+Synthetic3       & \textbf{-20.865}  & -15.708 & 5.158          \\ \hline
+Synthetic4       & \textbf{-22.73}   & -10.559 & 12.171         \\ \hline
+\end{tabular}
+	\caption{The negative log marginal likelihoods of fitting an exponential mixture kernel and a squared exponential kernel to random forests score data}
+\label{rnd_forest_fits}
+\end{table}
+
+Tables \ref{log_reg_fits} and \ref{rnd_forest_fits} show negative log marginal likelihoods  of fits to data percentage by score data for our test datasets. We compare the negative log marginal likelihoods of a squared exponential kernel with our exponential mixture kernel. As described in the Background chapter, the squared exponential kernel only encodes a smoothness prior and is commonly used as a baseline against kernels that encode stronger priors.
+
+For the negative log marginal likelihood, smaller values indicate a better fit. To compare the marginal likelihoods for the two kernels, we compute the Bayes factor as the quotient of the two marginal likelihoods. Since our marginal likelihoods are expressed in logspace, this is equal to the difference between the values for each kernel. The Bayes factor is to be interpreted as a measure of how much better one model is than the other. Greater values for the Bayes factor are better in our case, as they express a better fit for the exponential mixture kernel.
+
+In tables \ref{log_reg_fits} and \ref{rnd_forest_fits}, we have grouped our datasets into small and large datasets, separated by a double line. As can be seen from inspecting the tables, the Bayes factors for the large datasets are substantially larger than those for smaller datasets. This is due to the fact that the score data for small datasets tends to be much more noisy than for large datasets were learning takes a substantial amount of time.
+
+Figure \ref{madelon_logreg_fit} shows the two fits for the madelon dataset and random forests score data with the squared exponential kernel in blue and the exponential mixture kernel in red. The data, shown as black crosses, is so noisy, that the optimiser was not able to find a sensible fit using the exponential mixture kernel.
 
 \begin{figure}
 \centering
-% TODO explain yeast
-	\begin{tabular}{|l|l|l|}
-\hline
-Dataset          & Exp. mixture nlml & Squared exp. nlml \\ \hline\hline
-Abalone          & \textbf{-37.984}  & -34.138           \\ \hline
-Amazon           & \textbf{-24.641}  & -21.769           \\ \hline
-Car              & \textbf{-30.685}  & -25.251           \\ \hline
-Germancredit     & \textbf{-27.806}  & -23.858           \\ \hline
-Krvskp           & \textbf{-33.710}  & -30.226           \\ \hline
-Madelon          & -24.786           & \textbf{-25.212}  \\ \hline
-MNIST            & \textbf{-46.028}  & -37.350           \\ \hline
-Semeion          & \textbf{-32.969}  & -27.234           \\ \hline
-Shuttle          & \textbf{-45.728}  & -44.317           \\ \hline
-Waveform         & \textbf{-38.294}  & -27.317           \\ \hline
-Winequalitywhite & \textbf{-34.842}  & -32.331           \\ \hline
-Yeast            & -28.428           & \textbf{-28.676}  \\ \hline
-\end{tabular}
-
-	\caption{The negative log marginal likelihoods of fitting an exponential mixture kernel and a squared exponential kernel to logistic regression score data. Less is better.}
-\label{rnd_forest_fits}
-
+  \includegraphics[trim=50 200 50 200,clip,frame,width=.6\textwidth]{figures/madelon_logreg_fit.pdf}
+  \caption{Fits for the madelon logistic regression score data}
+  \label{madelon_logreg_fit}
 \end{figure}
 
+Figure \ref{synth3_rndforest_fit} shows the two fits for the Synthetic3 dataset, where the exponential mixture kernel, again shown in red, achieves a much better fit than the squared exponential kernel. For $x$ values that lie beyond the datapoints available, the exponential mixture kernel makes confident predictions that conform to our expectation of having reached a plateau.
 
 \begin{figure}
 \centering
-
-\begin{tabular}{|l|l|l|}
-\hline
-Dataset          & Exp. mixture nlml & Squared exp. nlml \\ \hline\hline
-Abalone          & -                 & -                 \\ \hline
-Amazon           & \textbf{-20.737}  & -18.355           \\ \hline
-Car              & \textbf{-27.436}  & -24.440           \\ \hline
-Germancredit     & \textbf{-24.955}  & -23.857           \\ \hline
-Krvskp           & \textbf{-35.775}  & -27.289           \\ \hline
-Madelon          & \textbf{-24.589}  & -23.921           \\ \hline
-MNIST            & \textbf{-41.603}  & -30.850           \\ \hline
-Semeion          & \textbf{-22.272}  & -18.516           \\ \hline
-Shuttle          & \textbf{-50.859}  & -47.183           \\ \hline
-Waveform         & \textbf{-32.038}  & -27.309           \\ \hline
-Winequalitywhite & \textbf{-27.074}  & -24.302           \\ \hline
-Yeast            & \textbf{-24.474}  & -23.146           \\ \hline
-\end{tabular}
-	\caption{The negative log marginal likelihoods of fitting an exponential mixture kernel and a squared exponential kernel to random forest score data. Less is better.}
-\label{rnd_forest_fits}
-
+  \includegraphics[trim=50 200 50 200,clip,frame,width=.6\textwidth]{figures/synth3_rndforest_fit.pdf}
+  \caption{Fits for the Synthetic3 logistic regression score data}
+  \label{synth3_rndforest_fit}
 \end{figure}
 
-\todo{run significance tests}
-% TODO how to talk about/deal with log scale?
+Our results show that the exponential mixture kernel is an appropriate choice to model the score data for large datasets where it achieves a substantially better fit than the squared exponential kernel. We don't consider the weaker performance of our kernel on score data for small datasets a significant weakness. The reason for this is that the problems that we attempt to make a contribution towards solving with this problem, approximateness trade-offs when learning, do not arise when there is little data. In these cases, it is normally feasible to simply use all the available data, as doing so will only take very little time.
 
-These results show that the exponential mixture kernel is an appropriate choice to model the score data we see in our experiments.
-
-% TODO MAYBE add this
+% TODO JAMES include this?
 %\subsection{In two Dimensions}
 
-
-% TODO how much variance gets explained
-% TODO show and discuss plots
 
 \section{The Exponential Mixture Kernel}
 
@@ -1025,7 +1016,6 @@ Although this solved the issue of overfitting on too little data, sampling hyper
 \label{kernel_issues_big1}
 \end{figure}
 
-
 \begin{figure}
 \centering
   \includegraphics[trim=540 710 500 75,clip,width=\textwidth]{figures/kernel_issues3.pdf}
@@ -1033,23 +1023,20 @@ Although this solved the issue of overfitting on too little data, sampling hyper
   \label{kernel_issues3}
 \end{figure}
 
-\todo{add sampling example plot}
-
-
 As our program has to be able to handle both samples and single results returned by optimisation, we treat the result of our optimisation routine as a single sample in the routines that make use of our model. This makes it completely transparent to these routines which of the two hyperparameter selection methods were used and enables us to switch between them according to the requirements of the schedulers.
 
+\begin{figure}
+\centering
+  \includegraphics[trim=540 360 493 370,clip,width=\textwidth]{figures/sampling_example.pdf}
+  \caption{An example of models with sampled hyperparameters}
+  \label{sampling_example}
+\end{figure}
 
-%\subsection{Unexpected behaviour}
-% TODO MAYBE mention kernel "cliffs"
-
+Figure \ref{sampling_example} shows models that are obtained by sampling hyperparameters. Every solid red and blue line is the mean of one model. To compute the red acquisition function for random forest, the acquisition functions for all red models are computed and averaged over. The same is done for logistic regression.
 
 \section{Scheduling Results}
-% TODO finish this section
-
-% TODO show case where one function is better initially but then gets overtaken
 
 \subsection{Scheduler Behaviour}
-% TODO add recall...s to this section
 
 \subsubsection{\texttt{FixedSequenceScheduler}}
 \begin{figure}
@@ -1063,8 +1050,6 @@ Figure \ref{fixedsequenceexample} shows a \texttt{FixedSequenceScheduler} with a
 
 This scheduler does not model performance data and does not adjust its decisions during the course of its execution.
 
-% TODO END explain and distinguish score, performance, accuracy, time, error early on
-% TODO explain how there are multiple acquisition functions, maximum of all of them is selected
 
 \subsubsection{\texttt{ProbabilityOfImprovementScheduler}}
 \begin{figure}
@@ -1074,7 +1059,7 @@ This scheduler does not model performance data and does not adjust its decisions
   \label{sched:probofimpr1}
 \end{figure}
 
-The \texttt{ProbabilityOfImprovementScheduler} tends to be conservative in exploring the function. Figure \ref{sched:probofimpr1} shows the score models and the acquisition functions for both algorithms as dashed lines. Although it models logistic regression to have a higher score for all $x$ values, it is less sure about how the score of this algorithm changes as $x$ grows. Consequently, it will create a random forest model next.
+The \texttt{ProbabilityOfImprovementScheduler} tends to be conservative in exploring the function. Figure \ref{sched:probofimpr1} shows the score models and the acquisition functions for both algorithms as dashed lines. Although it models logistic regression to have a higher score for all $x$ values, it is less sure about how the score of this algorithm changes as $x$ grows. Consequently, it will create a random forests model next.
 
 Although the uncertainty about the performance of random forests does not change by much for larger $x$ values, as it does for logistic regression, the probability of improvement acquisition function for random forests has its maximum at about 0.25 and decreases for larger values than that. This is due to the fact that the probability of improvement scheduler does not consider the magnitude of the increase over the current best value.
 
@@ -1086,7 +1071,7 @@ Although the uncertainty about the performance of random forests does not change
   \label{sched:probofimpr2}
 \end{figure}
 
-Figure \ref{sched:probofimpr2} shows a situation similar to the one shown in Figure \ref{sched:probofimpr1} with the difference that the uncertainty is roughly equal for both algorithms. The acquisition functions behave accordingly with the acquisition function for random forest being lower because it is less likely to improve over the current maximum $y$ which was achieved by logistic regression.
+Figure \ref{sched:probofimpr2} shows a situation similar to the one shown in Figure \ref{sched:probofimpr1} with the difference that the uncertainty is roughly equal for both algorithms. The acquisition functions behave accordingly with the acquisition function for random forests being lower because it is less likely to improve over the current maximum $y$ which was achieved by logistic regression.
 
 \begin{figure}
 \centering
@@ -1102,7 +1087,7 @@ In Figure \ref{sched:probofimpr3}, we see the final state of a probability of im
 Although the purpose of this scheduler in our program is to function as a superclass for more complex schedulers, it is nevertheless necessary to study its behaviour to understand these more complex schedulers.
 
 
-Figure \ref{sched:expimpr01} shows typical acquisition functions for the \texttt{ExpectedImprovementScheduler}. Recall that the expected improvement strategy automatically balances exploration and exploitation, and that both, a high mean and a high variance increase the value of the acquisition function. Figure \ref{sched:expimpr01} demonstrates this effect: while the mean of both meta models for $x$ values greater than about 0.4 are almost equal, the expected improvement for random forest overtakes the one for logistic regression because its variance is greater.
+Figure \ref{sched:expimpr01} shows typical acquisition functions for the \texttt{ExpectedImprovementScheduler}. Recall that the expected improvement strategy automatically balances exploration and exploitation, and that both, a high mean and a high variance increase the value of the acquisition function. Figure \ref{sched:expimpr01} demonstrates this effect: while the mean of both meta models for $x$ values greater than about 0.4 are almost equal, the expected improvement for random forests overtakes the one for logistic regression because its variance is greater.
 
 \begin{figure}
 \centering
@@ -1127,9 +1112,8 @@ The \texttt{ExpectedImprovementPerTimeScheduler} is a slight variation of the \t
 % TODO emphasize that these are the two truly new schedulers, anytime & contract
 % TODO mention that some schedulers trim their acquisition functions while others dont
 \subsubsection{\texttt{ExpectedImprovementTimesProbOfSuccessScheduler}}
-% TODO say what this scheduler is for (anytime)
 
-This is one of two schedulers that expect to be given a time budget during initialisation. Figure \ref{sched:expimprpertime01} shows the state of the scheduler with one second to spend after the burn-in phase has finishd. This time limit is marked on the left plot. As can be seen on that plot, the probability that creating a random forest model with more than about 10\% of data will finish in time is extremely low. Consequently, the acquisition function for random forest is essentially flat and not visible in the right plot.
+This is one of two schedulers that expect to be given a time budget during initialisation. Figure \ref{sched:expimprpertime01} shows the state of the scheduler with one second to spend after the burn-in phase has finishd. This time limit is marked on the left plot. As can be seen on that plot, the probability that creating a random forests model with more than about 10\% of data will finish in time is extremely low. Consequently, the acquisition function for random forests is essentially flat and not visible in the right plot.
 
 \begin{figure}
 \centering
@@ -1150,7 +1134,6 @@ The acquisition function of logistic regression algorithm with its peak around 0
 Figure \ref{sched:expimprpertime02} shows the \texttt{ExpectedImprovementTimesProbOfSuccessScheduler} at a later stage of execution. Logistic regression models have been created with several subsets of the data and the scheduler does not expect much improvement by creating another logistic regression model. It has about 12 seconds to spend on random forest. The runtime for this algorithm exceeds this limit for $x$ values close to 1, which is reflected in the sharp drop off in the acquisition function on the right at around an $x$ value of$0.9$.
 
 \subsubsection{\texttt{MinimeseUncertaintyThenExploitScheduler}}
-% TODO say what this scheduler is for (contract)
 
 The \texttt{MinimeseUncertaintyThenExploitScheduler} is the second scheduler implemented in this project that operates on a time budget. Recall that it functions in two stages, exploration and exploitation, that are each allocated time during initialisation.
 
@@ -1159,7 +1142,7 @@ Figure \ref{sched:exp_then_exp1} shows the scheduler shortly after the burn-in p
 % TODO explain why you sample
 % Recall that the means of the sampled meta-models are irrelevant during the exploration phase of the \texttt{MinimeseUncertaintyThenExploitScheduler} and decisions are made solely on the amount of variance at a certain point.
 
-In Figure \ref{sched:exp_then_exp1}, random forest has, on average, higher variance in its models than the blue algorithm. It also takes longer to evaluate, however, which causes its acquisition function to have smaller values as the scheduler computes it as $\sigma/\text{time} \cdot \text{probability of success}$. Note how the acquisition functions for both algorithms sharply drop off as the projected time crosses the current time budget of about 9 seconds. This point is reached for random forest at 0.1 and at 0.2 for logistic regression.
+In Figure \ref{sched:exp_then_exp1}, random forests has, on average, higher variance in its models than the blue algorithm. It also takes longer to evaluate, however, which causes its acquisition function to have smaller values as the scheduler computes it as $\sigma/\text{time} \cdot \text{probability of success}$. Note how the acquisition functions for both algorithms sharply drop off as the projected time crosses the current time budget of about 9 seconds. This point is reached for random forests at 0.1 and at 0.2 for logistic regression.
 
 
 
@@ -1170,7 +1153,7 @@ In Figure \ref{sched:exp_then_exp1}, random forest has, on average, higher varia
   \label{sched:exp_then_exp1}
 \end{figure}
 
-Figure \ref{sched:exp_then_exp2} shows the scheduler at the next iteration. A logistic regression model has been trained with about 8\% of the data. The decrease in variance around this point is clearly visible in the blue acquisition function which has a valley around this point. Now, the large variance of the random forest model causes the red acquisition function to dominate, even though it very quickly drops of as the predicted runtime for random forest exceeds the remaining exploration time of about seven seconds.
+Figure \ref{sched:exp_then_exp2} shows the scheduler at the next iteration. A logistic regression model has been trained with about 8\% of the data. The decrease in variance around this point is clearly visible in the blue acquisition function which has a valley around this point. Now, the large variance of the random forests model causes the red acquisition function to dominate, even though it very quickly drops of as the predicted runtime for random forests exceeds the remaining exploration time of about seven seconds.
 
 \begin{figure}
 \centering
@@ -1179,10 +1162,10 @@ Figure \ref{sched:exp_then_exp2} shows the scheduler at the next iteration. A lo
   \label{sched:exp_then_exp2}
 \end{figure}
 
-% TODO make an example where the time limit doesn't get exceeded
-In Figure \ref{sched:exp_then_exp3}, the scheduler has created a random forest model at the point where the red acquisition function shown in Figure \ref{sched:exp_then_exp2} has its maximum. This required all the remaining exploration time and the scheduler has now switched to the exploration phase. This is reflected in the remaining time which has been set to 30 seconds. Using this time, the scheduler tries to create the best model it can using its time budget, calculated as the score mean times the probability of success.
 
-The acquisition functions for both logistic regression and random forest reflect the mean of the means of the sampled score models until the predicted time exceeds 30 seconds and the probability of success quickly goes to zero. The scheduler predicts the best model to be a random forest model created with about 23\% of the available data.
+In Figure \ref{sched:exp_then_exp3}, the scheduler has created a random forests model at the point where the red acquisition function shown in Figure \ref{sched:exp_then_exp2} has its maximum. This required all the remaining exploration time and the scheduler has now switched to the exploration phase. This is reflected in the remaining time which has been set to 30 seconds. Using this time, the scheduler tries to create the best model it can using its time budget, calculated as the score mean times the probability of success.
+
+The acquisition functions for both logistic regression and random forests reflect the mean of the means of the sampled score models until the predicted time exceeds 30 seconds and the probability of success quickly goes to zero. The scheduler predicts the best model to be a random forests model created with about 23\% of the available data.
 
 \begin{figure}
 \centering
@@ -1191,25 +1174,83 @@ The acquisition functions for both logistic regression and random forest reflect
   \label{sched:exp_then_exp3}
 \end{figure}
 
-Figure \ref{sched:exp_then_exp4} shows the final result of running the \texttt{MinimeseUncertaintyThenExploitScheduler}. % TODO the time prediction was slightly inaccurate as the previous red point shows that now lies under the mean (not like before). talk about how cool this result is.
 
-\begin{figure}
-\centering
-  \includegraphics[trim=140 710 493 55,clip,width=\textwidth]{figures/exp_then_exp4.pdf}
-  \caption{The \texttt{MinimeseUncertaintyThenExploitScheduler} after finishing exploiting}
-  \label{sched:exp_then_exp4}
-\end{figure}
 
-\subsection{Scheduler Evaluation}
+\subsection{Scheduler Performance}
+In this section, we evaluate the heuristics for the two approximation trade-off goals described in the introduction to this report: anytime and contract algorithms.
+
 
 \subsubsection{Anytime algorithms}
 
+\begin{figure}
+\centering
+  \includegraphics[trim=0 0 0 0,clip,width=.6\textwidth]{figures/constructed_dataset_anytime.pdf}
+  \caption{Score data for one of the datasets used to test the anytime heuristic}
+  \label{constructed_dataset_anytime}
+\end{figure}
+
+Figure \ref{constructed_dataset_anytime} shows score data for a synthetic dataset with 7500 samples, 120 features and 6 classes. This dataset hat the interesting property that while a random forests model on the full data achieves a higher score than a logistic regression model, if we restrict ourselves to 50\% or less of the samples, logistic regression beats random forests.
+
+
+\begin{figure}
+\centering
+  \includegraphics[trim=110 50 895 650,clip,width=.6\textwidth]{figures/anytime2.pdf}
+  \caption{The highest score over time for two schedulers}
+  \label{anytime2}
+\end{figure}
+
+
+
+Figure \ref{anytime2} compares our anytime heuristic, the \texttt{ExpectedImprovementTimesProbOfSuccessScheduler}, against a baseline of a \texttt{FixedSequenceScheduler} for this dataset. After the burn in period ends after about 25 seconds, the \texttt{ExpectedImprovementTimesProbOfSuccessScheduler} immediately constructs much better models than the \texttt{FixedSequenceScheduler}. Eventually, both schedulers reach 100\% of data with both random forests and logistic regression, at which point they achieve the same score\footnote{In Figure \ref{anytime2}, the last model the \texttt{FixedSequenceScheduler} scheduler creates is slightly better than that of the \texttt{ExpectedImprovementTimesProbOfSuccessScheduler}. This is due to variance in random forests models.}
+
+
+
+
 \subsubsection{Contract algorithms}
 
+We reuse the dataset shown in Figure \ref{constructed_dataset_anytime} to test our contract heuristic, using only 5000 of the 7500 samples, however, which moves the point at which random forests overtake logistic regression to about 65\% of data.
+
+We first test our contract heuristic in form of the \texttt{MinimeseUncertaintyThenExploitScheduler} with an exploration time budget of 5 seconds and an exploitation time budget of 12 seconds on the dataset shown in Figure \ref{constructed_dataset_anytime}. After finishing exploring, it has reached the state shown in Figure \ref{explexlp0_1}. The acquisition functions shown on the right plot form the basis for the decision it faces next: where to spend its exploitation time. The heuristic predicts that at 80\% of data, a random forests model will be better than the logistic regression model it created in the last iteration.
+
+\begin{figure}
+\centering
+  \includegraphics[trim=120 510 500 40,clip,width=\textwidth]{figures/explexlp0_1.pdf}
+  \caption{The \texttt{MinimeseUncertaintyThenExploitScheduler} after finishing exploring}
+  \label{explexlp0_1}
+\end{figure}
+
+The final state of the scheduler is shown in Figure \ref{explexlp0}. 
 
 
-% TODO MAYBE write this
-%\section{Limitations}
+\begin{figure}
+\centering
+  \includegraphics[trim=120 510 500 40,clip,width=\textwidth]{figures/explexlp0.pdf}
+  \caption{The \texttt{MinimeseUncertaintyThenExploitScheduler} after finishing exploiting}
+  \label{explexlp0}
+\end{figure}
+
+
+Figure \ref{explexlp1} shows the final state of running a \texttt{MinimeseUncertaintyThenExploitScheduler} on a synthetic dataset with $50,000$ samples, $80$ features and $5$ classes, giving it 30 seconds to explore and 60 seconds to exploit. It chose to spend its exploitation time budget on constructing a random forests model with about 40\% of the available data. It correctly predicted the time it would take to build this model based on the runtime meta-model it constructed during the exploration phase. This can be seen on the left plot with the right dot at $x=0.4$ marking the final model having taken exactly one minute to build.
+
+\begin{figure}
+\centering
+  \includegraphics[trim=140 495 493 297,clip,width=\textwidth]{figures/explexlp1.pdf}
+  \caption{The \texttt{MinimeseUncertaintyThenExploitScheduler} after finishing exploiting}
+  \label{explexlp1}
+\end{figure}
+
+
+
+Although our anytime and contract heuristics have limitations which we describe in the next section, they still perform to a high standard. The results described above would be difficult to reproduce by hand for a human expert.
+
+\subsection{Limitations}
+The main limitation of our current heuristics is that they are one-step greedy algorithms. This means that at every step, they greedily maximise the gain they can achieve with their next decision. An optimal strategy, however, would think ahead and consider the state of the world given the possible outcomes of the current and all subsequent decisions. These possible future outcomes would then influence the behaviour of the scheduler at the next decision. 
+
+% TODO mention bandits, cite paper;
+% JAMES is it correct that the contract heuristic could then automatically balance expl/expl? what about anytime
+
+Considering all these potential states exhaustively is an entirely infeasible problem. We return to this problem when suggesting future work based on the results of this project in the next chapter.
+
 
 
 \section{Challenges}
@@ -1217,18 +1258,13 @@ One challenge we faced during the course of this problem resulted from our choic
 
 Matlab, on the other side of our interoperability structure, is clearly not very well suited for reading and writing JSON data. Currently, we have to append an empty cell array to a Matlab array that contains only one element when exporting it to prevent it from being exported as an individual object. This is an unsatisfying workaround to which the only true solution is to rewrite the Matlab code in Python.
 
-Implementing the gradients of the hyperparameters to our kernel also proved to be challenging. Even though we are not currently using them, we originally assumed we would use GPML's optimisation function which relies on gradient information. To test our gradient implementation and ensure its correctness, we used a script provided by the creators of GPML that checks kernel gradients\footnote{This script can be downloaded at http://learning.eng.cam.ac.uk/carl/code/minimize/checkgrad.m}. % TODO maybe stress that they are correct
-
-%The difficulty of implementing them was compounded by the facts that kernels receive parameters in log space and that we reparameterised our kernel which made the derivative terms more complex.
+Implementing the gradients of the hyperparameters to our kernel also proved to be challenging. Even though we are not currently using them, we originally assumed we would use GPML's optimisation function which relies on gradient information. To test our gradient implementation and ensure its correctness, we used a script provided by the creators of GPML that checks kernel gradients\footnote{This script can be downloaded at http://learning.eng.cam.ac.uk/carl/code/minimize/checkgrad.m}. Although they are not currently used in our system, they are available for further development.
 
 Another challenge we encountered during data collection for this project were unexplainable changepoints in the linear growth of the runtime. Figure \ref{time_hinge} shows examples of this effect.
 
 This problem was very hard to investigate. We strongly suspect it to stem from the particularities of the scikit-learn implementations and our computer specifications. It  disappeared when executing the same algorithm/parameter combinations on the EC2 instance and even on our local computer, small changes in hyperparameters often caused the problem to disappear. One possible explanations is an implementation that changes from one routine to another once some kind of threshold is reached. Caching-related effects are another possibility.
 
 As this problem occurred rarely and did not have a noticeable impact on the performance of our system, we did not investigate it further.
-
-
-% TODO mention numerical inaccuracies, e.g. the problem where for very small amounts of remaining time, a behaves weirdly
 
 
 \begin{figure}
@@ -1263,7 +1299,7 @@ In this project, we have succeeded in
 
 
 
-% TODO better than a human
+
 
 \section{Future Work}
 One straightforward way our system could be extended is by considering more algorithms besides logistic regression and random forest. Scikit-learn contains implementations of a great number of other machine learning algorithms that could be added to the current list of algorithms with little additional work. One challenge in this is to make the graphical output of the program stay readable while more models and lines are added.
@@ -1272,16 +1308,9 @@ Similarly, the program could be extended to consider additional approximation pa
 
 The heuristics implemented in this project are one step greedy heuristics, meaning they greedily search for maximum gain at every step. This is not the optimal behaviour to find a solution to the problems considered in this report. To find an optimal solution, one instead has to solve the multi-step problem of considering the future states after the possible outcomes at the current step. For each of these future state, one has to consider the states two iterations ahead, recursively considering all future outcomes.
 
-This problem is unlikely to have an analytic solution and is therefore intractable to compute. A solution to this is to develop multi-step heuristics using meta meta machine learning, i.e. using machine learning to learn heuristics that choose which learning algorithms to run in what order.
-% TODO JAMES reinforcement learning how?
+This problem is unlikely to have an analytic solution and is therefore intractable to compute. A solution to this is to develop multi-step heuristics using meta meta machine learning, i.e. using machine learning to learn heuristics that choose which learning algorithms to run in what order. This could be achieved using reinforcement learning techniques by making the information at every step available to the reinforcement learning algorithm and judging its decisions by evaluating its decisions once training has finished.
 
-
-
-
-% TODO explore then exploit should not have fixed proportion
-% TODO fixed score, fastest model
-% TODO transfer learning? to avoid burn-in
-
+% TODO possible goal: fixed error, trade off data and time
 
 
 \appendix

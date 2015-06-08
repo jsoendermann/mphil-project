@@ -2,7 +2,7 @@ files = dir('*.csv');
 
 Ml = [];
 
-for i = 12
+for i = 1:length(files)
     file = files(i);
     D = csvread(file.name, 1);
     disp(file.name);
@@ -10,7 +10,7 @@ for i = 12
     id = D(1,1);
     x = D(:,2);
     y = D(:,4);
-    z = linspace(0.1, 2, 50)';
+    z = linspace(0.0001, 2, 50)';
     
     
 
@@ -19,15 +19,15 @@ for i = 12
     
     hyp2.cov = log([1 1]);
     hyp2.lik = log(1);
-    hyp2_opt = minimize(hyp2, @gp, -100, @infExact, [], @covSEiso, likfunc, x, y);
-    nlml_se = gp(hyp2_opt, @infExact, [], @covSEiso, likfunc, x, y);
+    hyp2_opt = minimize(hyp2, @gp, -100, @infExact, [], @covSEiso, @likGauss, x, y);
+    nlml_se = gp(hyp2_opt, @infExact, [], @covSEiso, @likGauss, x, y);
     
     fprintf('Exp: %.3f; SE: %.3f\n', nlml_exp, nlml_se);
     
     Ml = [Ml; [id nlml_exp nlml_se (nlml_exp-nlml_se)]];
     
     [~,~,m_exp, var_exp] = gp(hyp_opt, @infExact, [], {@covSum, {@covExpMixture1d, @covConst}}, @likGauss, x, y, z);
-    [~,~,m_se, var_se] = gp(hyp2_opt, @infExact, [], covfunc, likfunc, x, y, z);
+    [~,~,m_se, var_se] = gp(hyp2_opt, @infExact, [], @covSEiso, @likGauss, x, y, z);
     
     clf;
     %f_exp = [m_exp+2*sqrt(var_exp); flipdim(m_exp-2*sqrt(var_exp),1)];
