@@ -18,7 +18,7 @@ K = K + 1e-6*eye(n);
 y = chol(K)'*randn(n, 1);
 
 z = x;
-%% fit & plot
+% fit & plot
 
 
 points = [x y];
@@ -50,9 +50,18 @@ axis([0,x_max,-2,2.3])
 hold off;
 
 fmax = max(sy);
-gamma = (m - fmax) ./ s
+gamma = (m - fmax) ./ s;
 pi = normcdf(gamma);
-ei = s .* (gamma .* normcdf(gamma)) + normpdf(gamma);
+
+ei = nan(100,1);
+for i = 1:100
+    ei(i) = integral(@(y)((y-fmax)*normpdf((y-m(i))/s(i))),fmax,Inf)
+    
+end
+
+%alpha = (fmax - m) ./ s;
+%ei = m + s .* normpdf(alpha) ./ normcdf(-alpha) - fmax .* normcdf(-alpha)
+%ei = s .* (gamma .* normcdf(gamma)) + normpdf(gamma);
 
 subplot(3,1,2);
 title('Probability of improvement');

@@ -2,10 +2,13 @@
 
 % TODO mention point cloud somewhere
 
+% TODO END go through lindard and l90 reports
 % TODO END percentage of data values, consistent term
 % TODO END present/past
 % TODO END check for emotional language
 % TODO END as -> since
+% TODO comment code
+% TODO random forest(s) sp.
 % TODO END citations: make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 
 % TODO ----------------------------------------------------------------
@@ -68,7 +71,6 @@
 
 
 \chapter{Introduction}
-% TODO add citations
 
 \pagenumbering{arabic}
 \setcounter{page}{1}
@@ -172,7 +174,7 @@ The learning algorithm can be assessed in two ways: the time it takes to create 
 This subsection introduces the two machine learning algorithms that we focus on in the evaluation of our system, logistic regression and random forests. These two algorithms are among the most common machine learning algorithm and are frequently used in real world applications.
 
 \subsubsection{Logistic regression}
-% TODO JAMES in linear regression, are more complex base functions used?
+
 Logistic regression is a variant of linear regression, a very widely used machine learning algorithms. In linear regression, the model $\hat{f}$ has the form
 \begin{equation}
 \hat{f}(\mathbf{x}) = \mathbf{w}_0 + \sum_{i=1}^n \mathbf{w}_i \mathbf{x}_i
@@ -301,29 +303,35 @@ Figure \ref{bayesianopti} shows an example of using Bayesian optimisation to fin
   \label{bayesianopti}
 \end{figure}
 
-The second plot shows the acquisition function that computes the probability of improvement. This acquisition function is based on the strategy of finding the point most likely to yield an improvement over the current maximum $y_{max}$. It is calculated as
+The second plot shows the acquisition function that computes the probability of improvement. This acquisition function is based on the strategy of finding the point most likely to yield an improvement over the current maximum $y_{\text{max}}$. It is calculated as
 \begin{align}
-a_{PI}(x) &= P(z \geq y_{max}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\label{eq:pi_equation}\\
-&=\Phi(\frac{\mu(x) - y_{max}}{\sigma(x)})
+a_{PI}(x) &= P(z \geq y_{\text{max}}) \text{\ with\ } z \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\label{eq:pi_equation}\\
+&=\Phi(\frac{\mu(x) - y_{\text{max}}}{\sigma(x)})
 \end{align}
 
 where $\mu$ and $\sigma$ are the mean and variance of the Gaussian process model.
 
-As the Gaussian process tends to be more certain about points that are close to known data points and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x_{\text{next}}$ and the current maximum $y_{max}$, it tends to be very conservative in its evaluations, often making small steps. Note how in Figure \ref{bayesianopti}, $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have already evaluated the function, and quickly drops off as $x$ increases. This acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
+As the Gaussian process tends to be more certain about points that are close to known data points and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x_{\text{next}}$ and the current maximum $y_{\text{max}}$, it tends to be very conservative in its evaluations, often making small steps. Note how in Figure \ref{bayesianopti}, $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have already evaluated the function, and quickly drops off as $x$ increases. This acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
 
-% TODO JAMES necessary to explain 2.8->2.9
-% TODO JAMES in 2.9, are the two summands exploration/exploitation
-A superior strategy to decide which point to evaluate next is to maximise the expected improvement. The acquisition function for the acquisition function in this case is defined \cite{eipaper} as
+% TODO not defined in 10
+A superior strategy to decide which point to evaluate next is to maximise the expected improvement. The acquisition function in this case is defined \cite{eipaper} as
 \begin{align}
-a_{EI}(x) &= \mathbb{E}(\text{max}\{y - y_{max}, 0\}) \text{\ with\ } y \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\\
+a_{EI}(x) &= \mathbb{E}(\text{max}\{y - y_{\text{max}}, 0\}) \text{\ with\ } y \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\\
 &= \mathbb{E}(\begin{cases}
-        y-y_{max} \text{\ \ if\ \ } y \geq y_{max}
+        y-y_{\text{max}} \text{\ \ if\ \ } y \geq y_{\text{max}}
         \\
         0 \text{\ \ \ \ \ \ \ \ \ \ \ \ otherwise}
         \end{cases})\\
-&= \int_{y_{max}}^\infty (y-y_{max})p(y)dy\\
-&= (\mu(x) - f_{max})\Phi(\frac{\mu(x) - y_{max}}{\sigma(x)}) + \sigma(x)\phi(\frac{\mu(x) - y_{max}}{\sigma(x)})
+&= \int_{y_{\text{max}}}^\infty (y-y_{\text{max}})p(y)dy\\
+&= \int_{y_{\text{max}}}^\infty y\cdot p(y)dy-y_{\text{max}}\int_{y_{\text{max}}}^\infty p(y)dy\\
+&= \sigma(x)\phi(\frac{y_{\text{max}}-\mu(x)}{\sigma(x)}) + \mu(x)\Phi(\frac{\mu(x) - y_{\text{max}}}{\sigma(x)}) \\
+&\quad - y_{\text{max}}[1-\Phi(\frac{y_{\text{max}} - \mu(x)}{\sigma(x)})]\\
+&= \sigma(x)\phi(\alpha) + \mu(x)(1-\Phi(\alpha))\\
+&\quad - y_{\text{max}}(1-\Phi(\alpha)) \text{\ with\ } \alpha = \frac{y_{\text{max}}-\mu(x)}{\sigma(x)}\\
+&= {\color{red}\sigma(x)}\phi(\alpha) + {\color{blue}(\mu(x)- y_{\text{max}})}(1-\Phi(\alpha))
 \end{align}
+
+% TODO describe red/blue
 
 An example of this function is shown in the third plot of \ref{bayesianopti}. If we compare the second and third plot, we can clearly see the difference between the two strategies in the range of $x$ values between four and five. In contrast to the probability of improvement, the acquisition function for the expected improvement has its maximum further to the right, as it also considers the difference between the current maximum and the $y$ value it expects.
 
@@ -385,7 +393,7 @@ As data collection was resource and time intensive, we implemented a command lin
 \item \texttt{-p/--parallel} This flag was originally included to parallelise data collection using multiple threads. Testing it revealed that running multiple instances of the algorithms in parallel led to distorted runtime data. This flag was therefore not used for data collection
 \end{itemize}
 
-The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}. 
+The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}.
 	
 % TODO explain how exponential growth is at most 2x as bad as 100%
 
@@ -455,9 +463,9 @@ This metric has been shown to be more robust than the simpler accuracy metric we
 
 Figure \ref{sampledata} show the results of collecting performance data, varying the percentage of data used. The four plots show the result of running random forests with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
 
-In all four figures, the runtime shown in blue shows linear growth as the amount of data increases. As runtime values shown in Figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected.
+In all four figures, the runtime, shown in blue, exhibits linear growth as the amount of data increases. Although the runtime of random forest is $\mathcal{O}(n log n)$ instead of linear in the amount of data, we've found that in practice, it is still modelled well by a linear kernel. As runtime values shown in Figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected. 
 
-The score (shown in red) for all four combinations of algorithms and datasets exhibits exponentially growth, rising very rapidly initially before levelling off.
+The score (shown in red) for all four combinations of algorithms and datasets exhibits rapid growth in the beginning before levelling off. We model these curves with the exponential mixture kernel described in the next section.
 
 
 \begin{figure}
@@ -480,7 +488,7 @@ The score (shown in red) for all four combinations of algorithms and datasets ex
   \caption{}
   \label{2d_3}
 \end{subfigure}
-\caption{Three different perspectives on the same plot of score data for two dimensions}
+\caption{Three different perspectives on the same score data}
 \label{2d}
 \end{figure}
 
@@ -553,9 +561,9 @@ After reparameterisation, the term for our kernel becomes
   \label{expmix11}
 \end{figure}
 
-Figure \ref{expmix11} shows functions drawn from the exponential mixture kernel. %TODO mention how they decay to 0
+Figure \ref{expmix11} shows functions drawn from the exponential mixture kernel. Note how these functions decay to zero as $y$ grows.
 
-The score functions shown in the previous section do not normally decay to zero, instead they plateau at values between zero and one. To model this effect, we add a constant function to our exponential mixture kernel as described in the Background chapter.
+The score functions we encounter, shown in the previous section do not normally decay to zero, instead they plateau at values between zero and one. To model this effect, we add a constant function to our exponential mixture kernel as described in the Background chapter.
 
 To model multi-dimensional data with multiple approximation parameters, we model every input dimension with a separate exponential mixture kernel and multiply these kernels together, adding a constant kernel to this product for the reason described in the previous paragraph. To model each dimension with its own kernel, we use GPML's \texttt{covMask} utility kernel that allows masking out arbitrary input dimensions.
 
@@ -898,11 +906,9 @@ In this section, we assess the quality of the fits to score data our exponential
 
 
 
-%\subsection{In one Dimension}
+\subsection{In one Dimension}
 
 
-
-% TODO JAMES linear kernel fits don't work
 
 \begin{table}
 \centering
@@ -984,8 +990,7 @@ Figure \ref{synth3_rndforest_fit} shows the two fits for the Synthetic3 dataset,
 
 Our results show that the exponential mixture kernel is an appropriate choice to model the score data for large datasets where it achieves a substantially better fit than the squared exponential kernel. We don't consider the weaker performance of our kernel on score data for small datasets a significant weakness. The reason for this is that the problems that we attempt to make a contribution towards solving with this problem, approximateness trade-offs when learning, do not arise when there is little data. In these cases, it is normally feasible to simply use all the available data, as doing so will only take very little time.
 
-% TODO JAMES include this?
-%\subsection{In two Dimensions}
+\subsection{In two Dimensions}
 
 
 \section{The Exponential Mixture Kernel}
@@ -1244,10 +1249,13 @@ Figure \ref{explexlp1} shows the final state of running a \texttt{MinimeseUncert
 Although our anytime and contract heuristics have limitations which we describe in the next section, they still perform to a high standard. The results described above would be difficult to reproduce by hand for a human expert.
 
 \subsection{Limitations}
+One limitation of our current system is that it models the function from approximation parameters to runtime as linear in all cases. Clearly, not all machine learning algorithm have linear runtime. As described in the Modelling chapter, we've found a linear model to be adequate 
+
+% TODO linear kernel isn't really correct; in future: model selection (n log n or lin or n^3 etc)
 The main limitation of our current heuristics is that they are one-step greedy algorithms. This means that at every step, they greedily maximise the gain they can achieve with their next decision. An optimal strategy, however, would think ahead and consider the state of the world given the possible outcomes of the current and all subsequent decisions. These possible future outcomes would then influence the behaviour of the scheduler at the next decision. 
 
 % TODO mention bandits, cite paper;
-% JAMES is it correct that the contract heuristic could then automatically balance expl/expl? what about anytime
+% TODO JAMES is it correct that the contract heuristic could then automatically balance expl/expl? what about anytime
 
 Considering all these potential states exhaustively is an entirely infeasible problem. We return to this problem when suggesting future work based on the results of this project in the next chapter.
 
