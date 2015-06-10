@@ -6,16 +6,15 @@ OUT_FILENAME = 'models.json';
 
 OPTIMISE = true;
 
+% Add stuff to path so that this script is self containd and can be called from the command line
 % GPML
 run(strcat(GPML_DIR, 'startup.m'));
-
 % JSONLAB
 addpath(JSONLAB_DIR);
-
 % utils
-me = mfilename;                                            % what is my filename
+me = mfilename;
 mydir = which(me); 
-mydir = mydir(1:end-2-numel(me));        % where am I located
+mydir = mydir(1:end-2-numel(me));
 addpath(mydir(1:end-1));
 addpath([mydir,'util']);
 
@@ -35,8 +34,7 @@ if OPTIMISE
         [~, time_m, time_sd] = gp_wrapper('linear', x_percent_data, y_times);
         [~, score_m, score_sd] = gp_wrapper('exp', x_percent_data, y_scores);
     end
-    % TODO The {}'s are necessary for matlab to encode this object as a
-    % list. Find a better solution to this
+    % The {}'s are necessary for matlab to encode this object as a list
     O.time_models = {struct('m', time_m', 'sd', time_sd'), {}};
     O.score_models = {struct('m', score_m', 'sd', score_sd'), {}};
 else
@@ -49,5 +47,5 @@ else
     end
 end
 
-% Write model to file
+% Write models to file
 savejson('', O, strcat(VAR_DIR, OUT_FILENAME));

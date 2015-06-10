@@ -1,6 +1,6 @@
 %% Load
 
-D = csvread('data_rnd_forest_amazon.csv', 1);
+D = csvread('data_rnd_forest_synth___n_features-1000__n_samples-10000.csv', 1);
 x = D(:,[2,3]);
 x1 = unique(D(:,2));
 x2 = unique(D(:,3));
@@ -26,11 +26,11 @@ rotate3d on;
 meanfunc = @meanZero; 
 hyp.mean = [];
 
-% exp1 = {@covMask, {[1 0], @covExpMixture1d}};
-% exp2 = {@covMask, {[0 1], @covExpMixture1d}};
-% prod = {@covProd, {exp1, exp2}};
-% covfunc = {@covSum, {prod, @covConst}};
-% hyp.cov = log([1 1 1 1 1 1 1]);
+exp1 = {@covMask, {[1 0], @covExpMixture1d}};
+exp2 = {@covMask, {[0 1], @covExpMixture1d}};
+prod = {@covProd, {exp1, exp2}};
+covfunc = {@covSum, {prod, @covConst}};
+hyp.cov = log([1 1 1 1 1 1 1]);
 
 covfunc = @covSEiso;
 hyp.cov = log([1 1]);
@@ -42,6 +42,7 @@ hyp.lik = log(1);
 %% Fit & plot
 
 hyp_opt = minimize(hyp, @gp, -100, @infExact, [], covfunc, likfunc, x, y);
+gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, x, y)
 [~, ~, m, sd] = gp(hyp_opt, @infExact, meanfunc, covfunc, likfunc, x, y, z);
 
 surf(z1, z2, reshape(m, [length(z1), length(z2)]));

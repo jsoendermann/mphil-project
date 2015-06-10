@@ -8,7 +8,8 @@ for i = 1:iterations
     
     grad = -grad_f(x);
     
-    dist = 1 / norm(grad); % Plot in direction of gradient; for report plot nlmlfunc
+    % This is not working as it should, currently
+    dist = 1 / norm(grad);
     for j = 1:10
         x_prime = x + dist * grad;
         y_prime = f(x_prime);
@@ -18,6 +19,7 @@ for i = 1:iterations
             break;
         end
         
+        % Smaller step size
         dist = dist / 2;
     end
 end

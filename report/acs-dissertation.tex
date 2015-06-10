@@ -1,15 +1,12 @@
-% TODO JAMES O runtime online is different to empirical findings
-
-% TODO mention point cloud somewhere
-
-% TODO END go through lindard and l90 reports
-% TODO END percentage of data values, consistent term
-% TODO END present/past
-% TODO END check for emotional language
-% TODO END as -> since
-% TODO comment code
-% TODO random forest(s) sp.
-% TODO END citations: make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
+% TODO PROOF go through lindard and l90 reports
+% TODO PROOF present/past
+% TODO PROOF check for emotional language
+% TODO PROOF for numbers > 999, add commas
+% TODO PROOF figure captions
+% TODO NOW comment code
+% TODO NOW random forest(s) sp.
+% TODO NOW percentage of data values, consistent term
+% TODO NOW citations: make sure author is mentioned, If you use purely-numeric bibliographic references, do not forget to still mention authors’ surnames
 
 % TODO ----------------------------------------------------------------
 
@@ -44,11 +41,9 @@
 \DeclareMathOperator*{\argmax}{arg\,max}
 
 
-%% START OF DOCUMENT
 \begin{document}
 
 
-%% FRONTMATTER (TITLE PAGE, DECLARATION, ABSTRACT, ETC) 
 \pagestyle{empty}
 \singlespacing
 \input{titlepage}
@@ -65,7 +60,6 @@
 \tableofcontents
 \listoffigures
 \listoftables
-\listoftodos
 
 \onehalfspacing
 
@@ -284,7 +278,7 @@ Bayesian optimisation is a method to solve the optimisation problem of having to
 
 Bayesian optimisation is based on the idea of placing a prior over the function $f$. After evaluating $f$ and obtaining a new data point, the model of $f$ is updated an used to decide where to evaluate the function next.
 
-As Gaussian processes are precisely such priors over functions, they are very well suited to be used with Bayesian optimisation. By selecting an appropriate kernel as described in the previous section, one can express existing prior knowledge over the function to be optimised which is crucial in ensuring that the Bayesian optimiser makes good choices in deciding the sequence of function evaluations.
+Since Gaussian processes are precisely such priors over functions, they are very well suited to be used with Bayesian optimisation. By selecting an appropriate kernel as described in the previous section, one can express existing prior knowledge over the function to be optimised which is crucial in ensuring that the Bayesian optimiser makes good choices in deciding the sequence of function evaluations.
 
 Unlike other optimisation methods like gradient descent that only use information local to the function at the last evaluation, Bayesian optimisation considers all the available data when deciding where to evaluate the function next. This means that Bayesian optimisation often finds an optimum in fewer steps than other methods. This, however, comes at the cost of requiring more computational resources when making these decisions \cite{PracticalBayesianOptimization}.
 
@@ -313,8 +307,7 @@ where $\mu$ and $\sigma$ are the mean and variance of the Gaussian process model
 
 As the Gaussian process tends to be more certain about points that are close to known data points and the probability of improvement strategy does not take into account the magnitude of the difference between the function value at $x_{\text{next}}$ and the current maximum $y_{\text{max}}$, it tends to be very conservative in its evaluations, often making small steps. Note how in Figure \ref{bayesianopti}, $a_{PI}$ is greatest at an $x$ value of around 4, close to where we have already evaluated the function, and quickly drops off as $x$ increases. This acquisition strategy is certain that by making a very small step away from the existing data point in a direction where the mean increases, it can improve the current maximum.
 
-% TODO not defined in 10
-A superior strategy to decide which point to evaluate next is to maximise the expected improvement. The acquisition function in this case is defined \cite{eipaper} as
+A superior strategy to decide which point to evaluate next is to maximise the expected improvement which is calculated as follows:
 \begin{align}
 a_{EI}(x) &= \mathbb{E}(\text{max}\{y - y_{\text{max}}, 0\}) \text{\ with\ } y \thicksim \mathcal{N}(\mu(x),\sigma^2(x))\\
 &= \mathbb{E}(\begin{cases}
@@ -328,12 +321,12 @@ a_{EI}(x) &= \mathbb{E}(\text{max}\{y - y_{\text{max}}, 0\}) \text{\ with\ } y \
 &\quad - y_{\text{max}}[1-\Phi(\frac{y_{\text{max}} - \mu(x)}{\sigma(x)})]\\
 &= \sigma(x)\phi(\alpha) + \mu(x)(1-\Phi(\alpha))\\
 &\quad - y_{\text{max}}(1-\Phi(\alpha)) \text{\ with\ } \alpha = \frac{y_{\text{max}}-\mu(x)}{\sigma(x)}\\
-&= {\color{red}\sigma(x)}\phi(\alpha) + {\color{blue}(\mu(x)- y_{\text{max}})}(1-\Phi(\alpha))
+&= {\color{red}\sigma(x)}\phi(\alpha) + {\color{blue}(\mu(x)- y_{\text{max}})}\Phi(-\alpha) \label{eq:ei}
 \end{align}
 
-% TODO describe red/blue
+By analysing term \ref{eq:ei}, we can get an intuition of the expected improvement strategy: it automatically balances exploration with exploitation. Large values of ${\color{red}\sigma(x)}$ represent high uncertainty and a potential to substantially improve the model of the function. Large values of ${\color{blue}(\mu(x)- y_{\text{max}})}$ indicate a potentially big improvement over the current best value.
 
-An example of this function is shown in the third plot of \ref{bayesianopti}. If we compare the second and third plot, we can clearly see the difference between the two strategies in the range of $x$ values between four and five. In contrast to the probability of improvement, the acquisition function for the expected improvement has its maximum further to the right, as it also considers the difference between the current maximum and the $y$ value it expects.
+An example of this function is shown in the third plot of \ref{bayesianopti}. If we compare the second and third plot, we can clearly see the difference between the two strategies in the range of $x$ values between four and five. In contrast to the probability of improvement, the acquisition function for the expected improvement has its maximum further to the right since it also considers the difference between the current maximum and the $y$ value it expects.
 
 \section{Third-Party Libraries}
 Besides the standard libraries of Python 2.7 and Matlab 2014b, our project uses a number of additional third-party libraries . The first and most important library for our project is scikit-learn, a Python implementation of many common machine learning algorithms. Scikit-learn is built on NumPy and SciPy, two very widespread Python frameworks for scientific computing. Besides its implementation of random forests and logistic regression, we also use it to generate datasets with its \texttt{make\_classification} function as explained in the Evaluation chapter.
@@ -345,19 +338,17 @@ Finally, we use jsonlab, a json implementation for Matlab and matplotlib, a Pyth
 
 
 \chapter{Related Work}
-% TODO the field of "sequential analysis"
-% TODO make clear that there are two broad trends: approximate algorithm developed by statisticians and bayesian optimisation of hyperparameters
-
-
 In \cite{jordan2013}, Jordan stresses the importance of the problem and the lack of attention it has received. They summarise research by Kleine et al. \cite{RSSB:RSSB12050} on extending the bootstrap, describe divide-and-conquer strategies that allow parallel inferential computations and explain an ordering of algorithms based on a hierarchy ordered by computational and statistical efficiency described by Chandrasekaran et al. \cite{Chandrasekaran26032013}.
 
-Bottou et al. \cite{Bottou08thetradeoffs} consider the trade-offs of approximate learning, describing qualitative differences between approximation of small and large datasets. 
+Bottou et al. \cite{Bottou08thetradeoffs} consider the trade-offs of approximate learning, describing qualitative differences between approximation of small and large datasets.
+
+Sequential analysis \cite{wald1945, 10.1057/9780230226203.1513} is a statistical method that was developed to learn from streams of data online and terminate when some desired inference goal is reached.
 
 These approaches put much focus on theoretical statistical guarantees while we take an empirical approach. While a theoretical approach to approximation is necessary for a deep understanding, our empirical approach can much more easily be extended into new directions. Wang et al. \cite{2015arXiv150207989W} survey the state of these approximate methods.
 
 Shalev et al. \cite{Shalev-Shwartz:2008:SOI:1390156.1390273} describe how the process of training a Support Vector Machine can be sped up with more data if the quality of the model is fixed. This is the opposite of the perspective taken by us that considers approximation trade-offs where the amount of data is fixed and the time is variable. Bruer et al. \cite{NIPS2014_5259} use additional data to smooth the optimisation function thus saving time by being able to optimise faster.
 
-Although besides work on approximate methods in machine learning, there has been a strong interest in the automatic selection of hyperparameters. As we use a similar approach to find an optimal balance of approximation, this work is relevant to this project.
+Although besides work on approximate methods in machine learning, there has been a strong interest in the automatic selection of hyperparameters. Since we use a similar approach to find an optimal balance of approximation, this work is relevant to this project.
 
 Snoek et al. \cite{PracticalBayesianOptimization} use Bayesian optimisation to optimise hyperparameters to machine learning algorithms. This relies on adequate models of training time and performance. We build on this paper, adding time constraints to the optimisation process. The results detailed in this paper have been implemented in a Python program called spearmint\footnote{https://github.com/HIPS/Spearmint}.
 
@@ -378,7 +369,7 @@ Approximation algorithms are one of the ways computer scientists have devised to
 The first step towards modelling performance was to collect sample data. This data was used to investigate the function and formulate an initial hypothesis on the nature of the function from approximation parameters to performance. After creating a model of performance, we tested it using this sample data.
 
 \subsection{Data Collection Script}
-As data collection was resource and time intensive, we implemented a command line script that accepts a range of configuration flags and collects data based on the parameters it receives. This script was then executed on an Amazon EC2 instance. Our script can be configured with the following list of command line flags:
+Since data collection was resource and time intensive, we implemented a command line script that accepts a range of configuration flags and collects data based on the parameters it receives. This script was then executed on an Amazon EC2 instance. Our script can be configured with the following list of command line flags:
 
 \begin{itemize}
 \item \texttt{-a/--algorithm} The machine learning algorithm to be run. This can be one of \texttt{rnd\_forest}, \texttt{log\_reg}
@@ -393,9 +384,9 @@ As data collection was resource and time intensive, we implemented a command lin
 \item \texttt{-p/--parallel} This flag was originally included to parallelise data collection using multiple threads. Testing it revealed that running multiple instances of the algorithms in parallel led to distorted runtime data. This flag was therefore not used for data collection
 \end{itemize}
 
-The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}. It includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}.
-	
-% TODO explain how exponential growth is at most 2x as bad as 100%
+The syntax to specify arrays in the command line arguments allows expressing arithmetic and geometric sequences. Arithmetic sequences are created with \texttt{a:min:length:max}, e.g. \texttt{a:1:4:50} to create an array of four evenly spaced elements with the first being 1 and the last being 50. The syntax to create geometric sequences is \texttt{g:min:length:max:base}, which includes the base of the geometric sequence. In this syntax, the array \texttt{[2, 4, 8, 16, 32, 64]} is expressed as \texttt{g:2:6:64:2}.
+
+In practice, we mostly used geometric sequences for approximation parameters. The reason for this is that it gives us an upper bound on runtime regardless of how many data points we collect. If creating a model with $100\%$ of data takes $t$ amount of time and the runtime grows linearly, a geometric sequence of values for the amounts of data with base 2 will take at most $\cdots + \frac{t}{8} + \frac{t}{4} + \frac{t}{2} + t < 2t$ time.
 
 These arrays contain all the values for the approximation parameters of the algorithm at which data should be collected. Before creating the desired models, the program takes the cartesian product of these arrays. It then runs the learning algorithm once for every element in this product. The number of elements in the cartesian product grows exponentially with every parameter. This made access to the EC2 instance, which could be run overnight, crucial. Avoiding hard coded values for data generation made data collection on the Amazon server convenient.
 
@@ -406,7 +397,7 @@ Once it has finished all the computations, the program outputs the data to a com
 \subsection{Measuring Performance}
 
 \subsubsection{Time}
-We use the \texttt{time.time()} function included in Python's standard library to measure training time. As we do not want to include validation time in our measurements, we keep the current time spent in a variable that gets updated after training in each iteration finishes.
+We use the \texttt{time.time()} function included in Python's standard library to measure training time. Since we do not want to include validation time in our measurements, we keep the current time spent in a variable that gets updated after training in each iteration finishes.
 
 One possible source of contamination for runtime measurements are other programs running in parallel. When collecting data on our personal machines, we were on occasion forced to shut down resource intensive programs to prevent this effect. This problem did not occur on the EC2 instance which was used for data collection exclusively.
 
@@ -463,7 +454,7 @@ This metric has been shown to be more robust than the simpler accuracy metric we
 
 Figure \ref{sampledata} show the results of collecting performance data, varying the percentage of data used. The four plots show the result of running random forests with 128 trees and logistic regression on the MNIST dataset and a synthetic dataset with 5000 samples and 500 features.
 
-In all four figures, the runtime, shown in blue, exhibits linear growth as the amount of data increases. Although the runtime of random forest is $\mathcal{O}(n log n)$ instead of linear in the amount of data, we've found that in practice, it is still modelled well by a linear kernel. As runtime values shown in Figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected. 
+In all four figures, the runtime, shown in blue, exhibits linear growth as the amount of data increases. Although the runtime of random forest is $\mathcal{O}(n log n)$ instead of linear in the amount of data, we've found that in practice, it is still modelled well by a linear kernel. Since runtime values shown in Figure \ref{sampledata3} are substantially lower, the values are noisier than in the other graphs, which is to be expected. 
 
 The score (shown in red) for all four combinations of algorithms and datasets exhibits rapid growth in the beginning before levelling off. We model these curves with the exponential mixture kernel described in the next section.
 
@@ -605,9 +596,8 @@ This integral does not have an analytic solution and, as such, must be approxima
 p(\mathbf{y}|\mathcal{D}) \approx \sum p(\mathbf{y}|\mathcal{D}, \theta)p(\theta|\mathcal{D}) \Delta\theta
 \end{equation}
 
-% TODO MAYBE explain what sampling is ("sample from distribution")
 
-The main advantage of sampling the hyperparameters is that it does not suffer from overfitting given that the samples are successfully drawn from the posterior distribution. Its major drawback is that it is computationally more expensive than optimisation methods. Implementation wise, sampling also takes more effort than optimisation, as the result of the computations the program executes have to be correctly averaged over.
+The main advantage of sampling the hyperparameters is that it does not suffer from overfitting given that the samples are successfully drawn from the posterior distribution. Its major drawback is that it is computationally more expensive than optimisation methods. Implementation wise, sampling also takes more effort than optimisation since the result of the computations the program executes have to be correctly averaged over.
 
 \subsubsection{Slice sampling}
 
@@ -615,7 +605,7 @@ Slice sampling \cite{MacKay:2002:ITI:971143, neal2003} is a Markov Chain Monte C
 
 The general outline of slice sampling given a distribution $f$ from which we want to sample is as follows. We start at a point $x$ and evaluate $y = f(x)$. From the interval $(0, y)$, we uniformly draw a value $u$, the height of the slice that gives slice sampling its name. The next step is to span an interval $(x_l, x_r)$ around $x$. We then draw $x'$ uniformly from this interval and calculate $y' = f(x')$. If $y' > u$, we return $x'$ as a sample. Otherwise we narrow the interval $(x_l, x_r)$ by setting $x'$ to be the new endpoint of the interval on the side of $x$ on which $x'$ falls.
 
-Figure \ref{slsamp} shows slice sampling after the height $u$ of the slice has been chosen, the interval $(x_l, x_r)$ has been created and an $x'$ has been drawn from that interval. As $f(x')$ is less than $u$, the next step of execution will shrink the interval by setting $x_r$ to $x'$.
+Figure \ref{slsamp} shows slice sampling after the height $u$ of the slice has been chosen, the interval $(x_l, x_r)$ has been created and an $x'$ has been drawn from that interval. Since $f(x')$ is less than $u$, the next step of execution will shrink the interval by setting $x_r$ to $x'$.
 
 \begin{figure}
 \centering
@@ -636,7 +626,7 @@ p_{\text{opt}}(\mathbf{y}|\mathcal{D}) = \argmax_\theta p(\mathbf{y}|\mathcal{D}
 \end{equation}
 
 
-This has the advantage of being substantially faster than sampling. It is also easier to implement, as it returns one set of hyperparameters that can be used to make predictions instead of multiple samples that have to be correctly averaged over. The disadvantage of optimisation is that it is prone to overfitting by choosing one optimum in cases where multiple viable optima exist. We describe situations in which we encountered this problem in the Evaluation chapter, comparing it with the results of slice sampling.
+This has the advantage of being substantially faster than sampling. It is also easier to implement since it returns one set of hyperparameters that can be used to make predictions instead of multiple samples that have to be correctly averaged over. The disadvantage of optimisation is that it is prone to overfitting by choosing one optimum in cases where multiple viable optima exist. We describe situations in which we encountered this problem in the Evaluation chapter, comparing it with the results of slice sampling.
 
 After inspecting the marginal likelihood functions of our sample data in Matlab, we concluded they are not functions that are inherently difficult to optimise and decided to implement our own optimisation routine. As we had already successfully sampled hyperparameters using slice sampling as described above, we implemented an optimisation method that works similarly to how slice sampling draws samples. The first version of this algorithm is shown below as Algorithm \ref{opti1}.
 
@@ -678,6 +668,7 @@ Given sufficient data to fit to, this algorithm is able to find suitable hyperpa
 
 While testing this algorithm, we found an effective method to handle these errors to be rerunning the algorithm multiple times and selecting the result with the highest marginal likelihood. This also alleviates the issue of local optima which we discuss in detail in the Evaluation chapter. The code to achieve this is shown as Algorithm \ref{optiwrap}.
 
+% TODO NOW comment
 \begin{algorithm}
 \begin{algorithmic}[1]
 \Procedure{Optimise\_with\_restarts}{$f,x,restarts=5$}
@@ -698,9 +689,8 @@ While testing this algorithm, we found an effective method to handle these error
 
 While this updated algorithm produces adequate results, it takes substantially longer than the original version. A final change we therefore added was to terminate the optimisation routine early if the value of $y$ only changes minimally over five iterations. This condition is met during almost all optimisations and often drastically cuts short the time that our algorithm needs.
 
-One shortcoming of this optimisation routine is that all its steps have to be axis aligned. If the gradient of the function being optimised at $x$ is not aligned with any axis, this causes the optimiser to make very small steps along multiple axes. A superior approach would be to directly move along the gradients, which are available to us. This would not be hard to implement because gradient information is available for our kernel. As our current algorithm already performs to a high standard, we did not investigate this potential improvement further.
+One shortcoming of this optimisation routine is that all its steps have to be axis aligned. If the gradient of the function being optimised at $x$ is not aligned with any axis, this causes the optimiser to make very small steps along multiple axes. A superior approach would be to directly move along the gradients, which are available to us. This would not be hard to implement because gradient information is available for our kernel. As our current algorithm already performs to a high standard, we did not investigate this potential improvement further. One possible recent method that would improve on our current algorithm is described in \cite{DBLP:journals/corr/MahsereciH15}.
 
-% TODO cite henning optimisation paper
 
 
 \chapter{Scheduling} 
@@ -719,12 +709,10 @@ One shortcoming of this optimisation routine is that all its steps have to be ax
 
 Our system is designed in a two tiered fashion. Tier 1 creates models of the data using learning algorithms that are parameterised with approximation parameters. The training time and score of these models makes up the input to tier 2. This second layer first creates meta-models of the time and score of the models in tier 1. These meta-models are then used by the scheduler to select the algorithm and approximation parameters for the next iteration and the process is repeated.
 
-% TODO JAMES how to justify this?
-In the implemented program for this project, we focus on the two algorithms described in the Background chapter, random forests and logistic regression. The approximation parameter we use is the percentage of the available data given to the learning algorithm to train.
+In the implemented program for this project, we focus on the two algorithms described in the Background chapter, random forests and logistic regression. These are two extremely common machine learning algorithms and are therefore well suited to demonstrate the feasibility of our methods. The approximation parameter we use is the percentage of the available data given to the learning algorithm to train. This decision is motivated by the fact that the proportion of data used is the clearest and most obvious way to run approximation of an algorithm 
 
 Figure \ref{architecture} shows this architecture diagrammatically for one scheduler after three iterations. In tier 1, the dataset \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {1}}} is used as input for all model creation. The learning process is parameterised by the learning algorithm and the approximation parameters to the algorithm \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {2}}}. The runtime time and score for every iteration are saved \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {3}}} separately for every algorithm.
 
-% TODO explain how there are multiple acquisition functions, maximum of all of them is selected
 In tier 2, this performance data is used to train Gaussian processes \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {4}}}, two each for every algorithm. These Gaussian processes model the time and the score of the algorithms as the approximation parameter is varied. These meta-models form the input to the scheduler \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {5}}} that uses them to make a decision on an algorithm/approximation parameter combination for the next iteration \raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {6}}}.
 
 \begin{figure}[ht]
@@ -750,7 +738,7 @@ Note how both tiers execute machine learning algorithms (coloured in red) on dat
 
 Figure \ref{systemexample} shows the program running with three schedulers. Rows one to three are each one instance of the architecture depicted in Figure \ref{architecture}; the plot in row four compares the performance of the three schedulers. For the three running instances, the first column shows runtime information. Logistic regression data is shown in blue while random forests data is shown in red. The dots represent recorded data points, the blue line shows the mean of the model that predicts runtime while the filled area is twice the standard deviation of the model, showing the uncertainty the model has. The scheduler shown in row one does not require models to make decisions and only shows the recorded data points. For schedulers that operate on time budgets, this plot also shows how much time is currently remaining by drawing a black line at the time threshold.
 
-The plot in the second column shows the score data and model in the same way the time information is drawn. Additionally, for schedulers that model time and score (the second and third in the example), the acquisition functions for both algorithm is shown as dashed line. The precise shape of these functions depends on the strategy the scheduler uses to make decision. 
+The plot in the second column shows the score data and model in the same way the time information is drawn. Additionally, for schedulers that model time and score (the second and third in the example), the acquisition functions for both algorithm is shown as dashed line. The precise shape of these functions depends on the strategy the scheduler uses to make decision. To decide which algorithm to evaluate next with how much data, the scheduler calculates the maximum of both acquisition functions.
 
 The third row contains plots of the time against the score function as a point cloud for logistic regression (blue) and random forests (red). These point clouds are created by drawing 100 points each from the time and score model and plotting one against the other. Again, these plots are only computed for schedulers that model performance data.
 
@@ -772,7 +760,7 @@ The directory of the project contains the following subdirectories:
 
 
 \subsection{Interoperability between Python and Matlab}
-Choosing Matlab to implement the performance modelling code and Python to implement the other parts of our system made it necessary to devise a method of transferring data between these two parts of the program. During the initial planning stage, we intended to write all parts of the system in Python but the advantages of GPML such as level of documentation and ease of use later outweighed the disadvantages of having to deal with process interoperability.
+Choosing Matlab to implement the performance modelling code and Python to implement the other parts of our system made it necessary to devise a method of transferring data between these two parts of the program. During the initial planning stage, we intended to write all parts of the system in Python but the advantages of GPML, such as level of documentation and ease of use, later outweighed the disadvantages of having to deal with process interoperability.
 
 To start the program, the \texttt{main.py} file is executed. This file then calls the Matlab script that contains modelling code whenever it has collected new data and needs to update one of its performance models. Data is transferred between the Python and the Matlab scripts by writing it to \texttt{json} files\footnote{JSON is a widespread data format similar to XML.} in the \texttt{var/} directory.  Before the Matlab script is executed, \texttt{main.py} writes the recorded performances of the algorithm for which it has just updated its data to \texttt{var/scheduler\_data.json}. This file contains a JSON object with the fields \texttt{x\_percent\_data}, \texttt{y\_times} and \texttt{y\_scores} which hold the data collected so far.
 
@@ -800,8 +788,7 @@ This is the base class that all schedulers inherit from. It defines a framework 
 
 
 \subsection{\texttt{FixedSequenceScheduler}}
-% TODO different name for this, not "decision list"
-\texttt{FixedSequenceScheduler} is the simplest of all the scheduling strategies implemented. Its constructor takes a sequence of data percentage values and computes the cartesian product of the learning algorithms and this sequence and saves this decision list. When its \texttt{decide} method is called, it writes the next element of the decision list into \texttt{self.decision}, cycling through algorithms and executing the fixed sequence of data percentage values. Once it has executed every algorithm/data percentage combination, the scheduler terminates.
+The \texttt{FixedSequenceScheduler} is the simplest of all the scheduling strategies implemented. Its constructor takes a sequence of data percentage values and computes the cartesian product of the learning algorithms with this sequence. When its \texttt{decide} method is called, it writes the next element of this product into \texttt{self.decision}, cycling through algorithms and executing the fixed sequence of data percentage values. Once it has executed every algorithm/data percentage combination, the scheduler terminates.
 
 This scheduler is unique among the schedulers in not requiring a model of runtime and score. Its evaluation sequence is set during initialisation and it does not rely on predictions to decide which learning algorithm/approximation parameter combination to try next.
 
@@ -827,19 +814,19 @@ This scheduler inherits from the \texttt{ExpectedImprovementScheduler} and diffe
 \subsection{\texttt{\textit{TimedScheduler}}}
 \texttt{\textit{TimedScheduler}} is the base class of the two schedulers that operate on a finite time budget. It inherits from \texttt{\textit{ProbablisticScheduler}} and includes functionality to keep track of the remaining time and add a line to the time plot to show how much time is left.
 
+% TODO NOW these two are truly new
 \subsection{\texttt{ExpectedImprovementTimesProbOfSuccessScheduler}}
-This scheduler inherits from both the \texttt{\textit{TimedScheduler}} and the \texttt{ExpectedImprovementScheduler}. To compute its acquisition function, it multiplies the expected improvement with the probability of successfully finishing the learning process in the remaining time. The probability of success for a given $x$ value is calculated by cutting off the distributions of the time model at $x$ and computing the amount of remaining probability mass.
+This scheduler inherits from both the \texttt{\textit{TimedScheduler}} and the \texttt{ExpectedImprovementScheduler}. To compute its acquisition function, it multiplies the expected improvement with the probability of successfully finishing the learning process in the remaining time. The probability of success for a given $x$ value, i.e. the probability of finishing model creation within the remaining time, is calculated by cutting off the distributions of the time model at $x$ and computing the amount of remaining probability mass.
 
 The constructor of \texttt{ExpectedImprovementTimesProbOfSuccessScheduler} expects a sequence of time intervals. Whenever the scheduler has used up its available time budget, the next time interval in the sequence is added to the remaining time.
 
 \subsection{\texttt{MinimeseUncertaintyThenExploitScheduler}}
-The \texttt{MinimeseUncertaintyThenExploitScheduler} inherits from \texttt{\textit{TimedScheduler}}. It has two scheduling phases and is allocated a separate time budget for each phase. In the first phase, it tries to build adequate models by reducing uncertainty. Its acquisition function during this phase is calculated as the score model standard deviation divided by the time it takes to evaluate the function at the point under consideration.% This behaviour is similar to the \texttt{ExpectedImprovementPerTimeScheduler} using.
+The \texttt{MinimeseUncertaintyThenExploitScheduler} inherits from \texttt{\textit{TimedScheduler}}. It has two scheduling phases and is allocated a separate time budget for each phase. In the first phase, it tries to build adequate models by reducing uncertainty. Its acquisition function during this phase is calculated as the score model standard deviation divided by the time it takes to evaluate the function at the point under consideration.
 
 After using up the time allotted for exploration, this scheduler uses the second time budget to construct the best model it can within that time, using the models it constructed during the first phase.
 
 
 \chapter{Evaluation}
-% TODO END add "recall that"
 
 \textit{This chapter describes the results of our project and evaluates the system we built. It also lists challenges that we faced during its development and limitations it currently has.}
 
@@ -855,9 +842,9 @@ This fine grained control over the properties of the datasets was very valuable 
 A second set of datasets was drawn from the list of datasets that were used in the development of Auto-WEKA as mentioned in the Related Work chapter. The authors of Auto-WEKA made the datasets used to test Auto-WEKA available on their website\footnote{They can be downloaded at http://www.cs.ubc.ca/labs/beta/Projects/autoweka/datasets/}.
 
 
-These datasets originally came from other sources \cite{Lichman:2013, Larochelle:2007:EED:1273496.1273556, Krizhevsky09learningmultiple} and were converted by the Auto-WEKA creators to WEKA's own data format, the Attribute-Relation File Format (\texttt{arff}). This made it very convenient for us to use these datasets as they are originally in a wide range of differing data formats and would have had to have individual import routines written for them. 
+These datasets originally came from other sources \cite{Lichman:2013, Larochelle:2007:EED:1273496.1273556, Krizhevsky09learningmultiple} and were converted by the Auto-WEKA creators to WEKA's own data format, the Attribute-Relation File Format (\texttt{arff}). This made it very convenient for us to use these datasets since they are originally in a wide range of differing data formats and would have had to have individual import routines written for them. 
 
-Besides converting them to the \texttt{arff} format, the authors of the Auto-WEKA paper also split them up in a training and a test set. As we described in the Implementation chapter, we implement k-fold cross-validation and therefore needed all the data in a single file. To achieve this, a small ruby script\footnote{Saved at \texttt{src/data\_handling/utils/append\_arff\_files.rb}} was written to merge the \texttt{train.arff} and \texttt{test.arff} files for each dataset. Table \ref{datasets_info} lists the names and sizes of these datasets.
+Besides converting them to the \texttt{arff} format, the authors of the Auto-WEKA paper also split them up in a training and a test set. As described in the Implementation chapter, we implement k-fold cross-validation and therefore needed all the data in a single file. To achieve this, a small ruby script\footnote{Saved at \texttt{src/data\_handling/utils/append\_arff\_files.rb}} was written to merge the \texttt{train.arff} and \texttt{test.arff} files for each dataset. Table \ref{datasets_info} lists the names and sizes of these datasets.
 
 
 \begin{table}
@@ -903,10 +890,6 @@ This encoding expands every feature of type string with $n$ possible values into
 \section{Model Comparison}
 In this section, we assess the quality of the fits to score data our exponential mixture kernel achieves. We do so by comparing the marginal likelihoods of the models it generates to those of a kernel that encodes weaker prior knowledge about the shape of the data, the squared exponential kernel.
 
-
-
-
-\subsection{In one Dimension}
 
 
 
@@ -979,7 +962,7 @@ Figure \ref{madelon_logreg_fit} shows the two fits for the madelon dataset and r
   \label{madelon_logreg_fit}
 \end{figure}
 
-Figure \ref{synth3_rndforest_fit} shows the two fits for the Synthetic3 dataset, where the exponential mixture kernel, again shown in red, achieves a much better fit than the squared exponential kernel. For $x$ values that lie beyond the datapoints available, the exponential mixture kernel makes confident predictions that conform to our expectation of having reached a plateau.
+Figure \ref{synth3_rndforest_fit} shows the two fits for the Synthetic3 dataset, where the exponential mixture kernel, again shown in red, achieves a much better fit than the squared exponential kernel. For $x$ values that lie beyond the data point available, the exponential mixture kernel makes confident predictions that conform to our expectation of having reached a plateau.
 
 \begin{figure}
 \centering
@@ -989,9 +972,6 @@ Figure \ref{synth3_rndforest_fit} shows the two fits for the Synthetic3 dataset,
 \end{figure}
 
 Our results show that the exponential mixture kernel is an appropriate choice to model the score data for large datasets where it achieves a substantially better fit than the squared exponential kernel. We don't consider the weaker performance of our kernel on score data for small datasets a significant weakness. The reason for this is that the problems that we attempt to make a contribution towards solving with this problem, approximateness trade-offs when learning, do not arise when there is little data. In these cases, it is normally feasible to simply use all the available data, as doing so will only take very little time.
-
-\subsection{In two Dimensions}
-
 
 \section{The Exponential Mixture Kernel}
 
@@ -1028,7 +1008,7 @@ Although this solved the issue of overfitting on too little data, sampling hyper
   \label{kernel_issues3}
 \end{figure}
 
-As our program has to be able to handle both samples and single results returned by optimisation, we treat the result of our optimisation routine as a single sample in the routines that make use of our model. This makes it completely transparent to these routines which of the two hyperparameter selection methods were used and enables us to switch between them according to the requirements of the schedulers.
+Since our program has to be able to handle both samples and single results returned by optimisation, we treat the result of our optimisation routine as a single sample in the routines that make use of our model. This makes it completely transparent to these routines which of the two hyperparameter selection methods were used and enables us to switch between them according to the requirements of the schedulers.
 
 \begin{figure}
 \centering
@@ -1113,9 +1093,7 @@ Figure \ref{sched:expimpr01} shows typical acquisition functions for the \texttt
 
 The \texttt{ExpectedImprovementPerTimeScheduler} is a slight variation of the \texttt{ExpectedImprovementScheduler}. To calculate its acquisition function, it divides the expected improvement by the mean of the time model. Figure \ref{sched:expimprpertime01} shows the bias this scheduler has towards models that can be created quickly. Although the expected improvement increases as $x$ becomes larger, the required time also grows (shown in the left plot).
 
-% TODO in the scheduler explanation section, mention that "success" means finishing in time
-% TODO emphasize that these are the two truly new schedulers, anytime & contract
-% TODO mention that some schedulers trim their acquisition functions while others dont
+
 \subsubsection{\texttt{ExpectedImprovementTimesProbOfSuccessScheduler}}
 
 This is one of two schedulers that expect to be given a time budget during initialisation. Figure \ref{sched:expimprpertime01} shows the state of the scheduler with one second to spend after the burn-in phase has finishd. This time limit is marked on the left plot. As can be seen on that plot, the probability that creating a random forests model with more than about 10\% of data will finish in time is extremely low. Consequently, the acquisition function for random forests is essentially flat and not visible in the right plot.
@@ -1142,10 +1120,9 @@ Figure \ref{sched:expimprpertime02} shows the \texttt{ExpectedImprovementTimesPr
 
 The \texttt{MinimeseUncertaintyThenExploitScheduler} is the second scheduler implemented in this project that operates on a time budget. Recall that it functions in two stages, exploration and exploitation, that are each allocated time during initialisation.
 
-Figure \ref{sched:exp_then_exp1} shows the scheduler shortly after the burn-in period has finished. To illustrate the behaviour of this scheduler, we use a much larger datasets with $50,000$ samples. The scheduler is given 10 seconds to explore and 30 to exploit the knowledge gained during exploration. Due to the size of the dataset, it is not possible to build a model using all the available data in 30 seconds. This makes it necessary for the scheduler to be smart about where to spend the time allocated for exploitation.
+Figure \ref{sched:exp_then_exp1} shows the scheduler shortly after the burn-in period has finished. To illustrate the behaviour of this scheduler, we use a much larger dataset with $50,000$ samples. We use sampling instead of optimisation for hyperparameter selection in this example.
 
-% TODO explain why you sample
-% Recall that the means of the sampled meta-models are irrelevant during the exploration phase of the \texttt{MinimeseUncertaintyThenExploitScheduler} and decisions are made solely on the amount of variance at a certain point.
+The scheduler is given 10 seconds to explore and 30 to exploit the knowledge gained during exploration. Due to the size of the dataset, it is not possible to build a model using all the available data in 30 seconds. This makes it necessary for the scheduler to be smart about where to spend the time allocated for exploitation.
 
 In Figure \ref{sched:exp_then_exp1}, random forests has, on average, higher variance in its models than the blue algorithm. It also takes longer to evaluate, however, which causes its acquisition function to have smaller values as the scheduler computes it as $\sigma/\text{time} \cdot \text{probability of success}$. Note how the acquisition functions for both algorithms sharply drop off as the projected time crosses the current time budget of about 9 seconds. This point is reached for random forests at 0.1 and at 0.2 for logistic regression.
 
@@ -1186,6 +1163,7 @@ In this section, we evaluate the heuristics for the two approximation trade-off 
 
 
 \subsubsection{Anytime algorithms}
+% TODO DATA more systematic eval
 
 \begin{figure}
 \centering
@@ -1224,7 +1202,7 @@ We first test our contract heuristic in form of the \texttt{MinimeseUncertaintyT
   \label{explexlp0_1}
 \end{figure}
 
-The final state of the scheduler is shown in Figure \ref{explexlp0}. 
+The final state of the scheduler is shown in Figure \ref{explexlp0}. The scheduler has spent its exploration time budget gaining more knowledge on the runtime of logistic regression but, using the models it has of the score, decided to spend the time available for exploitation building a random forest model.
 
 
 \begin{figure}
@@ -1249,13 +1227,11 @@ Figure \ref{explexlp1} shows the final state of running a \texttt{MinimeseUncert
 Although our anytime and contract heuristics have limitations which we describe in the next section, they still perform to a high standard. The results described above would be difficult to reproduce by hand for a human expert.
 
 \subsection{Limitations}
-One limitation of our current system is that it models the function from approximation parameters to runtime as linear in all cases. Clearly, not all machine learning algorithm have linear runtime. As described in the Modelling chapter, we've found a linear model to be adequate 
+One limitation of our current system is that it models the function from approximation parameters to runtime as linear in all cases. Clearly, not all machine learning algorithm have linear runtime. We've found a linear model to be adequate for empirical purposes, but if the system is to be extended to other algorithms that have runtimes that are not very well modelled by a linear kernel, such as Support Vector Machines with a runtime of $\mathcal{O}(n^3)$, a different way to model runtime has to be implemented.
 
-% TODO linear kernel isn't really correct; in future: model selection (n log n or lin or n^3 etc)
+% TODO NOW mention bandits, cite paper;
 The main limitation of our current heuristics is that they are one-step greedy algorithms. This means that at every step, they greedily maximise the gain they can achieve with their next decision. An optimal strategy, however, would think ahead and consider the state of the world given the possible outcomes of the current and all subsequent decisions. These possible future outcomes would then influence the behaviour of the scheduler at the next decision. 
 
-% TODO mention bandits, cite paper;
-% TODO JAMES is it correct that the contract heuristic could then automatically balance expl/expl? what about anytime
 
 Considering all these potential states exhaustively is an entirely infeasible problem. We return to this problem when suggesting future work based on the results of this project in the next chapter.
 
@@ -1272,7 +1248,7 @@ Another challenge we encountered during data collection for this project were un
 
 This problem was very hard to investigate. We strongly suspect it to stem from the particularities of the scikit-learn implementations and our computer specifications. It  disappeared when executing the same algorithm/parameter combinations on the EC2 instance and even on our local computer, small changes in hyperparameters often caused the problem to disappear. One possible explanations is an implementation that changes from one routine to another once some kind of threshold is reached. Caching-related effects are another possibility.
 
-As this problem occurred rarely and did not have a noticeable impact on the performance of our system, we did not investigate it further.
+Since this problem occurred rarely and did not have a noticeable impact on the performance of our system, we did not investigate it further.
 
 
 \begin{figure}
@@ -1297,34 +1273,39 @@ As this problem occurred rarely and did not have a noticeable impact on the perf
 
 
 \chapter{Conclusion and Future Work} 
-\section{Conclusions}
+\section{Conclusion}
 In this project, we have succeeded in
 \begin{itemize}
-	\item creating a covariance function for Gaussian processes that can model the exponential behaviour of learning algorithm accuracy as a function of its appoximation parameters
+	\item creating a covariance function for Gaussian processes that can model the exponential behaviour of learning algorithm accuracy as a function of its approximation parameters
 	\item developing a heuristic that uses this kernel to solve the anytime problem of obtaining good solution fast and quickly improving the models generated during the learning process
 	\item developing a heuristic that can generate solutions to the contract style problem of learning within a given time budget
 \end{itemize}
 
-
+% TODO NOW more
 
 
 
 \section{Future Work}
-One straightforward way our system could be extended is by considering more algorithms besides logistic regression and random forest. Scikit-learn contains implementations of a great number of other machine learning algorithms that could be added to the current list of algorithms with little additional work. One challenge in this is to make the graphical output of the program stay readable while more models and lines are added.
+One straightforward way our system could be extended is by considering more algorithms besides logistic regression and random forest. Scikit-learn includes implementations of a great number of other machine learning algorithms that could be added to the current list of algorithms with little additional work. One challenge in this is to make the graphical output of the program stay readable while more models and lines are added.
 
 Similarly, the program could be extended to consider additional approximation parameters besides the percentage of data, both individually and in combination with other parameters. The groundwork for this has been laid in this project by fitting exponential mixture kernels to 2D data, but additional investigations on how the approximation parameters influence each other would likely be necessary. This would likely require entirely new ways of visualising the output as it is very difficult to plot functions that take more than one argument.
 
-The heuristics implemented in this project are one step greedy heuristics, meaning they greedily search for maximum gain at every step. This is not the optimal behaviour to find a solution to the problems considered in this report. To find an optimal solution, one instead has to solve the multi-step problem of considering the future states after the possible outcomes at the current step. For each of these future state, one has to consider the states two iterations ahead, recursively considering all future outcomes.
+With our model of learning algorithm runtime and score, there are different perspectives on their relationship that can be taken. One possible such perspective is to treat the score as fixed and attempt to find a model that achieves the desired score in the shortest amount of time. This could be extended to present the user with information on how long the construction of this model is likely to take.
+
+The schedulers developed as part of this project could potentially have applications in other situations. From a general perspective, they are a method to optimise a function under time constraints in situations in which the point at which the function is evaluated has an effect on the runtime of the evaluation. 
+
+As mentioned in the Limitations section, the heuristics implemented in this project are one step greedy heuristics, meaning they greedily search for maximum gain at every step. This is not the optimal behaviour to find a solution to the problems considered in this report. To find an optimal solution, one instead has to solve the multi-step problem of considering the future states after the possible outcomes at the current step. For each of these future state, one has to consider the states two iterations ahead, recursively considering all future outcomes.
+
 
 This problem is unlikely to have an analytic solution and is therefore intractable to compute. A solution to this is to develop multi-step heuristics using meta meta machine learning, i.e. using machine learning to learn heuristics that choose which learning algorithms to run in what order. This could be achieved using reinforcement learning techniques by making the information at every step available to the reinforcement learning algorithm and judging its decisions by evaluating its decisions once training has finished.
 
-% TODO possible goal: fixed error, trade off data and time
+
 
 
 \appendix
 \singlespacing
 
-% TODO ADD more references
+% TODO NOW more references (more than one for one thing)
 
 \bibliographystyle{unsrt} 
 \bibliography{references}

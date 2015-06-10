@@ -52,16 +52,7 @@ hold off;
 fmax = max(sy);
 gamma = (m - fmax) ./ s;
 pi = normcdf(gamma);
-
-ei = nan(100,1);
-for i = 1:100
-    ei(i) = integral(@(y)((y-fmax)*normpdf((y-m(i))/s(i))),fmax,Inf)
-    
-end
-
-%alpha = (fmax - m) ./ s;
-%ei = m + s .* normpdf(alpha) ./ normcdf(-alpha) - fmax .* normcdf(-alpha)
-%ei = s .* (gamma .* normcdf(gamma)) + normpdf(gamma);
+ei = s .* (gamma .* normcdf(gamma)) + normpdf(gamma);
 
 subplot(3,1,2);
 title('Probability of improvement');

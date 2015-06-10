@@ -19,9 +19,3 @@ for i = 1:length(res)
     plot(z, m);
     
 end
-
-
-% f = [m+2*sd; flipdim(m-2*sd,1)];
-% fill([z; flipdim(z,1)], f, [7 7 7]/8)
-% plot(z, m);
-% plot(x, y, 'b+');

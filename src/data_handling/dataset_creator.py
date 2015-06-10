@@ -7,14 +7,16 @@ import matplotlib.pyplot as plt
 
 FIG_DIR = '/Users/jan/Dropbox/mphil_project/repo/figs/'
 
-
+# The dataset for which score data will be plotted
 dataset = create_dataset({'n_samples': 7500, 'n_features': 120, 'n_classes': 6, 'n_informative': 40})
 
+# The learning algorithms
 algorithms = [
-        {'name': 'rnd_forest', 'parameters': {'n_estimators': 50}, 'time': [], 'score': []},
-        {'name': 'log_reg', 'parameters': {}, 'time': [], 'score': []}
-        ]
+    {'name': 'rnd_forest', 'parameters': {'n_estimators': 50}, 'time': [], 'score': []},
+    {'name': 'log_reg', 'parameters': {}, 'time': [], 'score': []}
+]
 
+# Percentage of data values
 data_range = exp_incl_float_range(0.1, 10, 1, 1.5)
 
 def draw(ax, plt):
