@@ -1,6 +1,6 @@
 %% Load
 
-D = csvread('data_rnd_forest_synth___n_features-1000__n_samples-10000.csv', 1);
+D = csvread('data_rnd_forest_amazon.csv', 1);
 x = D(:,[2,3]);
 x1 = unique(D(:,2));
 x2 = unique(D(:,3));

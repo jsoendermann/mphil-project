@@ -648,8 +648,6 @@ elif args.load_arff:
 schedulers = [
     FixedSequenceScheduler('fixed_exponential', exp_incl_float_range(0.01, 15, 0.15, 1.3) + exp_incl_float_range(0.155, 10, 1.0, 1.3)),
     ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.01, 15, 0.15, 1.3), exp_incl_float_range(1, 10, 50, 1.3) ),    
-    #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) ),
-    #ExpectedImprovementTimesProbOfSuccessScheduler('EI * prob. of success', exp_incl_float_range(0.005, 15, 0.15, 1.3), exp_incl_float_range(1, 8, 30, 1.3) )
 ]
 n_schedulers = len(schedulers)
 
