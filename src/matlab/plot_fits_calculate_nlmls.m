@@ -2,7 +2,7 @@ files = dir('*.csv');
 
 Ml = [];
 
-for i =4%1:length(files)
+for i =29%1:length(files)
     % Load data
     file = files(i);
     D = csvread(file.name, 1);
@@ -41,9 +41,9 @@ for i =4%1:length(files)
     plot(z, m_exp + 2*sd_exp, 'r:');
     plot(z, m_exp - 2*sd_exp, 'r:');
     
-    plot(z, m_se, 'b');
-    plot(z, m_se + 2*sd_se, 'b:');
-    plot(z, m_se - 2*sd_se, 'b:');
+   % plot(z, m_se, 'b');
+   % plot(z, m_se + 2*sd_se, 'b:');
+   % plot(z, m_se - 2*sd_se, 'b:');
     
     hold off;
     print('-dpdf', sprintf('fits_out/%s.pdf', file.name));
