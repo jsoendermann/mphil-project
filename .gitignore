@@ -14,3 +14,5 @@ report/acs-dissertation.tex
 var/
 figs/
 report/figures/*.pdf
+presentation/.texpadtmp/
+presentation/*.pdf
